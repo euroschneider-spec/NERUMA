@@ -45,8 +45,8 @@ createServer(async(req,res)=>{
     if (url.pathname==='/health') return send(res,200,{ready:true});
     if(url.pathname==='/auth/v1/signup' || url.pathname==='/auth/v1/resend') {
       const payload=JSON.parse(body.toString());
-      if(payload.email==='limited@example.test') return send(res,429,{code:'over_email_send_rate_limit',msg:'Email rate limit exceeded'});
-      if(payload.email==='unauthorized@example.test') return send(res,400,{code:'email_address_not_authorized',msg:'Address not authorized'});
+      if(payload.email==='limited@example.test') return send(res,429,{error_code:'over_email_send_rate_limit',msg:'Email rate limit exceeded'});
+      if(payload.email==='unauthorized@example.test') return send(res,400,{error_code:'email_address_not_authorized',msg:'Address not authorized'});
       if(url.pathname==='/auth/v1/resend') return send(res,200,{});
       return send(res,200,{id:id(20),aud:'authenticated',role:'authenticated',email:payload.email,email_confirmed_at:null,is_anonymous:false,app_metadata:{provider:'email'},user_metadata:payload.data||{},identities:[],created_at:new Date().toISOString()});
     }
