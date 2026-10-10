@@ -113,6 +113,8 @@
   --space-6: 24px;
   --space-8: 32px;
   --container: 1160px;
+  /* Side gutter shared by the page container, header and top bar so their edges line up. */
+  --gutter: 24px;
   font-size: 16px;
 }
 
@@ -347,7 +349,8 @@ legend { padding-inline: var(--space-2); max-width: 100%; font-weight: var(--fon
 .level-dot { display: inline-block; height: 7px; width: 7px; border-radius: 50%; background: var(--color-accent); }
 
 /* ── Layout helpers (responsive without breakpoints) ─────────────────── */
-.container { max-width: var(--container); margin: 0 auto; padding: 0 24px; width: 100%; }
+/* Only inline padding: a component that shares this class keeps its own block padding at every width. */
+.container { max-width: var(--container); margin: 0 auto; padding-inline: var(--gutter); width: 100%; }
 .narrow { max-width: 680px; }
 .grid { display: grid; gap: 16px; grid-template-columns: repeat(auto-fit, minmax(min(100%, var(--min, 260px)), 1fr)); }
 .stack { display: flex; flex-direction: column; gap: var(--gap, 12px); }
@@ -360,13 +363,13 @@ legend { padding-inline: var(--space-2); max-width: 100%; font-weight: var(--fon
 /* ── Site chrome ─────────────────────────────────────────────────────── */
 .topbar {
   display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 8px 16px;
-  padding: 6px max(16px, calc((100% - var(--container)) / 2 + 24px));
+  padding: 6px max(var(--gutter), calc((100% - var(--container)) / 2 + var(--gutter)));
   border-bottom: 1px solid var(--color-divider); background: var(--color-bg);
 }
 .theme-toggle { gap: 6px; }
 .site-header { border-bottom: 1px solid var(--color-divider); background: var(--color-bg); }
 .header-inner {
-  max-width: var(--container); margin: 0 auto; padding: 0 24px;
+  max-width: var(--container); margin: 0 auto; padding: 0 var(--gutter);
   display: flex; align-items: center; gap: 24px; min-height: 60px;
 }
 .brand {
@@ -463,9 +466,10 @@ html[data-density="summary"] .density-switch button[data-value="summary"] { back
   font-size: 1.1875rem; line-height: 1.6; max-width: 56ch;
   margin: 0 0 24px; color: var(--v-muted); text-wrap: pretty;
 }
-.hero-visual { position: relative; min-width: 0; padding: 8px; }
+/* The tinted backing fills this box exactly, so it never reaches past the content edge. */
+.hero-visual { position: relative; min-width: 0; padding: 24px 28px 16px; }
 .visual-orbit {
-  position: absolute; inset: -16px -20px -8px; z-index: -1;
+  position: absolute; inset: 0; z-index: -1;
   background: color-mix(in srgb, var(--color-accent) 10%, var(--color-surface));
   border-radius: var(--radius-xl);
 }
@@ -841,12 +845,11 @@ p, li, dt, dd, summary, label, figcaption, a, .lbl, .small-label, .small-note { 
   .workspace-nav a { font-size: 0.8125rem; padding: 8px 12px; }
 }
 @media (max-width: 760px) {
-  .container { padding: 0 16px; }
+  :root { --gutter: 16px; }
   .section { padding-block: 48px; }
   .brand { font-size: 1rem; gap: 8px; letter-spacing: 0.06em; }
   .hero { padding-top: 40px; padding-bottom: 32px; gap: 32px; }
-  .hero-visual { width: min(470px, 100%); margin-inline: auto; }
-  .visual-orbit { inset: 0; }
+  .hero-visual { width: min(470px, 100%); margin-inline: auto; padding: 8px; }
   .approach-section { gap: 24px; }
   .org-banner { padding: 28px 24px; margin-bottom: 48px; gap: 0; }
   .banner-arches { display: none; }

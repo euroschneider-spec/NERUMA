@@ -289,7 +289,7 @@ try {
   await check('the header offers one sign-in and advertises no tier-specific destination',async()=>{
     for(const page of [adminPage,applicant]) {
       await page.goto(`${base}/en`);
-      await expect(page.locator('.header-login')).toHaveAttribute('href','/en/login');
+      await expect(page.locator('.nav-login')).toHaveAttribute('href','/en/login');
       await expect(page.locator('.site-header').getByRole('link',{name:'Platform administration',exact:true})).toHaveCount(0);
       await expect(page.locator('.site-header').getByRole('link',{name:'Organisation account',exact:true})).toHaveCount(0);
     }
@@ -304,8 +304,8 @@ try {
   });
   await check('email rate limits and resend feedback are visible without claiming delivery',async()=>{
     await applicant.goto(`${base}/en/register`);await fillApplication();await applicant.getByLabel('Work email',{exact:true}).fill('limited@example.test');await applicant.getByLabel('Password',{exact:true}).fill('Fixture-only-passphrase-123');
-    await applicant.getByRole('button',{name:'Request organisation access',exact:true}).click();await expect(applicant.getByRole('alert')).toContainText('The email service is limiting requests.');
-    await applicant.goto(`${base}/en/login`);await applicant.getByLabel('Confirmation email address',{exact:true}).fill('limited@example.test');await applicant.getByRole('button',{name:'Resend confirmation email',exact:true}).click();await expect(applicant.getByRole('alert')).toContainText('The email service is limiting requests.');
+    await applicant.getByRole('button',{name:'Request organisation access',exact:true}).click();await expect(applicant.locator('main').getByRole('alert')).toContainText('The email service is limiting requests.');
+    await applicant.goto(`${base}/en/login`);await applicant.getByLabel('Confirmation email address',{exact:true}).fill('limited@example.test');await applicant.getByRole('button',{name:'Resend confirmation email',exact:true}).click();await expect(applicant.locator('main').getByRole('alert')).toContainText('The email service is limiting requests.');
     await applicant.getByLabel('Confirmation email address',{exact:true}).fill('confirmed@example.test');await applicant.getByRole('button',{name:'Resend confirmation email',exact:true}).click();await expect(applicant.getByRole('status')).toContainText('The confirmation request was accepted.');
   });
   await check('missing evidence migration locks request submission but preserves approved workspaces',async()=>{
