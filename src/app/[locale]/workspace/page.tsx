@@ -7,7 +7,11 @@ import { PublishButton } from '@/components/publish-button';
 import { listPlaces, workspaceConfigured, workspaceSession } from '@/lib/workspace-server';
 
 export const dynamic='force-dynamic';
-export const metadata={title:'Organisation workspace',robots:{index:false,follow:false}};
+// The browser tab speaks the page's language too.
+export async function generateMetadata({params}:{params:Promise<{locale:string}>}) {
+  const {locale}=await params;const t=getWorkspaceCopy(isLocale(locale) ? locale : 'en');
+  return {title:t.dashboard,robots:{index:false,follow:false}};
+}
 export default async function Workspace({params,searchParams}:{params:Promise<{locale:string}>;searchParams:Promise<{org?:string}>}) {
   const {locale}=await params;if(!isLocale(locale)) notFound();
   const t=getWorkspaceCopy(locale);

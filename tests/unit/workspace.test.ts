@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { newPlace, parsePlaceDraft } from '@/lib/workspace';
+import { newOwnField, newPlace, parsePlaceDraft, visibleZone } from '@/lib/workspace';
 
 const org = crypto.randomUUID();
 const filled = () => {
@@ -69,4 +69,60 @@ describe('parsePlaceDraft', () => {
       }
     });
   });
+
+  describe('fields per step', () => {
+    it('reads a draft without hidden or own fields as nothing hidden and no own fields', () => {
+      const draft = filled() as unknown as Record<string, unknown>;
+      const zones = (draft.zones as Record<string, unknown>[]).map(zone => {
+        const older = { ...zone };
+        delete older.hidden;
+        delete older.fields;
+        return older;
+      });
+      const parsed = parsePlaceDraft({ ...draft, zones }, org);
+      expect(parsed?.zones[0].hidden).toEqual([]);
+      expect(parsed?.zones[0].fields).toEqual([]);
+    });
+    it('accepts the four removable fields once each and refuses anything else', () => {
+      const draft = filled();
+      draft.zones[0].hidden = ['note', 'note', 'photo'];
+      expect(parsePlaceDraft(draft, org)?.zones[0].hidden).toEqual(['note', 'photo']);
+      draft.zones[0].hidden = ['description' as never];
+      expect(parsePlaceDraft(draft, org)).toBeNull();
+    });
+    it('accepts up to five own fields with a name, and keeps only what each kind uses', () => {
+      const draft = filled();
+      const question = { ...newOwnField('yes_no'), label: 'Seating?', value: 'ignored', answer: 'yes' as const };
+      const text = { ...newOwnField('text'), label: ' Opening hours ', value: '10-18', answer: 'no' as const };
+      draft.zones[0].fields = [question, text];
+      const fields = parsePlaceDraft(draft, org)?.zones[0].fields;
+      expect(fields?.map(f => [f.kind, f.label, f.value, f.answer])).toEqual([['yes_no', 'Seating?', '', 'yes'], ['text', 'Opening hours', '10-18', 'unanswered']]);
+      draft.zones[0].fields = Array.from({ length: 6 }, () => ({ ...newOwnField('text'), label: 'Field' }));
+      expect(parsePlaceDraft(draft, org)).toBeNull();
+      draft.zones[0].fields = [{ ...newOwnField('text'), label: '' }];
+      expect(parsePlaceDraft(draft, org)).toBeNull();
+      draft.zones[0].fields = [{ ...newOwnField('text'), label: 'Field', kind: 'photo' as never }];
+      expect(parsePlaceDraft(draft, org)).toBeNull();
+      draft.zones[0].fields = [{ ...question, answer: 'maybe' as never }];
+      expect(parsePlaceDraft(draft, org)).toBeNull();
+    });
+  });
 });
+
+describe('visibleZone', () => {
+  it('leaves out removed fields but keeps their text in the draft', () => {
+    const zone = { ...filled().zones[0], note: 'Ask staff', next: 'Go left', optional: true, hidden: ['note' as const, 'optional' as const] };
+    expect(visibleZone(zone)).toMatchObject({ note: '', next: 'Go left', optional: false });
+    expect(zone.note).toBe('Ask staff');
+  });
+  it('shows an own field only when it says something; "not answered" is never shown as no', () => {
+    const zone = { ...filled().zones[0], fields: [
+      { ...newOwnField('text'), label: 'Opening hours', value: '' },
+      { ...newOwnField('text'), label: 'Toilets', value: 'Ground floor' },
+      { ...newOwnField('yes_no'), label: 'Seating?' },
+      { ...newOwnField('yes_no'), label: 'Lockers?', answer: 'no' as const },
+    ] };
+    expect(visibleZone(zone).fields.map(f => f.label)).toEqual(['Toilets', 'Lockers?']);
+  });
+});
+

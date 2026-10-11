@@ -50,4 +50,5 @@ This browsing data is switched on by `VIANORAE_FIXTURE_DEMO_DATA=1`, which only 
 suites start from the plain fixture.
 
 The shared test password is `FIXTURE_PASSWORD` in `scripts/workspace-fixture.mjs`. Everything resets when you
-stop it. Set `DEV_MOCK_PORT` to use another port. It refuses to start under `NODE_ENV=production` or on Vercel.
+stop it. It reads the migrations only when it starts: after switching to a branch with a new migration, stop it and
+start it again. Set `DEV_MOCK_PORT` to use another port. It refuses to start under `NODE_ENV=production` or on Vercel.

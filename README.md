@@ -34,7 +34,7 @@ npm run start
 - Reading preferences in a single fixed, movable, nonmodal popup opened from a tab docked to the left screen edge, with page scrolling available: text size, light/dark/high contrast, text spacing, reset and reduced-motion support.
 - Optional browser read-aloud for pages, guide steps, complete guides and private online previews, with pause/resume/stop and speed. Matching EN/RO/DE voices depend on the device; no autoplay or paid TTS service.
 - Sound-independent instructions/messages and a complete text view of every public/demo guide, with all steps, sensory labels and visit information.
-- Five Supabase migrations, 26 RLS-protected public tables, relational tenant constraints, immutable guide snapshots, audit records and pilot provenance structures.
+- Seven Supabase migrations, 29 RLS-protected public tables, relational tenant constraints, immutable guide snapshots, audit records and pilot provenance structures.
 - Fictional local SQL seed, schema/domain types, automated checks and GitHub Actions workflow.
 - Local zone photograph selection, binary storage in IndexedDB, alternative text, rights and photography dates.
 - Organisation responsibility at registration, in the editor and in a deliberate pre-publication review.

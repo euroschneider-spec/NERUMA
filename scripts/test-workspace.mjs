@@ -26,8 +26,8 @@ async function login(page,owner=1) {
   await page.getByRole('button',{name:'Sign in',exact:true}).click();
   await page.waitForURL(/\/en\/(account|workspace|admin\/organisations)$/);
 }
-const saved=page=>expect(page.locator('.status-message[role]')).toContainText('Draft saved online');
-const save=async page=>{await page.getByRole('button',{name:'Save online',exact:true}).last().click();await saved(page);};
+const saved=page=>expect(page.locator('.status-message[role]')).toContainText('Draft saved');
+const save=async page=>{await page.getByRole('button',{name:'Save',exact:true}).last().click();await saved(page);};
 try {
   if(!process.argv.includes('--skip-build')) {
     const build=start('npm',['run','build'],{},'/tmp/vianorae-workspace-build.log');
@@ -64,7 +64,7 @@ try {
   });
   await check('the location editor opens quietly: a status line, no responsibility box, hints as tooltips',async()=>{
     await expect(page.locator('.responsibility-notice')).toHaveCount(0);
-    await expect(page.getByRole('button',{name:'Save online',exact:true})).toHaveCount(2);
+    await expect(page.getByRole('button',{name:'Save',exact:true})).toHaveCount(2);
     const publish=page.getByRole('button',{name:'Publish',exact:true});
     await expect(publish).toHaveCount(2);for(const button of await publish.all()) await expect(button).toHaveAttribute('aria-disabled','true');
     await expect(page.getByText('Editing in')).toHaveCount(0);
@@ -80,7 +80,7 @@ try {
   await check('new zone requires initial save before private photo upload',async()=>{
     await expect(page.locator('input[type=file]')).toBeDisabled();
     await page.getByLabel('Location name',{exact:true}).fill('Fixture Gallery');await page.getByLabel('City',{exact:true}).fill('Example city');
-    await page.getByLabel('Zone title',{exact:true}).fill('Main entrance');
+    await page.getByLabel('Step name',{exact:true}).fill('Main entrance');
     await page.locator('.builder-zone').getByLabel('Short description',{exact:true}).fill('A step-free entrance, checked by the venue.');
     await save(page);await page.waitForURL(/\/en\/workspace\/[0-9a-f-]{36}$/);await expect(page.locator('input[type=file]')).toBeEnabled();
   });
@@ -136,7 +136,7 @@ try {
   });
   const second=await browser.newContext();const secondPage=await second.newPage();await login(secondPage);await secondPage.goto(editUrl);
   await check('a separate browser session sees the saved draft and photo',async()=>{
-    await expect(secondPage.getByLabel('Zone title',{exact:true})).toHaveValue('Main entrance');
+    await expect(secondPage.getByLabel('Step name',{exact:true})).toHaveValue('Main entrance');
     await expect(secondPage.getByLabel('Image rights / credit',{exact:true})).toHaveValue('VIANORAE test fixture');
     await expect(secondPage.getByLabel('Date photographed',{exact:true})).toHaveValue('2026-10-01');
   });
@@ -144,7 +144,7 @@ try {
   await check('concurrent stale save preserves unsaved text and does not overwrite the newer revision',async()=>{
     await page.getByLabel('Location name',{exact:true}).fill('Latest fixture name');await save(page);
     await secondPage.getByLabel('Location name',{exact:true}).fill('Unsaved conflicting name');
-    await secondPage.getByRole('button',{name:'Save online',exact:true}).last().click();
+    await secondPage.getByRole('button',{name:'Save',exact:true}).last().click();
     await expect(secondPage.locator('.status-message[role=alert]')).toContainText('Someone saved a newer version');
     await expect(secondPage.getByLabel('Location name',{exact:true})).toHaveValue('Unsaved conflicting name');
     await page.reload();await expect(page.getByLabel('Location name',{exact:true})).toHaveValue('Latest fixture name');
@@ -169,13 +169,13 @@ try {
     assert.equal(response.status(),400);await page.reload();await expect(page.getByLabel('Image rights / credit',{exact:true})).toHaveValue('VIANORAE test fixture');
   });
   await check('steps fold, a folded required field opens its step, and adding and removing a step persists without deleting zone history',async()=>{
-    await page.getByRole('button',{name:'Add a zone',exact:true}).click();
-    const zone=page.locator('.builder-zone').nth(1);await zone.getByLabel('Zone title',{exact:true}).fill('Quiet room');
+    await page.getByRole('button',{name:'Add a step',exact:true}).click();
+    const zone=page.locator('.builder-zone').nth(1);await zone.getByLabel('Step name',{exact:true}).fill('Quiet room');
     await zone.getByLabel('Short description',{exact:true}).fill('A fictional quiet room.');
     await expect(page.getByRole('button',{name:/^Move (earlier|later)/})).toHaveCount(0);
     await save(page);await page.reload();
     const second=page.locator('.builder-zone').nth(1);const toggle=second.locator('.zone-toggle');await expect(toggle).toHaveAccessibleName(/^Step 2 · Quiet room/);
-    await expect(toggle).toHaveAttribute('aria-expanded','false');await expect(second.getByLabel('Zone title',{exact:true})).toBeHidden();
+    await expect(toggle).toHaveAttribute('aria-expanded','false');await expect(second.getByLabel('Step name',{exact:true})).toBeHidden();
     await expect(toggle).not.toContainText('Needs details');
     const first=page.locator('.builder-zone').first().locator('.zone-toggle');
     await expect(page.getByRole('button',{name:'Move up: Quiet room',exact:true})).toHaveCount(0);
@@ -185,25 +185,60 @@ try {
     await page.getByRole('button',{name:'Move down: Quiet room',exact:true}).click();
     await expect(toggle).toHaveAccessibleName(/^Step 2 · Quiet room/);
     await toggle.click();await expect(toggle).toHaveAttribute('aria-expanded','true');
-    await expect(second.getByLabel('Zone title',{exact:true})).toHaveValue('Quiet room');
-    await second.getByLabel('Zone title',{exact:true}).fill('');await toggle.click();
-    await page.getByRole('button',{name:'Save online',exact:true}).last().click();
-    await expect(toggle).toHaveAttribute('aria-expanded','true');await expect(second.getByLabel('Zone title',{exact:true})).toBeFocused();
-    await second.getByLabel('Zone title',{exact:true}).fill('Quiet room');
+    await expect(second.getByLabel('Step name',{exact:true})).toHaveValue('Quiet room');
+    await second.getByLabel('Step name',{exact:true}).fill('');await toggle.click();
+    await page.getByRole('button',{name:'Save',exact:true}).last().click();
+    await expect(toggle).toHaveAttribute('aria-expanded','true');await expect(second.getByLabel('Step name',{exact:true})).toBeFocused();
+    await second.getByLabel('Step name',{exact:true}).fill('Quiet room');
     await page.locator('.builder-zone').nth(1).getByRole('button',{name:'Remove this step: Quiet room',exact:true}).click();await save(page);await page.reload();
     assert.equal(await page.locator('.builder-zone').count(),1);
   });
   await check('Romanian descriptions and photo alternative text persist separately from English',async()=>{
     await page.goto(editUrl.replace('/en/','/ro/'));
     await page.getByLabel('Numele locației',{exact:true}).fill('Galerie fictivă');
-    await page.getByLabel('Titlul zonei',{exact:true}).fill('Intrarea principală');
+    await page.getByLabel('Numele pasului',{exact:true}).fill('Intrarea principală');
     await page.locator('.builder-zone').getByLabel('Descriere scurtă',{exact:true}).fill('O intrare fictivă fără trepte.');
     await page.getByLabel('Descrierea imaginii (text alternativ)',{exact:true}).fill('Ilustrație fictivă a intrării');
-    await page.getByRole('button',{name:'Salvează online',exact:true}).last().click();
-    await expect(page.locator('.status-message[role]')).toContainText('Draft salvat online');await page.reload();
+    await page.getByRole('button',{name:'Salvează',exact:true}).last().click();
+    await expect(page.locator('.status-message[role]')).toContainText('Draft salvat');await page.reload();
     await expect(page.getByLabel('Numele locației',{exact:true})).toHaveValue('Galerie fictivă');
     await page.goto(editUrl);await expect(page.getByLabel('Location name',{exact:true})).toHaveValue('Latest fixture name');
     await expect(page.getByLabel('Image description (alternative text)',{exact:true})).toHaveValue('Fictional green entrance illustration');
+  });
+  await check('a step removes a field and adds it back with its text, and keeps its own short text and yes / no per language',async()=>{
+    const zone=page.locator('.builder-zone').first();
+    await zone.getByLabel('Useful note',{exact:true}).fill('Ask staff at the desk');
+    await zone.getByRole('button',{name:'Remove: Useful note',exact:true}).click();
+    await expect(zone.getByLabel('Useful note',{exact:true})).toHaveCount(0);
+    await expect(zone.getByRole('button',{name:'Useful note',exact:true})).toBeFocused();
+    await zone.getByRole('button',{name:'Short text',exact:true}).click();
+    await expect(zone.getByLabel('Field name',{exact:true})).toBeFocused();
+    await zone.getByLabel('Field name',{exact:true}).fill('Opening hours');await zone.getByLabel('Text',{exact:true}).fill('10-18');
+    await zone.getByRole('button',{name:'Yes / no',exact:true}).click();
+    await zone.getByLabel('Question',{exact:true}).fill('Seating available?');
+    await zone.getByRole('radiogroup',{name:'Answer'}).getByText('Yes',{exact:true}).click();
+    await expect(zone.getByRole('button',{name:'Remove: Seating available?',exact:true})).toBeVisible();
+    await expect(zone.getByRole('button',{name:'Remove: Sensory profile'})).toHaveCount(0);
+    await save(page);await page.reload();
+    await expect(zone.getByLabel('Useful note',{exact:true})).toHaveCount(0);
+    await expect(zone.getByLabel('Field name',{exact:true})).toHaveValue('Opening hours');
+    await page.getByRole('link',{name:'Preview',exact:true}).first().click();
+    await expect(page.locator('.own-fields')).toContainText('Opening hours10-18');await expect(page.locator('.own-fields')).toContainText('Seating available?Yes');
+    await expect(page.getByText('Ask staff at the desk')).toHaveCount(0);
+    await page.goto(editUrl.replace('/en/','/ro/'));
+    await expect(zone.locator('.zone-toggle')).toContainText('Necesită detalii');
+    await expect(zone.getByLabel('Numele câmpului',{exact:true})).toHaveValue('');
+    await expect(zone.getByRole('radiogroup',{name:'Răspuns'}).getByRole('radio',{name:'Da',exact:true})).toBeChecked();
+    await zone.getByLabel('Numele câmpului',{exact:true}).fill('Program');await zone.getByLabel('Text',{exact:true}).fill('10-18');
+    await zone.getByLabel('Întrebare',{exact:true}).fill('Locuri de stat?');
+    await page.getByRole('button',{name:'Salvează',exact:true}).last().click();
+    await expect(page.locator('.status-message[role]')).toContainText('Draft salvat');
+    await page.goto(editUrl);
+    await expect(zone.getByLabel('Field name',{exact:true})).toHaveValue('Opening hours');
+    await zone.getByRole('button',{name:'Useful note',exact:true}).click();
+    await expect(zone.getByLabel('Useful note',{exact:true})).toHaveValue('Ask staff at the desk');
+    await expect(zone.getByLabel('Useful note',{exact:true})).toBeFocused();
+    await save(page);
   });
   for(const locale of ['en','ro','de']) {
     await check(`${locale.toUpperCase()} online editor passes automated WCAG A/AA checks and narrow-screen reflow`,async()=>{
@@ -218,8 +253,8 @@ try {
   }
   await page.goto(editUrl);await page.screenshot({path:'docs/verification/screenshots/online-builder-preview.png',fullPage:true});
   await check('detaching a photo persists while retaining the private file',async()=>{
-    await page.getByRole('button',{name:'Detach photograph from draft',exact:true}).click();await save(page);await page.reload();
-    await expect(page.getByText('No photograph attached.',{exact:true})).toBeVisible();
+    await page.getByRole('button',{name:'Detach photo',exact:true}).click();await save(page);await page.reload();
+    await expect(page.getByText('No photo yet.',{exact:true})).toBeVisible();
     assert.equal((await context.request.get(`${base}${photoPath}`)).status(),200);
   });
   await check('sign out clears access to the saved workspace and photo',async()=>{

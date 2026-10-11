@@ -97,6 +97,9 @@ to icons. Fields are chosen per step: name, description and the sensory profile 
 compare places; photo, useful note, what happens next and "may skip" can be removed and added back, and
 organisations can add their own fields from a few types (short text, yes/no, photo). Not chosen: a list of
 steps on the left with one open, dragging the sidebar wider or to the other side, removable sensory channels.
+Details (brief `2026-10-11-step-fields.md`): removing a field keeps its text hidden so it can come back; own
+fields are a short text or a yes / no question to start with (a photo later); up to 5 per step; a yes / no
+has a third answer, *Not answered*, so unknown never reads as no.
 
 ## Not yet discussed
 
