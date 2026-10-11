@@ -344,8 +344,28 @@ Added on 2026-10-11, after the dashboard cards (PR #29). Decisions are in `DECIS
 5. [ ] **Publishing** (needs Opus): the QR registry above, the "isn't available" page, language choice, the real QR
    pop-up and visit counts on the card.
 
-**Migrations the owner's friend still has to apply to the real Supabase project:**
-`20261011120000_step_fields.sql` and `20261012090000_problem_reports.sql` (the app hides the matching controls until then).
+**Job for the owner's friend: apply two migrations to the real Supabase project** (the app hides the matching
+controls until each is installed, so nothing breaks while they wait). Needs access to the VIANORAE Supabase project
+(`uzlngrzokjzxvdfpctnt`, see the README), nothing else.
+
+- [ ] **1. Field controls** (`supabase/migrations/20261011120000_step_fields.sql`): adds the × and *Add a field* controls
+  in the step editor.
+- [ ] **2. Report a problem** (`supabase/migrations/20261012090000_problem_reports.sql`): adds the *Report a problem*
+  button for organisations and the administrator's list at `/admin/reports`.
+
+How, for each file, in this order (1, then 2):
+
+1. Open the project in Supabase, then **SQL Editor → New query**.
+2. Paste the whole file and press **Run**. Each file starts with a check and stops with a "STOP: … must already be
+   installed" message if an earlier migration is missing; tell the owner if that appears, and run nothing else.
+3. Run each file **once**. A second run fails with "already exists", which is safe but means it was already installed.
+4. Check it worked: run `select public.step_fields_schema_version(), public.problem_reports_schema_version();`
+   (it only works after both files are installed; before that it names the missing function). The result should be
+   `1 | 1`.
+5. Tell the owner. On the live site the sidebar then shows *Report a problem* for organisation owners, and step
+   cards show *Add a field*.
+
+Both files only add things; nothing is deleted or changed in existing tables.
 
 **Report a problem** (#31) is built; what is left of it: the email to the administrator when a report arrives
 (section 4) and visitor reports (with publishing).
