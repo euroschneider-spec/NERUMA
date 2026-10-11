@@ -44,7 +44,13 @@ try {
   });
   await check('verified owner signs in and opens their organisation workspace',async()=>{
     await login(page);await expect(page).toHaveURL(/\/en\/workspace$/);
-    await expect(page.getByText('Fixture museum 1',{exact:true})).toBeVisible();
+    const sidebar=page.getByRole('complementary');
+    await expect(sidebar.getByText('Fixture museum 1',{exact:true})).toBeVisible();
+    await expect(sidebar.getByText('Owner',{exact:true})).toBeVisible();
+    await expect(page.locator('.site-header')).toHaveCount(0);
+    await expect(page.getByRole('heading',{name:'Dashboard',level:1})).toBeVisible();
+    const tab=await page.locator('.floating-reading').boundingBox();const signOut=await sidebar.getByRole('button',{name:'Sign out',exact:true}).boundingBox();
+    assert.ok(tab && signOut && (tab.y+tab.height<=signOut.y || signOut.y+signOut.height<=tab.y || tab.x+tab.width<=signOut.x || signOut.x+signOut.width<=tab.x),'the reading tab must not cover Sign out');
     await page.getByRole('link',{name:'Create a location',exact:true}).click();
   });
   await check('new zone requires initial save before private photo upload',async()=>{
@@ -55,6 +61,16 @@ try {
     await save(page);await page.waitForURL(/\/en\/workspace\/[0-9a-f-]{36}$/);await expect(page.locator('input[type=file]')).toBeEnabled();
   });
   const editUrl=page.url();
+  await check('the dashboard lists the saved location with its status, and sign out works from the sidebar',async()=>{
+    await page.goto(`${base}/en/workspace`);
+    await expect(page.getByRole('heading',{name:'Fixture Gallery',level:3})).toBeVisible();
+    await expect(page.locator('.location-card').getByText('Draft',{exact:true})).toBeVisible();
+    await expect(page.locator('.location-card').getByText('Example city',{exact:false})).toBeVisible();
+    const other=await (await browser.newContext()).newPage();
+    await login(other);await other.getByRole('button',{name:'Sign out',exact:true}).click();
+    await expect(other).toHaveURL(/\/en\/login$/);await other.goto(`${base}/en/workspace`);await expect(other).toHaveURL(/\/en\/login$/);
+    await page.goto(editUrl);
+  });
   await check('saved draft and sensory data survive a full reload',async()=>{
     await page.getByRole('radiogroup',{name:'Sound',exact:true}).getByText('Moderate',{exact:true}).click();await save(page);await page.reload();
     await expect(page.getByLabel('Location name',{exact:true})).toHaveValue('Fixture Gallery');

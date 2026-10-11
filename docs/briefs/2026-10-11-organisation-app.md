@@ -22,8 +22,9 @@ Checked on the mock site (`npm run dev:mock`), on a phone first.
 
 Part 1 — the look and navigation, using what the database already has:
 - [x] 0. Mock data: an organisation with a location and five zones, and a request waiting for review.
-- [ ] 1. App shell: sidebar with organisation name and role, *Dashboard · Guide editor · Team*, language and
-      theme at the bottom, *Account / Sign out* visible. The demo workspace uses the same shell.
+- [x] 1. (1a) App shell around `/workspace`: sidebar with organisation name and role, *Dashboard* and *Public site*,
+      language, theme and *Sign out*; locations overview with name, address and status. Still to do: the *Team*
+      link (step 6), the demo workspace in the same shell, a photo on each card, QR codes, needs attention.
 - [ ] 2. No dropdowns in organisation and admin forms: one shared sensory control (*Not recorded · Low ·
       Moderate · Intense · Varies*) in both builders; organisation type, location type and the admin decision
       as visible choices.
@@ -33,6 +34,21 @@ Part 1 — the look and navigation, using what the database already has:
 - [ ] 5. Dashboard: status badges, a *Needs attention* list from existing data (missing alt text, fewer than
       three zones, not verified on site), the QR and link card.
 - [ ] 6. Team page, read-only: members, roles and what each role may do.
+
+## Task breakdown (owner's wishes, 2026-10-11)
+**Task 1, the dashboard** (owner does everything for the MVP; no reviewer role yet): all locations with name,
+address and a photo; a QR code and link per location; visitor counts; billing (owner only); what needs
+attention (unpublished changes, missing alt text, too few zones).
+- 1a Sidebar shell and a locations overview (name, address, status). 1b Needs attention. 1c QR and link per
+  location, plus a photo on the card. 1d Plan & billing page, owners only, a placeholder until payments exist.
+  1e Visit counts (privacy decision first).
+
+**Task 2, seeing changes live** (desktop and laptop only; no effort for phones): the editor keeps changes in
+memory, so the preview next to it reads from that and updates as you type, without saving. Same guide
+component visitors see; a picked photo shows at once. Narrow screens get a *Preview* button, nothing more.
+- 2a zones listed left, one open on the right. 2b the live preview beside it. 2c add, remove and reorder zones.
+  2d the photo is optional (no empty box). 2e every field we offer can be removed and added back.
+  Fields with their own names ("Opening hours") come later and need a database decision.
 
 ## Not in scope
 Part 2, each needing the owner's decision before a database change: guest settings (default senses, layout A/B,
@@ -45,6 +61,9 @@ Part 3: the administrator side in the same shell.
 - The demo workspace gets the same shell as the real one.
 - No dropdowns applies to organisation and admin forms only; the reading panel, language menu and Explore
   filters stay as they are. Country stays a two-letter text field (about 200 countries cannot be buttons).
+- Organisation accounts: owner only for now. Reviewers, editors and invitations wait.
+- The Organisation account page is for applicants and people waiting only; approved owners get *Sign out* in the
+  sidebar and never need it.
 - Mock browsing data is on only under `VIANORAE_FIXTURE_DEMO_DATA=1` (set by `dev:mock`), so the test suites
   start from the plain fixture.
 

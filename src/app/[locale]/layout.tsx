@@ -3,6 +3,7 @@ import { notFound } from 'next/navigation';
 import { locales, isLocale, getCopy } from '@/lib/i18n';
 import { SiteHeader } from '@/components/site-header';
 import { SiteFooter } from '@/components/site-footer';
+import { AppChrome } from '@/components/app-chrome';
 import { ReadingSettingsProvider } from '@/components/reading-settings';
 import { hyperlegible } from '@/lib/fonts';
 import '../globals.css';
@@ -19,6 +20,6 @@ export default async function LocaleLayout({children,params}:{children:React.Rea
   const {locale}=await params;if(!isLocale(locale))notFound();
   return <html lang={locale} className={hyperlegible.variable} data-theme="dark" data-density="full" data-tone="cool" suppressHydrationWarning>
     <head><script dangerouslySetInnerHTML={{__html:restorePreferences}}/></head>
-    <body><ReadingSettingsProvider locale={locale}><SiteHeader locale={locale}/>{children}<SiteFooter locale={locale}/></ReadingSettingsProvider></body>
+    <body><ReadingSettingsProvider locale={locale}><AppChrome header={<SiteHeader locale={locale}/>} footer={<SiteFooter locale={locale}/>}>{children}</AppChrome></ReadingSettingsProvider></body>
   </html>;
 }
