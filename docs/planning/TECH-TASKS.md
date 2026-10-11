@@ -29,6 +29,8 @@ workspace saves to the browser, not to the database.
 
 ## 2. Follow system settings
 
+**Chosen as the next task (owner, 2026-10-11):** the theme follows the visitor's device. The language part follows after.
+
 **Today:** the theme defaults to dark and ignores the device setting (`defaults` in
 `src/lib/reading-prefs.ts` and the pre-paint script in `src/app/[locale]/layout.tsx`). Reduced motion
 is already respected. The root URL always redirects to English (`src/app/(entry)/page.tsx`).
@@ -334,3 +336,24 @@ Added on 2026-10-11, after the dashboard cards (PR #29). Decisions are in `DECIS
 - [ ] **Later, with email (section 4):** a notification to the administrator when a report arrives.
 - [ ] **Visitor reports** ("something here is wrong" in the public guide, shown to the organisation) wait for
   publishing.
+
+**Order of work after the dashboard (owner, 2026-10-11):**
+
+1. [ ] Merge #29 (cards), #30 (sample QR and visits), #31 (report a problem), in that order, each after its checks are green.
+2. [ ] **Theme follows the device** (section 2). Next, by the owner's choice.
+3. [ ] **Contrast bug, issue #32.** The accent blue pair is 4.48:1 in the light theme (limit 4.5). Fix the palette, run
+   the full suite, and add axe scans of the signed-in workspace and admin pages in all three themes. Best done
+   together with the theme task, since both touch the same tokens and tests.
+4. [ ] **Live preview in a second tab** (brief, Task 2): the preview beside the editor, from unsaved changes, with
+   the guide component visitors see. Narrow screens get a *Preview* button only.
+5. [ ] **Plan & billing placeholder** (brief 1d): owners only, until payments exist (section 8).
+6. [ ] **Visit counts privacy decision.** Suggested: one number per location per day, no IP address, no cookie,
+   counting each time the guide opens. Needs the owner's yes, then section 3 and the privacy page.
+7. [ ] **Publishing** (needs Opus): the QR registry above, the "isn't available" page, language choice, the real QR
+   pop-up and visit counts on the card.
+
+**Migrations the owner's friend still has to apply to the real Supabase project:**
+`20261011120000_step_fields.sql` and `20261012090000_problem_reports.sql` (the app hides the matching controls until then).
+
+**Report a problem** (#31) is built; what is left of it: the email to the administrator when a report arrives
+(section 4) and visitor reports (with publishing).
