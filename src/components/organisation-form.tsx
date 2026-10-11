@@ -28,7 +28,6 @@ export function OrganisationForm({ locale, mode, enabled, initial, initialDocume
   return <form action={submit} className="organisation-form" aria-label={button}>
     {state.message && <div className="auth-feedback" role="alert">{state.message}</div>}
     {pending && <p role="status">{feedback.working}</p>}
-    {!enabled && <p className="notice">{t.unavailable}</p>}
     {hasOrganisation && <><p className="notice">{v.gate}</p><input type="hidden" name="revision" value={initial?.revision || ''}/></>}
     <fieldset disabled={!enabled || pending}>
       <legend>{button}</legend>
