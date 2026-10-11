@@ -9,8 +9,8 @@ import { preparePhoto } from '@/lib/local-photos';
 import { getWorkspaceCopy, MAX_ONLINE_PHOTO, photoUrl, uuidPattern, type OnlinePhoto, type OnlineZone } from '@/lib/workspace';
 import { InfoTip } from './info-tip';
 
-export function OnlinePhotoEditor({zone,placeId,locale,persisted,disabled,onChange,onBusy,remove}: {
-  zone:OnlineZone;placeId:string;locale:Locale;persisted:boolean;disabled:boolean;remove?:React.ReactNode;
+export function OnlinePhotoEditor({zone,placeId,locale,persisted,disabled,onChange,onBusy}: {
+  zone:OnlineZone;placeId:string;locale:Locale;persisted:boolean;disabled:boolean;
   onChange:(photo?:OnlinePhoto)=>void;onBusy:(busy:boolean)=>void;
 }) {
   const t=getWorkspaceCopy(locale);const o=getOrganisationCopy(locale);
@@ -35,7 +35,7 @@ export function OnlinePhotoEditor({zone,placeId,locale,persisted,disabled,onChan
     } finally {if(mounted.current){setBusy(false);onBusy(false);}}
   }
   return <fieldset className="photo-editor" disabled={disabled || busy}>
-    <legend>{t.fieldPhoto}</legend>{remove && <span className="photo-remove">{remove}</span>}
+    <legend>{t.fieldPhoto}</legend>
     <label className="file-pick">
       <input id={`online-photo-${zone.id}`} className="sr-only" type="file" accept="image/jpeg,image/png,image/webp" disabled={!persisted || disabled || busy}
         aria-describedby={`online-photo-hint-${zone.id}`} onChange={event=>{const file=event.target.files?.[0];event.target.value='';if(file) void upload(file);}}/>

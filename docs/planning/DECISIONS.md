@@ -101,6 +101,12 @@ Details (brief `2026-10-11-step-fields.md`): removing a field keeps its text hid
 fields are a short text or a yes / no question to start with (a photo later); up to 5 per step; a yes / no
 has a third answer, *Not answered*, so unknown never reads as no.
 
+### When the app asks "are you sure?"
+Owner's question, 2026-10-11. Only for what can't be undone with one click: **removing a step** asks first
+(Cancel has focus, Escape cancels), and **publishing** will ask when it exists (it goes public and carries the
+responsibility text). Removing a *field* (the ×) does not ask: its text is kept and *Add a field* brings it back.
+Save stays on screen in a bar at the bottom of the editor, so a small change deep in a step never means scrolling.
+
 ## Not yet discussed
 
 - `DESIGN-TASKS.md` sections 5, 6 (other items) and 7.
