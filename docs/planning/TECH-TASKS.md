@@ -279,3 +279,45 @@ locally is in `docs/guides/TESTING.md`.
   baselines when the design changes on purpose.
 - [ ] No test runs against the deployed Vercel preview. After the first real organisation pilot, add a
   small smoke test (home loads, example guide opens, sign-in page loads) that runs after each deployment.
+
+## 12. Organisation app: what the dashboard work left open
+
+Added on 2026-10-11, after the dashboard cards (PR #29). Decisions are in `DECISIONS.md`; the brief is
+`docs/briefs/2026-10-11-organisation-app.md`.
+
+**To do with publishing (needs Opus; the choices are already made, see "QR codes" in `DECISIONS.md`):**
+
+- [ ] **QR registry migration.** Today `qr_redirects` has a text `public_code` that points at one guide, which
+  is one language, and the only working code is the hard-coded `willow-museum` in `src/lib/qr.ts`. Change it to
+  one short random code per place, created in the same transaction as the first publish, never deleted or
+  reused. Add database tests for the "can't" cases: another organisation can't read or change a code, and a
+  code that exists is never handed to a second place.
+- [ ] **Which language opens.** `/q/[code]` picks the visitor's language when it is published, otherwise a
+  published one, with the language switch available.
+- [ ] **The "isn't available right now" page.** Visitors can't read unpublished rows, so a narrow database
+  function answers only "exists, not available" without returning the name. Replace the bare 404 in
+  `src/app/q/[code]/route.ts`.
+- [ ] **QR and link on the dashboard card.** A "QR & link" button opens a pop-up with the code (view and
+  download) and a copy-link button. Shown only once the place has a code. The pop-up is Sonnet work once the
+  migration exists.
+- [ ] **Needs attention, the missing items.** "Unpublished changes" and "not verified on site" need publishing
+  first. Add them to `placeAttention()` in `src/lib/workspace.ts` then.
+
+**Waiting on the owner or a decision:**
+
+- [ ] **Visit counts (brief 1e).** Nothing is counted today. Decide first what may be counted (for example a
+  total per location, with no IP address and no cookie), then check section 3 and update the privacy page.
+- [ ] **Plan & billing page (brief 1d).** A placeholder for owners only, until payments exist (section 8).
+- [ ] **Apply `supabase/migrations/20261011120000_step_fields.sql`** to the real Supabase project. The app works
+  without it but hides the × and "Add a field" controls.
+
+**Test fixture limits found while building:**
+
+- [ ] `scripts/workspace-fixture.mjs` fakes the database's REST layer by hand. It now serves embedded
+  `place_translations`, `zones`, `zone_translations` and `media_assets` on `places`, and nothing else. A new
+  nested `select(...)` elsewhere fails with a 500 in `dev:mock` and `test:workspace`, not on the real database.
+  Say so in the fixture's header comment, or replace the hand-written layer with PostgREST.
+- [ ] The fixture's port 3012 is written into four scripts, so a second copy can't run beside a running
+  `dev:mock`. Read it from one `FIXTURE_PORT` setting. A copy has to sed it today.
+- [ ] Editing code that talks to the database while `dev:mock` runs breaks the page until the mock is restarted,
+  because the fake database loads once at start. Mention it in `docs/guides/TESTING.md`.
