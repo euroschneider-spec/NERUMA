@@ -5,6 +5,8 @@ import { readFile, readdir } from 'node:fs/promises';
 import { randomUUID, createHmac } from 'node:crypto';
 import { PGlite } from '@electric-sql/pglite';
 if (process.env.VIANORAE_TEST_FIXTURE !== '1') throw new Error('Test fixture must be explicitly enabled');
+// One shared password for every mock user. Test-only: this fixture is a fake Supabase and never runs in a real environment.
+const FIXTURE_PASSWORD='Fixture-only-passphrase-123';
 const db = new PGlite();
 const id = n => `00000000-0000-4000-8000-${String(n).padStart(12,'0')}`;
 const users = [1,2,3,4,5].map(n => ({id:id(n),aud:'authenticated',role:'authenticated',email:`owner${n}@example.test`,email_confirmed_at:'2026-10-01T12:00:00Z',is_anonymous:false,app_metadata:{provider:'email'},user_metadata:{},created_at:'2026-10-01T12:00:00Z'}));
@@ -51,7 +53,7 @@ createServer(async(req,res)=>{
       return send(res,200,{id:id(20),aud:'authenticated',role:'authenticated',email:payload.email,email_confirmed_at:null,is_anonymous:false,app_metadata:{provider:'email'},user_metadata:payload.data||{},identities:[],created_at:new Date().toISOString()});
     }
     if (url.pathname==='/auth/v1/token') {
-      const payload=JSON.parse(body.toString());const user=url.searchParams.get('grant_type')==='refresh_token'?tokens.get(payload.refresh_token):users.find(u=>u.email===payload.email && payload.password==='Fixture-only-passphrase-123');
+      const payload=JSON.parse(body.toString());const user=url.searchParams.get('grant_type')==='refresh_token'?tokens.get(payload.refresh_token):users.find(u=>u.email===payload.email && payload.password===FIXTURE_PASSWORD);
       return send(res,user?200:400,user?session(user):{error:'invalid_grant',error_description:'Invalid fixture credentials'});
     }
     const token=(req.headers.authorization || '').replace(/^Bearer /,'');const user=tokens.get(token);

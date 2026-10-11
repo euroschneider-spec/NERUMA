@@ -31,3 +31,18 @@ let CI run it.
 Always pass `PORT` when a `next dev` server may be running. Playwright's `reuseExistingServer`
 adopts whatever already listens on the port, and a dev server's HMR socket breaks hydration under
 test — every interactive test then fails for reasons unrelated to the change. See GOTCHA.md.
+
+## Browsing locally as a signed-in user
+
+`npm run dev:mock` starts the test fixture (a fake Supabase backed by the real migrations, in memory) and
+`next dev` wired to it, so you can sign in without a real database. Stop your normal `npm run dev` first
+(Next allows one dev server per folder), then open http://localhost:3000/en/login.
+
+| Email | What it is |
+|---|---|
+| `owner3@example.test` | Platform administrator (lands on the review queue) |
+| `owner1@example.test`, `owner2@example.test` | Owners of "Fixture museum 1" and "Fixture museum 2" |
+| `owner4@example.test`, `owner5@example.test` | Signed in, no organisation yet (can apply) |
+
+The shared test password is `FIXTURE_PASSWORD` in `scripts/workspace-fixture.mjs`. Everything resets when you
+stop it. Set `DEV_MOCK_PORT` to use another port. It refuses to start under `NODE_ENV=production` or on Vercel.
