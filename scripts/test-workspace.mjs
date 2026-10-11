@@ -397,6 +397,29 @@ try {
       assert.equal(await applicant.evaluate(()=>document.documentElement.scrollWidth<=window.innerWidth),true);await applicant.setViewportSize({width:1280,height:900});
     });
   }
+  await check('an owner reports a problem; only the platform administrator reads and closes it',async()=>{
+    const ownerPage=await (await browser.newContext()).newPage();await login(ownerPage,1);
+    await ownerPage.getByRole('complementary').getByRole('link',{name:'Report a problem',exact:true}).click();
+    await expect(ownerPage).toHaveURL(/\/en\/workspace\/report$/);
+    await expect(ownerPage.getByRole('heading',{name:'Report a problem or ask for help',level:1})).toBeVisible();
+    await expect(ownerPage.getByRole('radiogroup',{name:'Which location is it about?'})).toBeVisible();
+    const message='The photo upload stops at 90 percent.';
+    await ownerPage.getByLabel('What happened?').fill(message);
+    await ownerPage.getByRole('button',{name:'Send report',exact:true}).click();
+    await expect(ownerPage.getByRole('status')).toContainText('Your report is saved');
+    assert.equal((await ownerPage.goto(`${base}/en/admin/reports`)).status(),404);
+    const adminPage=await (await browser.newContext()).newPage();await login(adminPage,3);
+    await adminPage.goto(`${base}/en/admin/reports`);
+    await expect(adminPage.getByRole('heading',{name:'Problem reports',level:1})).toBeVisible();
+    await expect(adminPage.getByRole('heading',{name:'Fixture museum 1',level:2})).toBeVisible();
+    await expect(adminPage.getByRole('link',{name:'owner1@example.test'})).toBeVisible();
+    await expect(adminPage.getByText(message,{exact:true})).toBeVisible();
+    await adminPage.getByRole('button',{name:'Mark as closed',exact:true}).click();
+    await expect(adminPage.getByText('No open reports.')).toBeVisible();
+    await adminPage.goto(`${base}/en/admin/reports?closed=1`);
+    await expect(adminPage.getByText(message,{exact:true})).toBeVisible();
+    await expect(adminPage.getByRole('button',{name:'Mark as closed'})).toHaveCount(0);
+  });
   await check('the header offers one organisations door and advertises no tier-specific destination',async()=>{
     for(const page of [adminPage,applicant]) {
       await page.goto(`${base}/en`);

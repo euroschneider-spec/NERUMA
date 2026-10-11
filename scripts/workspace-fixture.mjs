@@ -56,7 +56,7 @@ function session(user) {
 }
 const send=(res,status,value,headers={})=>{res.writeHead(status,{'Content-Type':'application/json',...headers});res.end(JSON.stringify(value));};
 const safe=value=>{if(!/^[a-z_]+$/.test(value)) throw new Error('Unsafe identifier');return value;};
-const tables=new Set(['organizations','organization_members','places','place_translations','zones','zone_translations','zone_fields','zone_field_translations','sensory_profiles','media_assets','guides','guide_steps','organization_applications','organization_review_events','organization_evidence_documents']);
+const tables=new Set(['organizations','organization_members','places','place_translations','zones','zone_translations','zone_fields','zone_field_translations','sensory_profiles','media_assets','guides','guide_steps','organization_applications','organization_review_events','organization_evidence_documents','problem_reports']);
 createServer(async(req,res)=>{
   try {
     const url=new URL(req.url,'http://127.0.0.1:3012');const chunks=[];for await(const chunk of req) chunks.push(chunk);const body=Buffer.concat(chunks);
@@ -88,6 +88,9 @@ createServer(async(req,res)=>{
           if(rpc==='workspace_schema_version') result=(await db.query('select public.workspace_schema_version() value')).rows[0].value;
           else if(rpc==='step_fields_schema_version') result=(await db.query('select public.step_fields_schema_version() value')).rows[0].value;
           else if(rpc==='organization_verification_schema_version') {if(!verificationEnabled) throw new Error('Verification migration unavailable');result=(await db.query('select public.organization_verification_schema_version() value')).rows[0].value;}
+          else if(rpc==='problem_reports_schema_version') result=(await db.query('select public.problem_reports_schema_version() value')).rows[0].value;
+          else if(rpc==='submit_problem_report') {const p=JSON.parse(body.toString());result=(await db.query('select public.submit_problem_report($1,$2,$3,$4) value',[p.org,p.place,p.report_message,p.report_locale])).rows[0].value;}
+          else if(rpc==='close_problem_report') {const p=JSON.parse(body.toString());result=(await db.query('select public.close_problem_report($1) value',[p.report])).rows[0].value;}
           else if(rpc==='mandate_evidence_schema_version') {if(!evidenceEnabled) throw new Error('Evidence migration unavailable');result=(await db.query('select public.mandate_evidence_schema_version() value')).rows[0].value;}
           else if(rpc==='reserve_mandate_document') {const p=JSON.parse(body.toString());result=(await db.query('select public.reserve_mandate_document($1,$2,$3,$4) value',[p.original_name,p.content_type,p.bytes,p.digest])).rows[0].value;}
           else if(rpc==='complete_mandate_document') {const p=JSON.parse(body.toString());result=(await db.query('select public.complete_mandate_document($1) value',[p.document_id])).rows[0].value;}

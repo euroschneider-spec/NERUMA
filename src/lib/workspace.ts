@@ -46,6 +46,14 @@ export function visibleZone(zone: OnlineZone) {
     fields: zone.fields.filter(f => f.label && (f.kind === 'text' ? f.value : f.answer !== 'unanswered')),
   };
 }
+export const REPORT_MIN = 10;
+export const REPORT_MAX = 2000;
+/** The text of a problem report, trimmed, or null when it is too short or too long (the database checks the same limits). */
+export function parseReportMessage(value: unknown): string | null {
+  if (typeof value !== 'string') return null;
+  const message = value.trim();
+  return message.length >= REPORT_MIN && value.length <= REPORT_MAX ? message : null;
+}
 export const photoUrl = (key: string) => `/api/workspace/photos?key=${encodeURIComponent(key)}`;
 const record = (value: unknown): value is Record<string, unknown> => Boolean(value) && typeof value === 'object' && !Array.isArray(value);
 const text = (value: unknown, min: number, max: number): value is string => typeof value === 'string' && value.trim().length >= min && value.length <= max;
@@ -121,6 +129,10 @@ const en = {
   noPhoto: 'No photo yet.', choosePhoto: 'Upload a photo', photoAttached: 'Photo attached.', login: 'Sign in again', draft: 'Saved organisation draft',
   retained: 'Detaching or replacing a photograph removes it from the draft; the private file is retained.',
   discard: 'You have unsaved changes. Leave this page and discard them?',
+  reportProblem: 'Report a problem', reportHeading: 'Report a problem or ask for help', reportIntro: 'Tell us what went wrong or what you need. The NERUMA team reads every message and replies to your account email.',
+  reportMessage: 'What happened?', reportPlace: 'Which location is it about?', reportNoPlace: 'Not about one location', reportSend: 'Send report', reportSaved: 'Thank you. Your report is saved and the NERUMA team will see it. It is not sent by email; we reply to your account address.',
+  reportError: 'Your report was not saved. Your text is still on this page. Try again.', reportInvalid: 'Write at least 10 characters, up to 2000.', reportTooMany: 'You have sent several reports recently. Please wait a while before sending another.', reportBack: 'Back to the dashboard',
+  reportsAdmin: 'Problem reports', reportsEmpty: 'No open reports.', reportsClosedEmpty: 'No closed reports.', reportsOpen: 'Open', reportsHistory: 'Closed', reportClose: 'Mark as closed', reportFrom: 'From', reportOrg: 'Organisation', reportAbout: 'Location', reportSent: 'Sent', reportReply: 'Reply by email', reportsUnavailable: 'Problem reports are not available yet. Apply the latest database migration first.',
 };
 type WorkspaceCopy = { [K in keyof typeof en]: string };
 const ro: WorkspaceCopy = {
@@ -146,6 +158,10 @@ const ro: WorkspaceCopy = {
   noPhoto:'Încă nu există o fotografie.', choosePhoto:'Încarcă o fotografie', photoAttached:'Fotografie asociată.', login:'Autentifică-te din nou', draft:'Draft salvat al organizației',
   retained:'Detașarea sau înlocuirea unei fotografii o scoate din draft; fișierul privat este păstrat.',
   discard:'Ai modificări nesalvate. Părăsești pagina și renunți la ele?',
+  reportProblem:'Raportați o problemă', reportHeading:'Raportați o problemă sau cereți ajutor', reportIntro:'Spuneți-ne ce nu a mers sau de ce aveți nevoie. Echipa NERUMA citește fiecare mesaj și răspunde la adresa de e-mail a contului dumneavoastră.',
+  reportMessage:'Ce s-a întâmplat?', reportPlace:'La ce locație se referă?', reportNoPlace:'Nu se referă la o singură locație', reportSend:'Trimite raportul', reportSaved:'Mulțumim. Raportul este salvat și echipa NERUMA îl va vedea. Nu este trimis prin e-mail; vă răspundem la adresa contului.',
+  reportError:'Raportul nu a fost salvat. Textul dumneavoastră este încă pe această pagină. Încercați din nou.', reportInvalid:'Scrieți cel puțin 10 caractere, cel mult 2000.', reportTooMany:'Ați trimis mai multe rapoarte recent. Așteptați puțin înainte de a trimite altul.', reportBack:'Înapoi la panou',
+  reportsAdmin:'Probleme raportate', reportsEmpty:'Niciun raport deschis.', reportsClosedEmpty:'Niciun raport închis.', reportsOpen:'Deschise', reportsHistory:'Închise', reportClose:'Marchează ca închis', reportFrom:'De la', reportOrg:'Organizație', reportAbout:'Locație', reportSent:'Trimis', reportReply:'Răspunde prin e-mail', reportsUnavailable:'Problemele raportate nu sunt disponibile încă. Aplicați mai întâi ultima migrare a bazei de date.',
 };
 const de: WorkspaceCopy = {
   dashboard:'Übersicht', locationsHeading:'Orte', roleOwner:'Eigentümer', roleAdmin:'Admin',
@@ -168,5 +184,9 @@ const de: WorkspaceCopy = {
   photoError:'Das Foto konnte nicht hochgeladen werden. Das zuvor gespeicherte Foto bleibt unverändert.', photoPreview:'Foto des Schritts', removePhoto:'Foto lösen',
   noPhoto:'Noch kein Foto.', choosePhoto:'Foto hochladen', photoAttached:'Foto zugeordnet.', login:'Erneut anmelden', draft:'Gespeicherter Organisationsentwurf', retained:'Lösen oder Ersetzen entfernt das Foto aus dem Entwurf; die private Datei bleibt gespeichert.',
   discard:'Es gibt ungespeicherte Änderungen. Möchten Sie diese Seite verlassen und die Änderungen verwerfen?',
+  reportProblem:'Problem melden', reportHeading:'Ein Problem melden oder um Hilfe bitten', reportIntro:'Schreiben Sie uns, was nicht funktioniert hat oder was Sie brauchen. Das NERUMA-Team liest jede Nachricht und antwortet an die E-Mail-Adresse Ihres Kontos.',
+  reportMessage:'Was ist passiert?', reportPlace:'Auf welchen Ort bezieht es sich?', reportNoPlace:'Nicht auf einen bestimmten Ort', reportSend:'Meldung senden', reportSaved:'Danke. Ihre Meldung ist gespeichert und das NERUMA-Team sieht sie. Sie wird nicht per E-Mail gesendet; wir antworten an Ihre Kontoadresse.',
+  reportError:'Ihre Meldung wurde nicht gespeichert. Ihr Text steht noch auf dieser Seite. Versuchen Sie es erneut.', reportInvalid:'Schreiben Sie mindestens 10 und höchstens 2000 Zeichen.', reportTooMany:'Sie haben kürzlich mehrere Meldungen gesendet. Bitte warten Sie etwas, bevor Sie eine weitere senden.', reportBack:'Zurück zur Übersicht',
+  reportsAdmin:'Problemmeldungen', reportsEmpty:'Keine offenen Meldungen.', reportsClosedEmpty:'Keine geschlossenen Meldungen.', reportsOpen:'Offen', reportsHistory:'Geschlossen', reportClose:'Als erledigt markieren', reportFrom:'Von', reportOrg:'Organisation', reportAbout:'Ort', reportSent:'Gesendet', reportReply:'Per E-Mail antworten', reportsUnavailable:'Problemmeldungen sind noch nicht verfügbar. Spielen Sie zuerst die neueste Datenbankmigration ein.',
 };
 export const getWorkspaceCopy = (locale: Locale): WorkspaceCopy => ({ en, ro, de })[locale];

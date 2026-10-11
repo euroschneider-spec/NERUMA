@@ -2,6 +2,7 @@ import { notFound } from 'next/navigation';
 import { getCopy, isLocale } from '@/lib/i18n';
 import { getOrganisationCopy } from '@/lib/organisation-copy';
 import { getWorkspaceCopy } from '@/lib/workspace';
+import { problemReportsReady } from '@/lib/verification-server';
 import { workspaceSession } from '@/lib/workspace-server';
 import { signOut } from '@/app/auth/actions';
 import { OrgSidebar } from '@/components/org-sidebar';
@@ -11,6 +12,8 @@ export default async function WorkspaceLayout({ children, params }: { children: 
   if (!isLocale(locale)) notFound();
   const t = getWorkspaceCopy(locale);
   const context = await workspaceSession(locale);
+  // Before the 2026-10-12 migration the button stays hidden, like the field controls before theirs.
+  const reportsEnabled = await problemReportsReady(context.supabase);
   const roleLabels = { owner: t.roleOwner, admin: t.roleAdmin };
   const memberships = context.memberships.map((membership) => ({
     organisation: membership.organisation,
@@ -30,6 +33,7 @@ export default async function WorkspaceLayout({ children, params }: { children: 
           collapse: t.collapseSidebar,
           expand: t.expandSidebar,
           reading: getCopy(locale).settings,
+          report: reportsEnabled ? t.reportProblem : undefined,
         }}
         signOutAction={signOut.bind(null, locale)}
       />

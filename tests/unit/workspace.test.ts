@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { newOwnField, newPlace, parsePlaceDraft, visibleZone } from '@/lib/workspace';
+import { newOwnField, newPlace, parsePlaceDraft, parseReportMessage, visibleZone } from '@/lib/workspace';
 
 const org = crypto.randomUUID();
 const filled = () => {
@@ -126,3 +126,17 @@ describe('visibleZone', () => {
   });
 });
 
+
+describe('parseReportMessage', () => {
+  it('trims and accepts 10 to 2000 characters', () => {
+    expect(parseReportMessage('  The upload stops.  ')).toBe('The upload stops.');
+    expect(parseReportMessage('x'.repeat(2000))).toHaveLength(2000);
+  });
+  it('rejects short, long, blank and non-text input', () => {
+    expect(parseReportMessage('too short')).toBeNull();
+    expect(parseReportMessage('   ' + 'x'.repeat(5) + '   ')).toBeNull();
+    expect(parseReportMessage('x'.repeat(2001))).toBeNull();
+    expect(parseReportMessage(null)).toBeNull();
+    expect(parseReportMessage(42)).toBeNull();
+  });
+});
