@@ -53,8 +53,10 @@ try {
     await expect(sidebar.getByRole('link',{name:'NERUMA'})).toHaveAttribute('href','/en');
     await expect(sidebar.locator('.language-switch summary')).toBeVisible();
     await expect(sidebar.getByRole('group',{name:'Colour tone'}).getByRole('button',{name:'Warm'})).toBeVisible();
-    const tab=await page.locator('.floating-reading').boundingBox();const signOut=await sidebar.getByRole('button',{name:'Sign out',exact:true}).boundingBox();
-    assert.ok(tab && signOut && (tab.y+tab.height<=signOut.y || signOut.y+signOut.height<=tab.y || tab.x+tab.width<=signOut.x || signOut.x+signOut.width<=tab.x),'the reading tab must not cover Sign out');
+    await expect(page.locator('.floating-reading')).toHaveCount(0);
+    const reading=sidebar.getByRole('button',{name:'Reading settings',exact:true});await expect(reading).toBeVisible();
+    await reading.click();const panel=page.getByRole('dialog',{name:'Reading settings'});await expect(panel).toBeVisible();
+    await page.keyboard.press('Escape');await expect(panel).toBeHidden();await expect(reading).toBeFocused();
     await sidebar.getByRole('button',{name:'Collapse sidebar',exact:true}).click();
     await expect(sidebar.getByText('Fixture museum 1',{exact:true})).toBeHidden();
     await expect(sidebar.getByRole('link',{name:'Dashboard',exact:true})).toBeVisible();
@@ -122,7 +124,7 @@ try {
     assert.match((await context.request.get(page.url())).headers()['cache-control'],/private.*no-store/);
   });
   await check('private preview offers reading controls and narrates only saved organisation content',async()=>{
-    await expect(page.locator('.floating-reading')).toBeVisible();
+    await expect(page.getByRole('complementary').getByRole('button',{name:'Reading settings',exact:true})).toBeVisible();
     await page.evaluate(()=>{
       let current=null;const spoken=[];
       Object.defineProperty(window,'__privateSpeech',{value:{spoken,finish:()=>{let count=0;while(current&&count++<100){const next=current;current=null;next.onend?.({});}}},configurable:true});
@@ -184,10 +186,15 @@ try {
     await expect(page.locator('.builder-zone').first().locator('.zone-toggle')).toHaveAccessibleName(/^Step 1 · Quiet room/);
     await page.getByRole('button',{name:'Move down: Quiet room',exact:true}).click();
     await expect(toggle).toHaveAccessibleName(/^Step 2 · Quiet room/);
-    await expect(page.getByRole('button',{name:'Fold all steps',exact:true})).toHaveCount(0);
+    await expect(page.getByRole('button',{name:'Collapse all',exact:true})).toHaveCount(0);await expect(page.getByRole('button',{name:'Expand all',exact:true})).toHaveCount(2);
     await first.click();await expect(first).toHaveAttribute('aria-expanded','true');
-    await page.getByRole('button',{name:'Fold all steps',exact:true}).click();await expect(first).toHaveAttribute('aria-expanded','false');
-    await expect(page.getByRole('button',{name:'Fold all steps',exact:true})).toHaveCount(0);
+    await expect(page.getByRole('button',{name:'Collapse all',exact:true}).first()).toBeVisible();
+    await page.getByRole('button',{name:'Collapse all',exact:true}).first().click();await expect(first).toHaveAttribute('aria-expanded','false');
+    await expect(page.getByRole('button',{name:'Collapse all',exact:true})).toHaveCount(0);
+    await page.getByRole('button',{name:'Expand all',exact:true}).last().click();
+    await expect(first).toHaveAttribute('aria-expanded','true');await expect(toggle).toHaveAttribute('aria-expanded','true');
+    await expect(page.getByRole('button',{name:'Expand all',exact:true})).toHaveCount(0);
+    await page.getByRole('button',{name:'Collapse all',exact:true}).last().click();await expect(first).toHaveAttribute('aria-expanded','false');
     await toggle.click();await expect(toggle).toHaveAttribute('aria-expanded','true');
     await expect(second.getByLabel('Step name',{exact:true})).toHaveValue('Quiet room');
     await second.getByLabel('Step name',{exact:true}).fill('');await toggle.click();

@@ -110,7 +110,8 @@ Today settings live in two places, and the theme appears in both:
   into the reading panel.
 - [ ] **Rename "Cool / Warm".** It switches the accent between blue and green, which the names don't
   say. Try "Accent colour: Blue / Green".
-- [ ] **Move the reading-settings trigger into the top bar** as a labelled button ("Aa Reading" or
+- [x] (workspace only, PR for 2026-10-11) The reading-settings button is a labelled button in the organisation sidebar; the floating tab
+  is gone there. The public site still has the floating tab: **Move the reading-settings trigger into the top bar** as a labelled button ("Aa Reading" or
   similar). The floating edge tab is easy to miss, has no visible label, and covers content on phones.
 - [ ] **Slim the panel header.** Moving the panel uses a drag handle plus five nudge buttons. Check
   whether a fixed position (right side on desktop, bottom sheet on phones) removes the need to move it.

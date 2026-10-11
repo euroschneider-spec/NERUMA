@@ -85,6 +85,14 @@ export function OnlineBuilder({locale,org,initial,persistedZoneIds,missingTransl
   }
   // Save, Preview and Publish sit at the top and the bottom of the editor. Only the bottom copy announces the result,
   // so a screen reader hears each message once.
+  // Collapse all / Expand all, above and below the steps. Each shows only when it has something to do.
+  const anyOpen=draft.zones.some(z=>openZones.has(z.id));
+  const anyFolded=draft.zones.some(z=>!openZones.has(z.id));
+  const foldBar=(withHint:boolean)=>draft.zones.length>1 && (anyOpen || anyFolded) && <p className="editor-fold">
+    {anyOpen && <button type="button" className="text-button" onClick={()=>setOpenZones(new Set())}>{t.collapseAll}</button>}
+    {anyFolded && <button type="button" className="text-button" onClick={()=>setOpenZones(new Set(draft.zones.map(z=>z.id)))}>{t.expandAll}</button>}
+    {withHint && !allFolded && <span className="small-note">{t.reorderHint}</span>}
+  </p>;
   const actions=(announce:boolean)=><div className={announce ? 'editor-actions is-bottom' : 'editor-actions'}>
     <button className="button" type="submit" disabled={disabled}>{pending?t.saving:t.save}</button>
     {draft.revision>0 ? <Link className="button button-outline" href={`/${locale}/workspace/${draft.id}/preview`}>{t.preview}</Link> : <button className="button button-outline" type="button" disabled>{t.preview}</button>}
@@ -104,6 +112,7 @@ export function OnlineBuilder({locale,org,initial,persistedZoneIds,missingTransl
           <div className="form-field wide"><label htmlFor="online-description">{t.summary}</label><textarea id="online-description" rows={2} maxLength={2000} value={draft.description} onChange={e=>field('description',e.target.value)}/></div>
           <div className="form-field wide"><label htmlFor="online-arrivalInfo">{t.arrival}</label><textarea id="online-arrivalInfo" rows={3} maxLength={2000} value={draft.arrivalInfo} onChange={e=>field('arrivalInfo',e.target.value)}/></div>
         </div>
+        {foldBar(true)}
         {draft.zones.map((zone,index)=>{
           const open=openZones.has(zone.id);
           const complete=Boolean(zone.title.trim() && zone.description.trim() && (!zone.photo || zone.hidden.includes('photo') || zone.photo.alt.trim())
@@ -157,7 +166,7 @@ export function OnlineBuilder({locale,org,initial,persistedZoneIds,missingTransl
           <div className="zone-remove"><button type="button" className="text-button" disabled={disabled || draft.zones.length===1} onClick={()=>setConfirmRemove(zone.id)} aria-label={`${t.removeZone}: ${zone.title || index+1}`}>{t.removeZone}</button></div>
           </div>
         </section>;})}
-        {draft.zones.length>1 && !allFolded && <p className="editor-fold"><button type="button" className="text-button" onClick={()=>setOpenZones(new Set())}>{t.foldAll}</button><span className="small-note">{t.reorderHint}</span></p>}
+        {foldBar(false)}
         <div className="editor-add"><button id="add-zone" className="button button-outline" type="button" disabled={disabled || draft.zones.length>=8} onClick={()=>{const zone=newZone();setOpenZones(current=>new Set(current).add(zone.id));change(current=>({...current,zones:[...current.zones,zone]}));}}>{t.addZone}</button></div>
       </fieldset>
       {actions(true)}

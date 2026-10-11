@@ -29,6 +29,7 @@ export default async function WorkspaceLayout({ children, params }: { children: 
           sidebarLabel: t.sidebarLabel,
           collapse: t.collapseSidebar,
           expand: t.expandSidebar,
+          reading: getCopy(locale).settings,
         }}
         signOutAction={signOut.bind(null, locale)}
       />
