@@ -184,13 +184,25 @@ try {
     await expect(page.locator('.builder-zone').first().locator('.zone-toggle')).toHaveAccessibleName(/^Step 1 · Quiet room/);
     await page.getByRole('button',{name:'Move down: Quiet room',exact:true}).click();
     await expect(toggle).toHaveAccessibleName(/^Step 2 · Quiet room/);
+    await expect(page.getByRole('button',{name:'Fold all steps',exact:true})).toHaveCount(0);
+    await first.click();await expect(first).toHaveAttribute('aria-expanded','true');
+    await page.getByRole('button',{name:'Fold all steps',exact:true}).click();await expect(first).toHaveAttribute('aria-expanded','false');
+    await expect(page.getByRole('button',{name:'Fold all steps',exact:true})).toHaveCount(0);
     await toggle.click();await expect(toggle).toHaveAttribute('aria-expanded','true');
     await expect(second.getByLabel('Step name',{exact:true})).toHaveValue('Quiet room');
     await second.getByLabel('Step name',{exact:true}).fill('');await toggle.click();
     await page.getByRole('button',{name:'Save',exact:true}).last().click();
     await expect(toggle).toHaveAttribute('aria-expanded','true');await expect(second.getByLabel('Step name',{exact:true})).toBeFocused();
     await second.getByLabel('Step name',{exact:true}).fill('Quiet room');
-    await page.locator('.builder-zone').nth(1).getByRole('button',{name:'Remove this step: Quiet room',exact:true}).click();await save(page);await page.reload();
+    const removeLink=page.locator('.builder-zone').nth(1).getByRole('button',{name:'Remove this step: Quiet room',exact:true});
+    await removeLink.click();
+    const confirmBox=page.getByRole('dialog',{name:'Remove this step?'});await expect(confirmBox).toBeVisible();
+    await expect(confirmBox.getByRole('button',{name:'Cancel',exact:true})).toBeFocused();
+    await page.keyboard.press('Escape');await expect(confirmBox).toBeHidden();assert.equal(await page.locator('.builder-zone').count(),2);
+    await removeLink.click();await confirmBox.getByRole('button',{name:'Cancel',exact:true}).click();await expect(confirmBox).toBeHidden();assert.equal(await page.locator('.builder-zone').count(),2);
+    await removeLink.click();await confirmBox.getByRole('button',{name:'Remove step',exact:true}).click();
+    assert.equal(await page.locator('.builder-zone').count(),1);await expect(page.getByRole('button',{name:'Add a step',exact:true})).toBeFocused();
+    await save(page);await page.reload();
     assert.equal(await page.locator('.builder-zone').count(),1);
   });
   await check('Romanian descriptions and photo alternative text persist separately from English',async()=>{

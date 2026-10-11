@@ -1053,9 +1053,6 @@ p, li, dt, dd, summary, label, figcaption, a, .lbl, .small-label, .small-note { 
 .remove-field { display: inline-flex; align-items: center; justify-content: center; width: 24px; height: 24px; min-width: 24px; min-height: 24px; padding: 0; margin-left: auto; border: 1px solid var(--color-divider); border-radius: 50%; background: transparent; color: var(--v-muted); cursor: pointer; }
 .remove-field:hover:not(:disabled) { color: var(--color-text); border-color: var(--color-accent); }
 .remove-field:disabled { opacity: 0.45; cursor: not-allowed; }
-/* The photo's × sits on the frame's top edge, at the right, like the × of every other field. */
-.photo-editor { position: relative; }
-.photo-remove { position: absolute; top: -12px; right: 16px; padding-inline: 4px; background: var(--color-surface); }
 .builder-zone .label-row > label { flex: 1; min-width: 0; }
 /* The × is taller than the label text: let its row take that height so it never touches the box above. */
 .builder-zone .form-field > .label-row { margin-block: 0; }
@@ -1071,3 +1068,15 @@ p, li, dt, dd, summary, label, figcaption, a, .lbl, .small-label, .small-note { 
 /* Inside the organisation app, buttons and sidebar controls use regular weight: the filled colour already marks
    the main action, and bold everywhere made every control shout. */
 .app-shell .button, .app-shell .theme-toggle, .app-shell .app-signout { font-weight: 500; }
+
+/* Save stays on screen: the bottom bar sticks to the bottom of the window while the editor is in view, so a
+   small change deep in a step never means scrolling back to find Save. Its hint opens upwards. */
+.editor-actions.is-bottom { position: sticky; bottom: 0; z-index: 20; margin: 24px 0 0; padding: 12px 0; background: var(--color-bg); border-top: 1px solid var(--color-divider); }
+.editor-actions.is-bottom .infotip-text { top: auto; bottom: calc(100% + 6px); }
+.zone-remove { margin-top: 24px; padding-top: 12px; border-top: 1px solid var(--color-divider); }
+.editor-fold { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 12px; margin: 8px 0 0; }
+.confirm-dialog { max-width: min(440px, calc(100vw - 32px)); padding: 24px; color: var(--color-text); background: var(--color-surface); border: 1px solid var(--color-divider); border-radius: var(--radius-lg); box-shadow: var(--shadow-lg); }
+.confirm-dialog::backdrop { background: color-mix(in srgb, var(--color-bg) 70%, transparent); }
+.confirm-dialog h2 { margin: 0 0 8px; font-size: 1.25rem; }
+.confirm-dialog p { margin: 0 0 20px; }
+.confirm-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 12px; }

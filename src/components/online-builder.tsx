@@ -12,6 +12,7 @@ import { savePlaceDraft } from '@/app/workspace/actions';
 import { OnlinePhotoEditor } from './online-photo';
 import { ChoiceGroup } from './choice-group';
 import { PublishButton } from './publish-button';
+import { ConfirmDialog } from './confirm-dialog';
 
 /** The small × beside a field that hides it from the step (the text is kept). */
 function RemoveField({label,disabled,onClick,enabled=true}:{label:string;disabled:boolean;onClick:()=>void;enabled?:boolean}) {
@@ -31,6 +32,7 @@ export function OnlineBuilder({locale,org,initial,persistedZoneIds,missingTransl
   const [openZones,setOpenZones]=useState(()=>new Set(initial.zones.slice(0,1).map(z=>z.id)));
   // Reordering is offered only while every step is folded: short cards are easy to drag, and nothing jumps under the pointer.
   const allFolded=draft.zones.length>1 && draft.zones.every(z=>!openZones.has(z.id));
+  const [confirmRemove,setConfirmRemove]=useState<string|null>(null);
   const [dragIndex,setDragIndex]=useState<number|null>(null);
   function moveZone(from:number,to:number){if(from===to || to<0) return;change(current=>{const zones=[...current.zones];const [zone]=zones.splice(from,1);zones.splice(Math.min(to,zones.length),0,zone);return {...current,zones};});}
   function toggleZone(id:string){setOpenZones(current=>{const next=new Set(current);if(next.has(id)) next.delete(id);else next.add(id);return next;});}
@@ -83,7 +85,7 @@ export function OnlineBuilder({locale,org,initial,persistedZoneIds,missingTransl
   }
   // Save, Preview and Publish sit at the top and the bottom of the editor. Only the bottom copy announces the result,
   // so a screen reader hears each message once.
-  const actions=(announce:boolean)=><div className="editor-actions">
+  const actions=(announce:boolean)=><div className={announce ? 'editor-actions is-bottom' : 'editor-actions'}>
     <button className="button" type="submit" disabled={disabled}>{pending?t.saving:t.save}</button>
     {draft.revision>0 ? <Link className="button button-outline" href={`/${locale}/workspace/${draft.id}/preview`}>{t.preview}</Link> : <button className="button button-outline" type="button" disabled>{t.preview}</button>}
     <PublishButton label={t.publish} hint={t.publishSoon} />
@@ -124,13 +126,11 @@ export function OnlineBuilder({locale,org,initial,persistedZoneIds,missingTransl
             </span>}
           </div>
           <div id={`online-zone-body-${zone.id}`} className="zone-body" data-zone-body={zone.id} hidden={!open}>
-          <div className="button-row zone-order"><button type="button" className="text-button" disabled={disabled || draft.zones.length===1} onClick={()=>change(current=>({...current,zones:current.zones.filter(z=>z.id!==zone.id)}))} aria-label={`${t.removeZone}: ${zone.title || index+1}`}>{t.removeZone}</button></div>
           <div className="form-grid">
             <label className="form-field wide">{t.stepName}<input required maxLength={160} value={zone.title} onChange={e=>zoneField(index,z=>({...z,title:e.target.value}))}/></label>
             <div className="form-field wide"><label htmlFor={`online-description-${zone.id}`}>{common.description}</label><textarea id={`online-description-${zone.id}`} required rows={3} maxLength={2000} value={zone.description} onChange={e=>zoneField(index,z=>({...z,description:e.target.value}))}/></div>
           </div>
-          {!zone.hidden.includes('photo') && <OnlinePhotoEditor zone={zone} placeId={draft.id} locale={locale} persisted={persisted.has(zone.id)} disabled={disabled} onBusy={busy=>photoBusy(zone.id,busy)} onChange={(photo?:OnlinePhoto)=>zoneField(index,z=>({...z,photo}))}
-            remove={<RemoveField enabled={fieldsEnabled} label={`${t.removeField}: ${t.fieldPhoto}`} disabled={disabled} onClick={()=>hideField(index,zone.id,'photo')}/>}/>}
+          {!zone.hidden.includes('photo') && <OnlinePhotoEditor zone={zone} placeId={draft.id} locale={locale} persisted={persisted.has(zone.id)} disabled={disabled} onBusy={busy=>photoBusy(zone.id,busy)} onChange={(photo?:OnlinePhoto)=>zoneField(index,z=>({...z,photo}))}/>}
           <fieldset className="sensory-fields"><legend>{locale==='ro'?'Profil senzorial':locale==='de'?'Sensorisches Profil':'Sensory profile'}</legend>
             {sensoryChannels.map(channel=><ChoiceGroup key={channel} label={common[channel]} value={zone.sensory[channel]} onChange={value=>zoneField(index,z=>({...z,sensory:{...z.sensory,[channel]:value}}))} options={sensoryLevels.map(level=>({value:level,label:common[level]}))}/>)}
           </fieldset>
@@ -154,13 +154,17 @@ export function OnlineBuilder({locale,org,initial,persistedZoneIds,missingTransl
             </div>
             {zone.fields.length>=MAX_OWN_FIELDS && <p className="small-note">{t.fieldLimit}</p>}
           </div>}
+          <div className="zone-remove"><button type="button" className="text-button" disabled={disabled || draft.zones.length===1} onClick={()=>setConfirmRemove(zone.id)} aria-label={`${t.removeZone}: ${zone.title || index+1}`}>{t.removeZone}</button></div>
           </div>
         </section>;})}
-        {draft.zones.length>1 && !allFolded && <p className="small-note">{t.reorderHint}</p>}
-        <div className="editor-add"><button className="button button-outline" type="button" disabled={disabled || draft.zones.length>=8} onClick={()=>{const zone=newZone();setOpenZones(current=>new Set(current).add(zone.id));change(current=>({...current,zones:[...current.zones,zone]}));}}>{t.addZone}</button></div>
+        {draft.zones.length>1 && !allFolded && <p className="editor-fold"><button type="button" className="text-button" onClick={()=>setOpenZones(new Set())}>{t.foldAll}</button><span className="small-note">{t.reorderHint}</span></p>}
+        <div className="editor-add"><button id="add-zone" className="button button-outline" type="button" disabled={disabled || draft.zones.length>=8} onClick={()=>{const zone=newZone();setOpenZones(current=>new Set(current).add(zone.id));change(current=>({...current,zones:[...current.zones,zone]}));}}>{t.addZone}</button></div>
       </fieldset>
       {actions(true)}
     </form>
+    <ConfirmDialog open={confirmRemove!==null} title={t.removeConfirmTitle} body={t.removeConfirmBody} confirm={t.removeConfirm} cancel={t.cancel}
+      onCancel={()=>setConfirmRemove(null)}
+      onConfirm={()=>{const id=confirmRemove;setConfirmRemove(null);if(id){change(current=>({...current,zones:current.zones.filter(z=>z.id!==id)}));focusLater('add-zone');}}}/>
     {error==='conflict' && <a className="quiet-link" href={`/${locale}/workspace/${draft.id}`} target="_blank" rel="noopener noreferrer">{t.reload}</a>}
     {error==='auth' && <Link className="quiet-link" href={`/${locale}/login`}>{t.login}</Link>}
   </>;
