@@ -957,7 +957,7 @@ p, li, dt, dd, summary, label, figcaption, a, .lbl, .small-label, .small-note { 
 .app-org-name { margin: 0; font-family: var(--font-heading); font-weight: var(--font-heading-weight); font-size: 1.125rem; line-height: 1.3; overflow-wrap: anywhere; }
 .app-org-role { margin: 2px 0 0; font-size: 0.8125rem; color: var(--v-muted); }
 .app-nav { display: flex; flex-direction: column; gap: 4px; }
-.app-nav a { display: flex; align-items: center; gap: 10px; min-height: 40px; padding: 0 12px; border-radius: var(--radius-md); color: var(--color-text); text-decoration: none; font-size: 0.9375rem; font-weight: 600; }
+.app-nav a { display: flex; align-items: center; gap: 10px; min-height: 40px; padding: 0 12px; border-radius: var(--radius-md); color: var(--color-text); text-decoration: none; font-size: 0.9375rem; font-weight: 500; }
 .app-nav a:hover { background: color-mix(in srgb, var(--color-text) 7%, transparent); }
 .app-nav a[data-active="true"] { background: var(--color-accent); color: var(--color-bg); }
 .app-sidebar-foot { margin-top: auto; display: flex; flex-direction: column; gap: 8px; align-items: stretch; }
@@ -1061,3 +1061,7 @@ p, li, dt, dd, summary, label, figcaption, a, .lbl, .small-label, .small-note { 
 .own-fields { display: grid; gap: 8px; margin: 16px 0; }
 .own-fields dt { font-weight: 600; }
 .own-fields dd { margin: 2px 0 0; }
+
+/* Inside the organisation app, buttons and sidebar controls use regular weight: the filled colour already marks
+   the main action, and bold everywhere made every control shout. */
+.app-shell .button, .app-shell .theme-toggle, .app-shell .app-signout { font-weight: 500; }

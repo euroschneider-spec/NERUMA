@@ -26,8 +26,8 @@ async function login(page,owner=1) {
   await page.getByRole('button',{name:'Sign in',exact:true}).click();
   await page.waitForURL(/\/en\/(account|workspace|admin\/organisations)$/);
 }
-const saved=page=>expect(page.locator('.status-message[role]')).toContainText('Draft saved online');
-const save=async page=>{await page.getByRole('button',{name:'Save online',exact:true}).last().click();await saved(page);};
+const saved=page=>expect(page.locator('.status-message[role]')).toContainText('Draft saved');
+const save=async page=>{await page.getByRole('button',{name:'Save',exact:true}).last().click();await saved(page);};
 try {
   if(!process.argv.includes('--skip-build')) {
     const build=start('npm',['run','build'],{},'/tmp/vianorae-workspace-build.log');
@@ -64,7 +64,7 @@ try {
   });
   await check('the location editor opens quietly: a status line, no responsibility box, hints as tooltips',async()=>{
     await expect(page.locator('.responsibility-notice')).toHaveCount(0);
-    await expect(page.getByRole('button',{name:'Save online',exact:true})).toHaveCount(2);
+    await expect(page.getByRole('button',{name:'Save',exact:true})).toHaveCount(2);
     const publish=page.getByRole('button',{name:'Publish',exact:true});
     await expect(publish).toHaveCount(2);for(const button of await publish.all()) await expect(button).toHaveAttribute('aria-disabled','true');
     await expect(page.getByText('Editing in')).toHaveCount(0);
@@ -144,7 +144,7 @@ try {
   await check('concurrent stale save preserves unsaved text and does not overwrite the newer revision',async()=>{
     await page.getByLabel('Location name',{exact:true}).fill('Latest fixture name');await save(page);
     await secondPage.getByLabel('Location name',{exact:true}).fill('Unsaved conflicting name');
-    await secondPage.getByRole('button',{name:'Save online',exact:true}).last().click();
+    await secondPage.getByRole('button',{name:'Save',exact:true}).last().click();
     await expect(secondPage.locator('.status-message[role=alert]')).toContainText('Someone saved a newer version');
     await expect(secondPage.getByLabel('Location name',{exact:true})).toHaveValue('Unsaved conflicting name');
     await page.reload();await expect(page.getByLabel('Location name',{exact:true})).toHaveValue('Latest fixture name');
@@ -187,7 +187,7 @@ try {
     await toggle.click();await expect(toggle).toHaveAttribute('aria-expanded','true');
     await expect(second.getByLabel('Zone title',{exact:true})).toHaveValue('Quiet room');
     await second.getByLabel('Zone title',{exact:true}).fill('');await toggle.click();
-    await page.getByRole('button',{name:'Save online',exact:true}).last().click();
+    await page.getByRole('button',{name:'Save',exact:true}).last().click();
     await expect(toggle).toHaveAttribute('aria-expanded','true');await expect(second.getByLabel('Zone title',{exact:true})).toBeFocused();
     await second.getByLabel('Zone title',{exact:true}).fill('Quiet room');
     await page.locator('.builder-zone').nth(1).getByRole('button',{name:'Remove this step: Quiet room',exact:true}).click();await save(page);await page.reload();
@@ -199,8 +199,8 @@ try {
     await page.getByLabel('Titlul zonei',{exact:true}).fill('Intrarea principală');
     await page.locator('.builder-zone').getByLabel('Descriere scurtă',{exact:true}).fill('O intrare fictivă fără trepte.');
     await page.getByLabel('Descrierea imaginii (text alternativ)',{exact:true}).fill('Ilustrație fictivă a intrării');
-    await page.getByRole('button',{name:'Salvează online',exact:true}).last().click();
-    await expect(page.locator('.status-message[role]')).toContainText('Draft salvat online');await page.reload();
+    await page.getByRole('button',{name:'Salvează',exact:true}).last().click();
+    await expect(page.locator('.status-message[role]')).toContainText('Draft salvat');await page.reload();
     await expect(page.getByLabel('Numele locației',{exact:true})).toHaveValue('Galerie fictivă');
     await page.goto(editUrl);await expect(page.getByLabel('Location name',{exact:true})).toHaveValue('Latest fixture name');
     await expect(page.getByLabel('Image description (alternative text)',{exact:true})).toHaveValue('Fictional green entrance illustration');
@@ -231,8 +231,8 @@ try {
     await expect(zone.getByRole('radiogroup',{name:'Răspuns'}).getByRole('radio',{name:'Da',exact:true})).toBeChecked();
     await zone.getByLabel('Numele câmpului',{exact:true}).fill('Program');await zone.getByLabel('Text',{exact:true}).fill('10-18');
     await zone.getByLabel('Întrebare',{exact:true}).fill('Locuri de stat?');
-    await page.getByRole('button',{name:'Salvează online',exact:true}).last().click();
-    await expect(page.locator('.status-message[role]')).toContainText('Draft salvat online');
+    await page.getByRole('button',{name:'Salvează',exact:true}).last().click();
+    await expect(page.locator('.status-message[role]')).toContainText('Draft salvat');
     await page.goto(editUrl);
     await expect(zone.getByLabel('Field name',{exact:true})).toHaveValue('Opening hours');
     await zone.getByRole('button',{name:'Useful note',exact:true}).click();
