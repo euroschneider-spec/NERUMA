@@ -1,18 +1,17 @@
 'use client';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { useRef, useState } from 'react';
-import { ChevronDown, Menu, X } from 'lucide-react';
-import { getCopy, locales, localeNames, type Locale } from '@/lib/i18n';
+import { useState } from 'react';
+import { Menu, X } from 'lucide-react';
+import { getCopy, type Locale } from '@/lib/i18n';
 import { contentPages } from '@/lib/content';
 import { PageDensity } from './page-density';
 import { ThemeToggle } from './theme-toggle';
 import { ToneSwitch } from './tone-switch';
+import { LanguageMenu } from './language-menu';
 export function Brand() { return <span className="brand"><span className="brand-mark" aria-hidden="true"><span/><span/><span/></span>NERUMA</span>; }
 export function SiteHeader({locale}:{locale:Locale}) {
-  const t=getCopy(locale); const path=usePathname(); const [open,setOpen]=useState(false); const languageMenu=useRef<HTMLDetailsElement>(null);
-  const languageLabel=locale==='ro'?'Limbă':locale==='de'?'Sprache':'Language';
-  const closeLanguageMenu=()=>languageMenu.current?.removeAttribute('open');
+  const t=getCopy(locale); const path=usePathname(); const [open,setOpen]=useState(false);
   // The first three jump to sections of the home page; from any other page they lead back to it.
   const links=[
     {href:`/${locale}#how-it-works`,label:t.nav[0]},
@@ -27,19 +26,7 @@ export function SiteHeader({locale}:{locale:Locale}) {
     <a className="skip-link" href="#main-content">{t.skip}</a>
     {/* Language and appearance sit above the brand row: settings for the whole site, not navigation. */}
     <div className="topbar">
-      <details
-        className="language-switch"
-        ref={languageMenu}
-        onKeyDown={event=>{ if(event.key==='Escape') closeLanguageMenu(); }}
-      >
-        <summary aria-label={`${languageLabel}: ${localeNames[locale]}`}>
-          {locale.toUpperCase()}
-          <ChevronDown aria-hidden="true" />
-        </summary>
-        <nav aria-label={languageLabel}>
-          {locales.map(lang=><Link key={lang} href={path.replace(/^\/(en|ro|de)(?=\/|$)/,`/${lang}`)} lang={lang} hrefLang={lang} aria-current={lang===locale?'page':undefined} onClick={closeLanguageMenu}>{localeNames[lang]}</Link>)}
-        </nav>
-      </details>
+      <LanguageMenu locale={locale}/>
       {readable ? <PageDensity locale={locale}/> : null}
       <ToneSwitch locale={locale}/>
       <ThemeToggle locale={locale}/>

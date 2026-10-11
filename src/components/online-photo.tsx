@@ -6,6 +6,7 @@ import type { Locale } from '@/lib/i18n';
 import { getOrganisationCopy } from '@/lib/organisation-copy';
 import { preparePhoto } from '@/lib/local-photos';
 import { getWorkspaceCopy, MAX_ONLINE_PHOTO, photoUrl, uuidPattern, type OnlinePhoto, type OnlineZone } from '@/lib/workspace';
+import { InfoTip } from './info-tip';
 
 export function OnlinePhotoEditor({zone,placeId,locale,persisted,disabled,onChange,onBusy}: {
   zone:OnlineZone;placeId:string;locale:Locale;persisted:boolean;disabled:boolean;
@@ -34,9 +35,9 @@ export function OnlinePhotoEditor({zone,placeId,locale,persisted,disabled,onChan
   }
   return <fieldset className="photo-editor" disabled={disabled || busy}>
     <legend>{o.photo}</legend>
-    <p id={`online-photo-hint-${zone.id}`}>{t.photoHint}</p>
+    <p id={`online-photo-hint-${zone.id}`} className="label-row">{t.photoHint}<InfoTip text={t.photoPrivacy} label={t.moreInfo} /></p>
     {!persisted && <p className="notice">{t.saveFirst}</p>}
-    <label className="form-field">{o.photo}<input type="file" accept="image/jpeg,image/png,image/webp" disabled={!persisted || disabled || busy}
+    <label className="form-field"><span className="sr-only">{o.photo}</span><input type="file" accept="image/jpeg,image/png,image/webp" disabled={!persisted || disabled || busy}
       aria-describedby={`online-photo-hint-${zone.id}`} onChange={event=>{const file=event.target.files?.[0];event.target.value='';if(file) void upload(file);}}/></label>
     {zone.photo ? <>
       <Image unoptimized src={photoUrl(zone.photo.storageKey)} alt={zone.photo.alt || t.photoPreview} width={600} height={400} className="draft-photo"/>

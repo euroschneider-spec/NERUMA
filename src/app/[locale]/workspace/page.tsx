@@ -3,6 +3,7 @@ import { notFound } from 'next/navigation';
 import { isLocale } from '@/lib/i18n';
 import { getOrganisationCopy } from '@/lib/organisation-copy';
 import { getWorkspaceCopy } from '@/lib/workspace';
+import { InfoTip } from '@/components/info-tip';
 import { listPlaces, workspaceConfigured, workspaceSession } from '@/lib/workspace-server';
 
 export const dynamic='force-dynamic';
@@ -27,7 +28,10 @@ export default async function Workspace({params,searchParams}:{params:Promise<{l
       {!places.length ? <div className="empty-state"><p>{t.empty}</p><Link className="button" href={newPlaceHref}>{t.newPlace}</Link></div> : <ul className="location-cards">{places.map(place=><li key={place.id} className="location-card">
         <div className="location-card-head"><h3><Link href={`/${locale}/workspace/${place.id}`}>{place.name}</Link></h3><span className={place.status==='published' ? 'status-badge is-published' : 'status-badge'}>{place.status==='published' ? t.statusPublished : t.statusDraft}</span></div>
         <p className="location-address">{[place.address,place.city].filter(Boolean).join(', ') || t.addressMissing}</p>
-        <Link className="quiet-link" href={`/${locale}/workspace/${place.id}`}>{t.edit}</Link>
+        <div className="location-card-actions">
+          <Link className="button button-outline button-small" href={`/${locale}/workspace/${place.id}`}>{t.edit}</Link>
+          <span className="publish-group"><button className="button button-outline button-small" type="button" disabled>{t.publish}</button><InfoTip text={t.publishSoon} label={t.moreInfo} /></span>
+        </div>
       </li>)}</ul>}
     </section>}
   </main>;

@@ -48,14 +48,21 @@ export function OnlineBuilder({locale,org,initial,persistedZoneIds,missingTransl
     } catch {setError('other');setMessage(t.error);}
     finally {setPending(false);}
   }
+  // Save, Preview and Publish sit at the top and the bottom of the editor. Only the bottom copy announces the result,
+  // so a screen reader hears each message once.
+  const actions=(announce:boolean)=><div className="editor-actions">
+    <button className="button" type="submit" disabled={disabled}>{pending?t.saving:t.save}</button>
+    {draft.revision>0 && <Link className="button button-outline" href={`/${locale}/workspace/${draft.id}/preview`}>{t.preview}</Link>}
+    <span className="publish-group"><button className="button button-outline" type="button" disabled>{t.publish}</button><InfoTip text={t.publishSoon} label={t.moreInfo} /></span>
+    <p className="status-message" {...(announce ? {role:error?'alert':'status'} : {'aria-hidden':true as const})}>{message || (dirty?t.unsaved:'')}</p>
+  </div>;
   return <>
     <p className="editor-status">
-      <span className="status-badge">{t.statusDraft}</span>
-      <span>{t.draftHint}</span>
       <span className="editor-language">{t.editingIn} {localeNames[locale]}<InfoTip text={t.shared} label={t.moreInfo} /></span>
     </p>
     {missingTranslation && <p className="notice">{t.missing}</p>}
     <form onSubmit={save} aria-label={t.edit}>
+      {actions(false)}
       <fieldset className="online-fields" disabled={disabled}>
         <legend>{t.edit}</legend>
         <div className="form-grid">
@@ -84,13 +91,11 @@ export function OnlineBuilder({locale,org,initial,persistedZoneIds,missingTransl
           <div className="form-field"><label htmlFor={`online-next-${zone.id}`}>{common.predictability}</label><textarea id={`online-next-${zone.id}`} rows={2} maxLength={2000} value={zone.next} onChange={e=>zoneField(index,z=>({...z,next:e.target.value}))}/></div>
           <label className="checkbox-label commitment"><input type="checkbox" checked={zone.optional} onChange={e=>zoneField(index,z=>({...z,optional:e.target.checked}))}/>{t.optional}</label>
         </section>)}
-        <div className="button-row"><button className="button button-outline" type="button" disabled={disabled || draft.zones.length>=8} onClick={()=>change(current=>({...current,zones:[...current.zones,newZone()]}))}>{t.addZone}</button>
-          <button className="button" type="submit" disabled={disabled}>{pending?t.saving:t.save}</button>
-          <p className="status-message" role={error?'alert':'status'}>{message || (dirty?t.unsaved:'')}</p></div>
+        <div className="editor-add"><button className="button button-outline" type="button" disabled={disabled || draft.zones.length>=8} onClick={()=>change(current=>({...current,zones:[...current.zones,newZone()]}))}>{t.addZone}</button></div>
       </fieldset>
+      {actions(true)}
     </form>
     {error==='conflict' && <a className="quiet-link" href={`/${locale}/workspace/${draft.id}`} target="_blank" rel="noopener noreferrer">{t.reload}</a>}
     {error==='auth' && <Link className="quiet-link" href={`/${locale}/login`}>{t.login}</Link>}
-    <div className="button-row">{draft.revision>0 && <Link className="button button-outline" href={`/${locale}/workspace/${draft.id}/preview`}>{t.preview}</Link>}</div>
   </>;
 }

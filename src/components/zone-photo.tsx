@@ -57,7 +57,7 @@ export function ZonePhotoEditor({ zone, locale, disabled, onChange }: {
   return <fieldset className="photo-editor">
     <legend>{t.photo}</legend>
     <p id={`photo-hint-${zone.id}`}>{t.photoHint}</p>
-    <label className="form-field">{t.photo}
+    <label className="form-field"><span className="sr-only">{t.photo}</span>
       <input type="file" accept="image/jpeg,image/png,image/webp" disabled={disabled || busy}
         aria-describedby={`photo-hint-${zone.id}`} onChange={event => {
           const file = event.target.files?.[0]; event.target.value = ''; void upload(file);

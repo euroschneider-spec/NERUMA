@@ -367,7 +367,13 @@ legend { padding-inline: var(--space-2); max-width: 100%; font-weight: var(--fon
 .small-label { font-size: 0.6875rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.09em; color: var(--v-muted); }
 /* The quiet line at the top of the location editor: status, who can see it, and the language being edited. */
 .editor-status { position: relative; display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px; margin: 0 0 20px; font-size: 0.875rem; color: var(--v-muted); }
-.editor-language { display: inline-flex; align-items: center; gap: 6px; margin-left: auto; }
+.editor-language { display: inline-flex; align-items: center; gap: 6px; }
+.editor-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 16px; margin: 20px 0; }
+.editor-add { margin-top: 24px; }
+.publish-group { display: inline-flex; align-items: center; gap: 8px; position: relative; }
+.publish-group .button:disabled { opacity: 0.55; }
+.location-card-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 16px; margin-top: 8px; }
+.location-card-actions .publish-group .infotip-text { right: 0; left: auto; }
 .label-row { position: relative; display: flex; align-items: center; gap: 6px; }
 /* A "?" that explains a field (InfoTip): hover, focus or tap shows it, Escape closes it. */
 /* The hint is placed against the whole row (.label-row / .editor-status), never against the small button, so it
@@ -952,8 +958,8 @@ p, li, dt, dd, summary, label, figcaption, a, .lbl, .small-label, .small-note { 
 .app-nav a:hover { background: color-mix(in srgb, var(--color-text) 7%, transparent); }
 .app-nav a[data-active="true"] { background: var(--color-accent); color: var(--color-bg); }
 .app-sidebar-foot { margin-top: auto; display: flex; flex-direction: column; gap: 10px; align-items: flex-start; }
-.app-lang a.seg-opt { text-decoration: none; color: var(--color-text); min-height: 36px; }
-.app-lang a.seg-opt[aria-current="true"] { background: var(--color-accent); color: var(--color-bg); font-weight: 600; }
+/* The sidebar sits at the bottom of the screen, so its language menu opens upwards. */
+.app-sidebar .language-switch nav { top: auto; bottom: calc(100% + 8px); }
 .app-signout { gap: 8px; }
 .app-content { min-width: 0; }
 .app-main { max-width: 1100px; margin: 0 auto; padding: 40px 40px 72px; }

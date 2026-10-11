@@ -68,8 +68,8 @@ is a quiet link lower down. Checked at 1280px, 390px and 320px in EN, RO and DE.
 
 ### The location editor opens quietly
 The long responsibility box, the "private draft" notice and the paragraph about languages are gone from the top of
-the location editor. A single line says **Draft** · who can see it · **Editing in English**, and the language
-explanation is a "?" tooltip. Hints under fields become the same "?" tooltip (the country hint first). The
+the location editor. A single line says **Editing in English**, and the language explanation is a "?" tooltip
+(no Draft tag: the dashboard card shows the status). Save, Preview and Publish sit at the top and the bottom. Hints under fields become the same "?" tooltip (the country hint first). The
 responsibility text is shown once at registration and again at publication review, not on every page. Owner's
 wish, 2026-10-11. The location types no longer say "Other organisation": the last choice is "Other".
 
