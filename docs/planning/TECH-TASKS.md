@@ -29,21 +29,16 @@ workspace saves to the browser, not to the database.
 
 ## 2. Follow system settings
 
-**Chosen as the next task (owner, 2026-10-11):** the theme follows the visitor's device. The language part follows after.
+**Today:** the theme follows the visitor's device until they choose (done in #33, `DECISIONS.md`). Reduced
+motion is already respected. The root URL always redirects to English (`src/app/(entry)/page.tsx`).
 
-**Today:** the theme defaults to dark and ignores the device setting (`defaults` in
-`src/lib/reading-prefs.ts` and the pre-paint script in `src/app/[locale]/layout.tsx`). Reduced motion
-is already respected. The root URL always redirects to English (`src/app/(entry)/page.tsx`).
-
-- [ ] Theme: when nothing is stored, the pre-paint script uses `prefers-color-scheme`. It listens for
-  changes until the visitor picks a theme. Store the theme only once they choose. Add a "system"
-  value to `Theme` and keep stored preferences loading (see the `fromStored` comment). Read GOTCHA.md
-  "fixed the theme script warning and brought the flash back" first.
+- [x] Theme: follows `prefers-color-scheme` until the visitor picks one (`data-theme-choice`, *Match my device*),
+  resolved before first paint and live. Done in #33.
 - [ ] Consider `prefers-contrast: more` → high contrast theme.
 - [ ] Language: the root URL picks EN/RO/DE from the browser's `Accept-Language`, falling back to EN.
   A language chosen in the menu wins.
-- [ ] Tests: update `tests/reading-accessibility.spec.ts` for the new default (Playwright can emulate
-  `colorScheme`). The axe contrast sweeps must run in both themes.
+- [x] Tests: Playwright now runs as a dark device and `tests/theme-follows-device.spec.ts` emulates both. Still
+  open: the axe contrast sweeps in both themes for the signed-in workspace and admin pages (issue #32).
 
 ## 3. Cookies and the law
 
@@ -326,30 +321,27 @@ Added on 2026-10-11, after the dashboard cards (PR #29). Decisions are in `DECIS
 
 **Report a problem (organisations to NERUMA; `DECISIONS.md`, "Organisations can report a problem"):**
 
-- [ ] **Table and policies (needs Opus).** A `problem_reports` table: organisation, place (optional), the sender,
+- [x] **Table and policies (needs Opus).** A `problem_reports` table: organisation, place (optional), the sender,
   a message with a length limit, status, created time. An organisation member can add a report for their own
   organisation and read only their own; the platform administrator reads and closes all. Database tests need the
   "can't" cases: a member of another organisation, a signed-out user, and a suspended organisation can't add or read.
-- [ ] **The form.** A sidebar button opens a short form (message, optional location), EN/RO/DE, with a rate limit
+- [x] **The form.** A sidebar button opens a short form (message, optional location), EN/RO/DE, with a rate limit
   so it can't be used to flood the table. Show a confirmation that says plainly it was saved, not emailed.
-- [ ] **The admin list.** A page in the admin area with open reports, newest first, and a "closed" button.
+- [x] **The admin list.** A page in the admin area with open reports, newest first, and a "closed" button.
 - [ ] **Later, with email (section 4):** a notification to the administrator when a report arrives.
 - [ ] **Visitor reports** ("something here is wrong" in the public guide, shown to the organisation) wait for
   publishing.
 
 **Order of work after the dashboard (owner, 2026-10-11):**
 
-1. [ ] Merge #29 (cards), #30 (sample QR and visits), #31 (report a problem), in that order, each after its checks are green.
-2. [ ] **Theme follows the device** (section 2). Next, by the owner's choice.
-3. [ ] **Contrast bug, issue #32.** The accent blue pair is 4.48:1 in the light theme (limit 4.5). Fix the palette, run
-   the full suite, and add axe scans of the signed-in workspace and admin pages in all three themes. Best done
-   together with the theme task, since both touch the same tokens and tests.
-4. [ ] **Live preview in a second tab** (brief, Task 2): the preview beside the editor, from unsaved changes, with
+1. [ ] **Contrast bug, issue #32.** The accent blue pair is 4.48:1 in the light theme (limit 4.5). Fix the palette, run
+   the full suite, and add axe scans of the signed-in workspace and admin pages in all three themes.
+2. [ ] **Live preview in a second tab** (brief, Task 2): the preview beside the editor, from unsaved changes, with
    the guide component visitors see. Narrow screens get a *Preview* button only.
-5. [ ] **Plan & billing placeholder** (brief 1d): owners only, until payments exist (section 8).
-6. [ ] **Visit counts privacy decision.** Suggested: one number per location per day, no IP address, no cookie,
+3. [ ] **Plan & billing placeholder** (brief 1d): owners only, until payments exist (section 8).
+4. [ ] **Visit counts privacy decision.** Suggested: one number per location per day, no IP address, no cookie,
    counting each time the guide opens. Needs the owner's yes, then section 3 and the privacy page.
-7. [ ] **Publishing** (needs Opus): the QR registry above, the "isn't available" page, language choice, the real QR
+5. [ ] **Publishing** (needs Opus): the QR registry above, the "isn't available" page, language choice, the real QR
    pop-up and visit counts on the card.
 
 **Migrations the owner's friend still has to apply to the real Supabase project:**
