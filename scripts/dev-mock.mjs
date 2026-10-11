@@ -7,9 +7,9 @@
 // scripts/workspace-fixture.mjs (test-only, never used in a real environment).
 //   owner3@example.test  platform administrator (lands on the organisation review queue)
 //   owner1@example.test  owner of "Fixture museum 1" (approved organisation)
-//   owner2@example.test  owner of "Fixture museum 2" (approved organisation)
+//   owner2@example.test  owner of the fictional Willow Museum (five zones, from supabase/seed.sql)
 //   owner4@example.test  signed-in user with no organisation (can apply)
-//   owner5@example.test  signed-in user with no organisation (can apply)
+//   owner5@example.test  has a request for "Linden Gallery" waiting in the review queue
 import { spawn } from 'node:child_process';
 
 if (process.env.NODE_ENV === 'production' || process.env.VERCEL) {
@@ -20,6 +20,7 @@ const port = process.env.DEV_MOCK_PORT || '3000';
 const env = {
   ...process.env,
   VIANORAE_TEST_FIXTURE: '1',
+  VIANORAE_FIXTURE_DEMO_DATA: '1',
   VIANORAE_SUPABASE_PROJECT_REF: 'vianorae-fixture',
   NEXT_PUBLIC_SUPABASE_URL: 'https://vianorae-fixture.supabase.co',
   NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: 'sb_publishable_fixture',
@@ -59,4 +60,4 @@ const next = run(
 next.on('exit', (code) => { stop(); process.exit(code || 0); });
 
 console.log(`\nMock site: http://localhost:${port}/en/login  (stop with Ctrl+C; data resets each run)`);
-console.log('Users: owner3@example.test is the platform administrator; owner1 and owner2 own approved organisations.');
+console.log('Users: owner3 = platform administrator (one request waiting), owner2 = Willow Museum (five zones), owner1 = an empty organisation.');

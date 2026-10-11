@@ -2,7 +2,7 @@
 // Auth and Storage HTTP services are simulated; no remote project is contacted.
 import { createServer } from 'node:http';
 import { readFile, readdir } from 'node:fs/promises';
-import { randomUUID, createHmac } from 'node:crypto';
+import { randomUUID, createHmac, createHash } from 'node:crypto';
 import { PGlite } from '@electric-sql/pglite';
 if (process.env.VIANORAE_TEST_FIXTURE !== '1') throw new Error('Test fixture must be explicitly enabled');
 // One shared password for every mock user. Test-only: this fixture is a fake Supabase and never runs in a real environment.
@@ -28,6 +28,24 @@ for (let n=1;n<=2;n++) {
 }
 for(let n=3;n<=5;n++) await db.query('insert into auth.users(id,email) values($1,$2)',[id(n),users[n-1].email]);
 await db.query('insert into private.platform_admins(user_id) values($1)',[id(3)]);
+// Browsing data for npm run dev:mock only; the test suite never sets this, so its starting state is unchanged.
+// owner2 owns the fictional Willow Museum (five zones from supabase/seed.sql); owner5 has a request waiting for review.
+if (process.env.VIANORAE_FIXTURE_DEMO_DATA === '1') {
+  const willow='a0000000-0000-4000-8000-000000000001';
+  await db.exec(await readFile('supabase/seed.sql','utf8'));
+  await db.query("update public.organizations set approval_status='approved' where id=$1",[willow]);
+  await db.query('delete from public.organization_members where user_id=$1',[id(2)]);
+  await db.query("insert into public.organization_members(organization_id,user_id,role) values($1,$2,'owner')",[willow,id(2)]);
+  const application=(await db.query(`insert into public.organization_applications(applicant_id,applicant_email,organization_name,organization_type,country_code,official_website,registry_reference,representative_name,representative_role,authorization_description,statement_version,statement_locale)
+    values($1,'owner5@example.test','Linden Gallery (fictional)','museum','RO','https://linden-gallery.example.test','RO-REG-0042','Ana Popescu (fictional)','Director','The city cultural office can confirm the director appointment by phone. A signed authorisation is attached.','2026-10-07-v1','en') returning id`,[id(5)])).rows[0].id;
+  const pdf=Buffer.from('%PDF-1.7\n1 0 obj\n<< /Type /Catalog >>\nendobj\ntrailer\n<< /Root 1 0 R >>\n%%EOF\n');
+  const documentId=randomUUID();const key=`${id(5)}/${documentId}.pdf`;
+  await db.query(`insert into public.organization_evidence_documents(id,applicant_id,application_id,storage_key,filename,mime_type,byte_size,sha256,uploaded_at)
+    values($1,$2,$3,$4,'signed-authorisation.pdf','application/pdf',$5,$6,now())`,[documentId,id(5),application,key,pdf.length,createHash('sha256').update(pdf).digest('hex')]);
+  await db.query("insert into storage.objects(bucket_id,name) values('vianorae-mandate-evidence',$1)",[key]);
+  await db.query('update public.organization_applications set evidence_document_ids=array[$1::uuid] where id=$2',[documentId,application]);
+  files.set(key,pdf);
+}
 function session(user) {
   const now=Math.floor(Date.now()/1000);
   const encode=value=>Buffer.from(JSON.stringify(value)).toString('base64url');

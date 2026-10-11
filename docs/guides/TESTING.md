@@ -40,9 +40,14 @@ test — every interactive test then fails for reasons unrelated to the change. 
 
 | Email | What it is |
 |---|---|
-| `owner3@example.test` | Platform administrator (lands on the review queue) |
-| `owner1@example.test`, `owner2@example.test` | Owners of "Fixture museum 1" and "Fixture museum 2" |
-| `owner4@example.test`, `owner5@example.test` | Signed in, no organisation yet (can apply) |
+| `owner3@example.test` | Platform administrator; one request (Linden Gallery, with a PDF) waits in the queue |
+| `owner2@example.test` | Owner of the fictional Willow Museum: one location, five zones (`supabase/seed.sql`) |
+| `owner1@example.test` | Owner of "Fixture museum 1", an empty organisation (to try creating a first location) |
+| `owner4@example.test` | Signed in, no organisation yet (can apply) |
+| `owner5@example.test` | The applicant behind the waiting Linden Gallery request |
+
+This browsing data is switched on by `VIANORAE_FIXTURE_DEMO_DATA=1`, which only `dev:mock` sets; the test
+suites start from the plain fixture.
 
 The shared test password is `FIXTURE_PASSWORD` in `scripts/workspace-fixture.mjs`. Everything resets when you
 stop it. Set `DEV_MOCK_PORT` to use another port. It refuses to start under `NODE_ENV=production` or on Vercel.
