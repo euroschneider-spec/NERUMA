@@ -18,28 +18,31 @@ content lives, so do them before trimming copy. The reasons behind these choices
 
 Decision needed before starting.
 
-- [ ] Visitor navigation: *How it works · Explore places · Example guide*, plus one *For organisations*
-  link on the right.
-- [ ] Keep *Methodology* for visitors too, but link it from *How it works* ("How we decide →") instead of
+- [x] Visitor navigation: now *How it works · Who it's for · Sources · Explore*, an outlined *Example guide*
+  button and a filled *For organisations* button (PR #13; `DECISIONS.md`).
+- [ ] (Link done, PR #13: "How we decide →" in *Sources*. Plain-language rewrite of the Methodology page still to do.)
+  Keep *Methodology* for visitors too, but link it from *How it works* ("How we decide →") instead of
   the main navigation, and rewrite the top in plain language. It is written for experts (dB(A), lux,
   PAS 6463, "platform plan v0.1", "Working status"); keep that detail further down. See `DECISIONS.md`.
-- [ ] Footer: move *Request organisation access*, *Organisation sign in* and *Demo workspace* into the
+- [x] Footer (PR #13): move *Request organisation access*, *Organisation sign in* and *Demo workspace* into the
   organisations area. Keep a single *For organisations* link.
-- [ ] Home: remove the hero's *For your organisation* button and move the organisations banner to the
-  organisations page.
-- [ ] Remove the internal "NERUMA · WORKING METHODOLOGY · V0.1" heading from *How it works* and
+- [x] Home (PR #13): the hero's *For your organisation* button and the organisations banner are removed;
+  the organisations page already says it.
+- [x] (PR #13) Remove the internal "NERUMA · WORKING METHODOLOGY · V0.1" heading from *How it works* and
   *For organisations*.
-- [ ] Replace the scattered development notices with one thin site-wide "Preview" strip:
+- [ ] **PINNED** (owner: talk about it after the organisation side). Done so far: the "Registration is not active
+  yet" line is gone from the Register and Login forms (PR #15). Replace the scattered development notices
+  with one thin site-wide "Preview" strip:
   "Registration is not active yet…", "Live publishing will be available after… the separate database
   are configured", "share it with the project owner through your existing contact".
 
 ## 2. Page structure and jump links
 
-- [ ] Visitors: merge Home, *How it works* and a short "Where the information comes from" section into
+- [x] Visitors (PR #13): merge Home, *How it works* and a short "Where the information comes from" section into
   one page. The navigation buttons jump to its sections.
-- [ ] Keep *Explore* and the guide as separate pages.
+- [x] Keep *Explore* and the guide as separate pages.
 - [ ] Organisations: one page with jump links: Why → What you describe → Responsibilities →
-  Methodology → Request access.
+  Methodology → Request access. (Started: *Request access* and *Sign in* now sit at the top, PR #14.)
 
 ## 3. Guide examples
 
@@ -80,7 +83,7 @@ Decision needed before starting.
   and Login. Information and warnings look the same. Use separate styles.
 - [ ] *How it works* and *Methodology* end in a bordered box containing a single link
   ("Example guide →"). Make it a button.
-- [ ] Move the home organisations banner (see section 1). Its button text wraps to two lines on
+- [x] Move the home organisations banner (see section 1; removed in PR #13). Its button text wraps to two lines on
   phones; shorten it.
 
 ## 6. Settings
@@ -126,7 +129,7 @@ Today settings live in two places, and the theme appears in both:
 - [ ] Two button systems: `.btn` (36px) and `.button` (48px), plus `.button-small` (32px), `.btn-lg`
   (48px) and a 40px phone override. Settle on three sizes in one system.
 - [ ] Inputs (36–37px) sit next to 48px buttons. Match the heights.
-- [ ] Top bar on phones: language 32px, Cool/Warm 34px, Light 40px. The Light button picks up the
+- [x] (PR #16) Top bar on phones: language 32px, Cool/Warm 34px, Light 40px. The Light button picks up the
   phone `.button` override. Make all three the same height.
 - [ ] The reading-settings tab (36px wide) covers content on phones, where the side margin is 16px.
 - [ ] Unused CSS: `.pilot` and `.principle` aren't referenced by any page. Delete them.
