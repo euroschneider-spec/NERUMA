@@ -12,7 +12,8 @@ workspace saves to the browser, not to the database.
 
 - [x] **Started (no Docker needed):** `npm run dev:mock` runs the site against the test fixture with five mock
   users (platform administrator, two organisation owners, two users without an organisation); see
-  `docs/guides/TESTING.md`. Still thin: the review queue is empty and organisations have no locations.
+  `docs/guides/TESTING.md`. It now has the Willow Museum (five zones) and one request waiting for review.
+  Still missing: photos, organisations in other states (needs information, suspended), several places.
 - [ ] Seed script for a **local** Supabase (`supabase start`) that creates one user per state:
   platform administrator, organisation owner, organisation admin, applicant waiting for review,
   applicant asked for more information, suspended organisation.
