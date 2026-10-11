@@ -1,0 +1,5 @@
+{
+  "name": "neruma",
+  "owner": { "name": "euroschneider-spec" },
+  "plugins": [{ "name": "neruma-guard", "source": "./tools/neruma-guard" }]
+}

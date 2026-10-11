@@ -1,0 +1,6 @@
+{
+  "name": "neruma-guard",
+  "version": "0.1.0",
+  "description": "Keeps the NERUMA project rules in view and blocks commits and pull requests until the checks have run.",
+  "types": "./types/index.d.ts"
+}
