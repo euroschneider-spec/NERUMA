@@ -163,6 +163,29 @@ test('Register blocks share both edges, one 24px rhythm and one label size',asyn
  }
 });
 
+// Fields sit on shared rows whatever the language: a long label must not push its field lower than its neighbours.
+test('Register fields share rows in every language and the dropdown matches the text fields',async({page})=>{
+ await page.setViewportSize({width:1280,height:800});
+ for(const locale of ['en','ro','de']) {
+  await page.goto(`/${locale}/register`);
+  const m=await page.evaluate(()=>{
+   const top=(sel:string)=>Math.round(document.querySelector(sel)!.getBoundingClientRect().top);
+   const h=(sel:string)=>Math.round(document.querySelector(sel)!.getBoundingClientRect().height);
+   return {
+    pair1:[top('input[name=organisation]'),top('#organisation-type')],
+    pair2:[top('input[name=representative]'),top('input[name=representativeRole]')],
+    thirds:[top('input[name=website]'),top('input[name=country]'),top('input[name=registry]')],
+    pair3:[top('input[name=email]'),top('input[name=password]')],
+    heights:[h('input[name=organisation]'),h('#organisation-type')],
+    appearance:getComputedStyle(document.querySelector('#organisation-type')!).appearance,
+   };
+  });
+  for(const row of [m.pair1,m.pair2,m.thirds,m.pair3]) expect(new Set(row).size,`${locale} ${JSON.stringify(m)}`).toBe(1);
+  expect(m.heights[0],JSON.stringify(m)).toBe(m.heights[1]);
+  expect(m.appearance).toBe('none');
+ }
+});
+
 // One door for organisations: the menu and the footer each carry a single For organisations link,
 // and registering, signing in and the demo workspace sit behind that page. One sign-in serves every
 // tier (landingPath() routes administrators, members and everyone else after authentication).

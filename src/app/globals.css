@@ -703,7 +703,23 @@ html[data-density="summary"] .density-switch button[data-value="summary"] { back
 .photo-editor p { font-size: 0.875rem; color: var(--v-muted); }
 .draft-photo { width: 100%; max-width: 600px; max-height: 320px; object-fit: contain; margin-block: 16px; background: var(--color-neutral-100); border-radius: var(--radius-md); }
 .organisation-form, .verification-page { max-width: 900px; margin-bottom: 28px; overflow-wrap: anywhere; }
-.organisation-form .form-grid { align-items: start; }
+.organisation-form { container-type: inline-size; }
+/* One column when the form is narrow. Wider, a six-column grid: pairs share a row (name and type, representative
+   and role, email and password) and the three short fields (website, country, registry) take a third each. */
+.organisation-form .form-grid { align-items: start; grid-template-columns: minmax(0, 1fr); }
+@container (min-width: 640px) {
+  .organisation-form .form-grid { grid-template-columns: repeat(6, minmax(0, 1fr)); }
+  .organisation-form .form-field { grid-column: span 3; }
+  .organisation-form .form-field.third { grid-column: span 2; }
+  .organisation-form .form-grid > .wide { grid-column: 1 / -1; }
+}
+/* The dropdown takes the same box as the text fields instead of the browser's own look. */
+.organisation-form .form-grid > .notice { margin-bottom: 0; }
+.organisation-form select {
+  appearance: none; padding-right: 36px; background-repeat: no-repeat; background-size: 5px 5px, 5px 5px;
+  background-image: linear-gradient(45deg, transparent 50%, var(--color-text) 50%), linear-gradient(135deg, var(--color-text) 50%, transparent 50%);
+  background-position: calc(100% - 18px) 55%, calc(100% - 13px) 55%;
+}
 .organisation-form fieldset { margin: 0; padding: 24px; }
 .organisation-form fieldset:disabled { opacity: 0.6; }
 .organisation-form button { margin-top: 20px; }
