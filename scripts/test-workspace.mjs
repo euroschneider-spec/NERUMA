@@ -286,10 +286,10 @@ try {
       assert.equal(await applicant.evaluate(()=>document.documentElement.scrollWidth<=window.innerWidth),true);await applicant.setViewportSize({width:1280,height:900});
     });
   }
-  await check('the header offers one sign-in and advertises no tier-specific destination',async()=>{
+  await check('the header offers one organisations door and advertises no tier-specific destination',async()=>{
     for(const page of [adminPage,applicant]) {
       await page.goto(`${base}/en`);
-      await expect(page.locator('.nav-login')).toHaveAttribute('href','/en/login');
+      await expect(page.locator('.nav-org')).toHaveAttribute('href','/en/for-organisations');
       await expect(page.locator('.site-header').getByRole('link',{name:'Platform administration',exact:true})).toHaveCount(0);
       await expect(page.locator('.site-header').getByRole('link',{name:'Organisation account',exact:true})).toHaveCount(0);
     }

@@ -367,7 +367,8 @@ legend { padding-inline: var(--space-2); max-width: 100%; font-weight: var(--fon
   border-bottom: 1px solid var(--color-divider); background: var(--color-bg);
 }
 .theme-toggle { gap: 6px; }
-.site-header { border-bottom: 1px solid var(--color-divider); background: var(--color-bg); }
+/* Stays at the top while the page scrolls. The language and appearance row above it scrolls away. */
+.site-header { position: sticky; top: 0; z-index: 50; border-bottom: 1px solid var(--color-divider); background: var(--color-bg); }
 .header-inner {
   max-width: var(--container); margin: 0 auto; padding: 0 var(--gutter);
   display: flex; align-items: center; gap: 24px; min-height: 60px;
@@ -389,8 +390,14 @@ legend { padding-inline: var(--space-2); max-width: 100%; font-weight: var(--fon
   font-size: 0.875rem; color: var(--color-text); text-decoration: none;
 }
 .navigation a:hover, .navigation a[aria-current] { color: var(--color-accent-700); }
-/* Organisation sign-in: a quiet link set apart from the visitor pages, not a headline button. */
-.navigation .nav-login { color: var(--v-muted); padding-left: 20px; border-left: 1px solid var(--color-divider); }
+/* Example guide (outlined) and For organisations (filled) end the menu as buttons. */
+.navigation .nav-button {
+  justify-content: center; min-height: 40px; padding: 0 16px; font-weight: 600;
+  border: 1px solid var(--color-divider); border-radius: var(--radius-md);
+}
+.navigation .nav-button:hover { background: color-mix(in srgb, var(--color-text) 7%, transparent); color: var(--color-text); }
+.navigation .nav-org { background: var(--color-accent); border-color: transparent; color: var(--color-bg); }
+.navigation .nav-org:hover, .navigation .nav-org[aria-current] { background: var(--color-accent-600); color: var(--color-bg); }
 .menu-toggle { display: none; }
 .language-switch { position: relative; }
 .language-switch summary {
@@ -498,7 +505,7 @@ html[data-density="summary"] .density-switch button[data-value="summary"] { back
 .principles-grid h2 { font-size: 0.9375rem; margin-bottom: 2px; }
 .principles-grid p { font-size: 0.8125rem; color: var(--v-muted); margin: 0; }
 
-.section { padding-block: 72px; scroll-margin-top: 16px; }
+.section { padding-block: 72px; scroll-margin-top: 88px; }
 .section-head { display: flex; flex-direction: column; gap: 6px; }
 .section-title { font-size: clamp(1.625rem, 3.2vw, 2.25rem); line-height: 1.15; letter-spacing: -0.015em; max-width: 24ch; margin-bottom: 32px; }
 .large-copy { font-size: 1.0625rem; line-height: 1.7; color: var(--v-muted); }
@@ -518,20 +525,7 @@ html[data-density="summary"] .density-switch button[data-value="summary"] { back
 .step-number { display: block; font-size: 1.5rem; font-weight: 600; letter-spacing: 0.04em; color: var(--color-accent-700); border-bottom: 1px solid var(--color-divider); padding-bottom: 12px; margin-bottom: 20px; }
 .steps-grid h3 { font-size: 1.25rem; margin-bottom: 8px; }
 .steps-grid p { font-size: 0.875rem; color: var(--v-muted); }
-
-.org-banner {
-  background: var(--color-surface); border: 1px solid var(--color-divider); border-radius: var(--radius-lg);
-  padding: clamp(28px, 5vw, 56px); margin-bottom: 72px;
-  display: flex; flex-wrap: wrap; align-items: center; gap: 40px; overflow: hidden;
-}
-.org-banner > div { min-width: 0; max-width: 100%; }
-.org-banner > div:first-child { max-width: 620px; }
-.org-banner h2 { font-size: clamp(1.75rem, 3.6vw, 2.5rem); line-height: 1.15; letter-spacing: -0.015em; }
-.org-banner p { max-width: 52ch; color: var(--v-muted); }
-.banner-arches { display: flex; align-items: flex-end; gap: 16px; margin-left: auto; }
-.banner-arches i { display: block; width: 48px; height: 120px; border: 1px solid var(--color-divider); border-bottom: 0; border-radius: 48px 48px 0 0; }
-.banner-arches i:nth-child(2) { height: 176px; }
-.banner-arches i:nth-child(3) { height: 144px; }
+.sources-note { margin-block: 24px 12px; max-width: 60ch; color: var(--v-muted); }
 
 .pilot {
   background: var(--color-surface); border: 1px solid var(--color-divider); border-radius: var(--radius-lg);
@@ -571,7 +565,7 @@ html[data-density="summary"] .density-switch button[data-value="summary"] { back
 .page-head .grow { flex: 1; min-width: 240px; display: flex; flex-direction: column; gap: 6px; }
 .list-row { display: flex; gap: 12px; align-items: flex-start; padding: 12px 0; border-bottom: 1px solid var(--color-divider); }
 .dot-accent { width: 8px; height: 8px; border-radius: 50%; background: var(--color-accent); margin-top: 8px; flex: none; }
-.preview-col { flex: 0 1 400px; max-width: 100%; display: flex; flex-direction: column; gap: 8px; position: sticky; top: 16px; }
+.preview-col { flex: 0 1 400px; max-width: 100%; display: flex; flex-direction: column; gap: 8px; position: sticky; top: 76px; }
 .preview-frame { width: 100%; height: 720px; display: flex; }
 .check-row { display: flex; align-items: center; gap: 12px; min-height: 44px; border-bottom: 1px solid var(--color-divider); cursor: pointer; font-size: 0.9375rem; }
 .auth-wrap { min-height: calc(100vh - 60px); display: grid; place-items: center; padding: 24px; }
@@ -830,12 +824,13 @@ p, li, dt, dd, summary, label, figcaption, a, .lbl, .small-label, .small-note { 
   .navigation { gap: 14px; }
 }
 @media (max-width: 900px) {
+  .site-header { max-height: 100dvh; overflow-y: auto; }
   .menu-toggle { display: inline-flex; margin-left: auto; }
   .header-inner { position: relative; flex-wrap: wrap; min-height: 60px; }
   .header-inner > .brand-link { margin-right: auto; }
   .navigation { display: none; width: 100%; order: 4; margin: 0; padding-bottom: 16px; }
   .navigation.is-open { display: flex; flex-wrap: wrap; gap: 4px 20px; }
-  .navigation .nav-login { width: 100%; margin-top: 8px; padding-left: 0; border-left: 0; border-top: 1px solid var(--color-divider); }
+  .navigation .nav-button { width: 100%; }
   .navigation a { white-space: normal; }
   .guide-layout, .workspace-layout { grid-template-columns: minmax(0, 1fr); gap: 20px; }
   .guide-sidebar ol { display: flex; overflow: auto; gap: 8px; padding-bottom: 4px; }
@@ -851,8 +846,6 @@ p, li, dt, dd, summary, label, figcaption, a, .lbl, .small-label, .small-note { 
   .hero { padding-top: 40px; padding-bottom: 32px; gap: 32px; }
   .hero-visual { width: min(470px, 100%); margin-inline: auto; padding: 8px; }
   .approach-section { gap: 24px; }
-  .org-banner { padding: 28px 24px; margin-bottom: 48px; gap: 0; }
-  .banner-arches { display: none; }
   .footer-top { flex-direction: column; gap: 8px; }
   .footer-bottom { flex-direction: column; align-items: flex-start; }
   .page-heading { padding-top: 40px; padding-bottom: 20px; }
