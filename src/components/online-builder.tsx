@@ -64,7 +64,7 @@ export function OnlineBuilder({locale,org,initial,persistedZoneIds,missingTransl
           <label className="form-field wide">{t.location}<input name="location-name" required maxLength={160} value={draft.name} onChange={e=>field('name',e.target.value)}/></label>
           <label className="form-field wide">{t.city}<input required maxLength={160} value={draft.city} onChange={e=>field('city',e.target.value)}/></label>
           <label className="form-field wide">{t.address}<input maxLength={500} value={draft.address} onChange={e=>field('address',e.target.value)}/></label>
-          <ChoiceGroup label={t.kind} value={draft.placeType} onChange={value=>field('placeType',value as PlaceDraft['placeType'])} options={placeTypes.map((kind,i)=>({value:kind,label:kind==='other' ? t.kindOther : o.types[i]}))}/>
+          <ChoiceGroup className="wide" label={t.kind} value={draft.placeType} onChange={value=>field('placeType',value as PlaceDraft['placeType'])} options={placeTypes.map((kind,i)=>({value:kind,label:kind==='other' ? t.kindOther : o.types[i]}))}/>
           <div className="form-field wide"><label htmlFor="online-description">{t.summary}</label><textarea id="online-description" rows={2} maxLength={2000} value={draft.description} onChange={e=>field('description',e.target.value)}/></div>
           <div className="form-field wide"><label htmlFor="online-arrivalInfo">{t.arrival}</label><textarea id="online-arrivalInfo" rows={3} maxLength={2000} value={draft.arrivalInfo} onChange={e=>field('arrivalInfo',e.target.value)}/></div>
         </div>
