@@ -126,7 +126,7 @@ export function OnlineBuilder({locale,org,initial,persistedZoneIds,missingTransl
           <div id={`online-zone-body-${zone.id}`} className="zone-body" data-zone-body={zone.id} hidden={!open}>
           <div className="button-row zone-order"><button type="button" className="text-button" disabled={disabled || draft.zones.length===1} onClick={()=>change(current=>({...current,zones:current.zones.filter(z=>z.id!==zone.id)}))} aria-label={`${t.removeZone}: ${zone.title || index+1}`}>{t.removeZone}</button></div>
           <div className="form-grid">
-            <label className="form-field wide">{common.zoneName}<input required maxLength={160} value={zone.title} onChange={e=>zoneField(index,z=>({...z,title:e.target.value}))}/></label>
+            <label className="form-field wide">{t.stepName}<input required maxLength={160} value={zone.title} onChange={e=>zoneField(index,z=>({...z,title:e.target.value}))}/></label>
             <div className="form-field wide"><label htmlFor={`online-description-${zone.id}`}>{common.description}</label><textarea id={`online-description-${zone.id}`} required rows={3} maxLength={2000} value={zone.description} onChange={e=>zoneField(index,z=>({...z,description:e.target.value}))}/></div>
           </div>
           {!zone.hidden.includes('photo') && <OnlinePhotoEditor zone={zone} placeId={draft.id} locale={locale} persisted={persisted.has(zone.id)} disabled={disabled} onBusy={busy=>photoBusy(zone.id,busy)} onChange={(photo?:OnlinePhoto)=>zoneField(index,z=>({...z,photo}))}

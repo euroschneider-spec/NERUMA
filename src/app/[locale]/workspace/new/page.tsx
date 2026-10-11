@@ -6,7 +6,11 @@ import { stepFieldsReady } from '@/lib/verification-server';
 import { OnlineBuilder } from '@/components/online-builder';
 
 export const dynamic='force-dynamic';
-export const metadata={title:'Create a location',robots:{index:false,follow:false}};
+// The browser tab speaks the page's language too.
+export async function generateMetadata({params}:{params:Promise<{locale:string}>}) {
+  const {locale}=await params;const t=getWorkspaceCopy(isLocale(locale) ? locale : 'en');
+  return {title:t.newPlace,robots:{index:false,follow:false}};
+}
 export default async function NewPlace({params,searchParams}:{params:Promise<{locale:string}>;searchParams:Promise<{org?:string}>}) {
   const {locale}=await params;if(!isLocale(locale)) notFound();
   const t=getWorkspaceCopy(locale);const context=await workspaceSession(locale);const {org:chosen}=await searchParams;

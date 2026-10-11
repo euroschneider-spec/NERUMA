@@ -972,6 +972,7 @@ p, li, dt, dd, summary, label, figcaption, a, .lbl, .small-label, .small-note { 
 .app-main { max-width: 1100px; margin: 0 auto; padding: 40px 40px 72px; }
 .app-heading { display: flex; flex-wrap: wrap; align-items: flex-start; justify-content: space-between; gap: 16px; margin-bottom: 32px; padding-bottom: 20px; border-bottom: 1px solid var(--color-divider); }
 .app-heading h1 { font-size: clamp(1.75rem, 3vw, 2.25rem); margin-bottom: 4px; }
+.app-main section > h2 { font-size: 1.25rem; margin-bottom: 12px; }
 .app-heading .lead { margin: 0; color: var(--v-muted); }
 .location-cards { list-style: none; padding: 0; margin: 16px 0 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 320px), 1fr)); gap: 16px; }
 .location-card { display: flex; flex-direction: column; gap: 8px; padding: 20px; background: var(--color-surface); border: 1px solid var(--color-divider); border-radius: var(--radius-lg); }
@@ -1052,7 +1053,9 @@ p, li, dt, dd, summary, label, figcaption, a, .lbl, .small-label, .small-note { 
 .remove-field { display: inline-flex; align-items: center; justify-content: center; width: 24px; height: 24px; min-width: 24px; min-height: 24px; padding: 0; margin-left: auto; border: 1px solid var(--color-divider); border-radius: 50%; background: transparent; color: var(--v-muted); cursor: pointer; }
 .remove-field:hover:not(:disabled) { color: var(--color-text); border-color: var(--color-accent); }
 .remove-field:disabled { opacity: 0.45; cursor: not-allowed; }
-.photo-editor > legend.label-row { display: flex; gap: 10px; margin-block: 0; }
+/* The photo's × sits on the frame's top edge, at the right, like the × of every other field. */
+.photo-editor { position: relative; }
+.photo-remove { position: absolute; top: -12px; right: 16px; padding-inline: 4px; background: var(--color-surface); }
 .builder-zone .label-row > label { flex: 1; min-width: 0; }
 /* The × is taller than the label text: let its row take that height so it never touches the box above. */
 .builder-zone .form-field > .label-row { margin-block: 0; }

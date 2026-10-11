@@ -8,7 +8,11 @@ import { getWorkspaceCopy, photoUrl, sensoryChannels, visibleZone, type OwnField
 import { loadPlace, workspaceConfigured, workspaceSession } from '@/lib/workspace-server';
 
 export const dynamic='force-dynamic';
-export const metadata={title:'Private organisation draft preview',robots:{index:false,follow:false}};
+// The browser tab speaks the page's language too.
+export async function generateMetadata({params}:{params:Promise<{locale:string}>}) {
+  const {locale}=await params;const t=getWorkspaceCopy(isLocale(locale) ? locale : 'en');
+  return {title:t.draft,robots:{index:false,follow:false}};
+}
 export default async function DraftPreview({params}:{params:Promise<{locale:string;id:string}>}) {
   const {locale,id}=await params;if(!isLocale(locale)) notFound();const t=getWorkspaceCopy(locale);const common=getCopy(locale);
   const context=await workspaceSession(locale);if(!workspaceConfigured()) notFound();

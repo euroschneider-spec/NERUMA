@@ -35,7 +35,7 @@ export function OnlinePhotoEditor({zone,placeId,locale,persisted,disabled,onChan
     } finally {if(mounted.current){setBusy(false);onBusy(false);}}
   }
   return <fieldset className="photo-editor" disabled={disabled || busy}>
-    <legend className="label-row">{o.photo}{remove}</legend>
+    <legend>{t.fieldPhoto}</legend>{remove && <span className="photo-remove">{remove}</span>}
     <label className="file-pick">
       <input id={`online-photo-${zone.id}`} className="sr-only" type="file" accept="image/jpeg,image/png,image/webp" disabled={!persisted || disabled || busy}
         aria-describedby={`online-photo-hint-${zone.id}`} onChange={event=>{const file=event.target.files?.[0];event.target.value='';if(file) void upload(file);}}/>
