@@ -59,7 +59,7 @@ test('one control docks to the left screen edge while the page scrolls and reflo
     const after=await panel.boundingBox();expect(after!.x).toBeCloseTo(before!.x,0);expect(after!.y).toBeCloseTo(before!.y,0);
     const triggerAfter=await trigger.boundingBox();expect(triggerAfter!.x).toBe(0);expect(triggerAfter!.y).toBeCloseTo(tb!.y,0);await expect(panel).toBeVisible();
     await page.evaluate(()=>window.scrollTo({top:0,behavior:'instant'}));
-    await page.screenshot({path:route==='/ro'?'docs/media-controls-preview.png':'docs/audio-guide-preview.png',fullPage:true});
+    await page.screenshot({path:route==='/ro'?'docs/verification/screenshots/media-controls-preview.png':'docs/verification/screenshots/audio-guide-preview.png',fullPage:true});
     await page.setViewportSize({width:320,height:900});await page.evaluate(()=>document.documentElement.style.fontSize='32px');
     await expect.poll(async()=>panel.evaluate(node=>{const r=node.getBoundingClientRect();return r.left>=0 && r.right<=window.innerWidth && r.top>=0 && r.bottom<=window.innerHeight && node.scrollWidth<=node.clientWidth;})).toBe(true);
     await expect.poll(async()=> (await trigger.boundingBox())!.x).toBe(0);

@@ -54,10 +54,10 @@ test('text guide uses the saved local draft and retains the current step when sw
 });
 test('reading controls are visible before the footer and screenshots document the new views',async({page})=>{
   await page.setViewportSize({width:1440,height:1000});await page.goto('/ro');await page.locator('.floating-reading').click();
-  await page.screenshot({path:'docs/reading-panel-preview.png'});await page.keyboard.press('Escape');
+  await page.screenshot({path:'docs/verification/screenshots/reading-panel-preview.png'});await page.keyboard.press('Escape');
   await page.goto('/ro/example-guide');await page.getByRole('button',{name:copy.ro.options,exact:true}).click();await page.getByRole('button',{name:copy.ro.full,exact:true}).click();
   await page.setViewportSize({width:390,height:844});expect(await page.evaluate(()=>document.documentElement.scrollWidth<=window.innerWidth)).toBe(true);
-  await page.screenshot({path:'docs/text-guide-preview.png',fullPage:true});
+  await page.screenshot({path:'docs/verification/screenshots/text-guide-preview.png',fullPage:true});
 });
 
 test('popup can be moved by drag, keyboard and single-click controls, with viewport bounds and reset',async({page})=>{

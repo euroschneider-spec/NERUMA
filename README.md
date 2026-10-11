@@ -55,7 +55,7 @@ Work is confined to the dedicated VIANORAE directory, `euroschneider-spec/Vianor
 
 Branch `foundation-v0.1` contains the complete application; remote `main` preserves the owner's initial README until review. The dedicated Supabase URL/ref/publishable key and workspace flag are configured for Production and this branch's Preview. The owner installed the first four migrations manually; the fifth verification migration and initial platform-admin bootstrap require the supplied additive SQL in the dedicated VIANORAE SQL Editor because management API access still refuses this project.
 
-Read [the organisation-flow update](docs/ORGANISATION-FLOW.md), [the handoff](docs/HANDOFF.ro.md), [architecture](docs/ARCHITECTURE.md), [database security](docs/DATABASE.md), [verification](docs/VERIFICATION.md), and [next MVP phase](docs/NEXT-STEPS.md).
+Read [the organisation-flow update](docs/architecture/ORGANISATION-FLOW.md), [architecture](docs/architecture/ARCHITECTURE.md), [database security](docs/architecture/DATABASE.md), [verification](docs/verification/VERIFICATION.md), and [next MVP phase](docs/planning/NEXT-STEPS.md).
 
 
 ## Recovery release — 8 October 2026
@@ -65,7 +65,3 @@ environment variable names and browser persistence keys remain unchanged to pres
 The target public address is https://neruma.lignorae.com; domain activation is a separate
 release step, not implied by this commit. Supabase default email delivery remains in use;
 the templates in this repository are inactive examples, not SMTP configuration.
-
-Private mandate evidence and the account feedback changes were recovered from 27 complete
-file payloads in the interrupted chat, compared with commit 318e968, and tested again.
-See docs/RECOVERY-2026-10-08.md for current verification results and release prerequisites.

@@ -1,6 +1,6 @@
 # Project rules for AI agents
 
-Read `AGENTS.md` (Next.js 16 differs from older versions) and `docs/TESTING.md` (which tests to run)
+Read `AGENTS.md` (Next.js 16 differs from older versions) and `docs/guides/TESTING.md` (which tests to run)
 first. `GOTCHA.md` lists mistakes already made here; don't repeat them.
 
 ## Prefer reuse over new code
@@ -22,7 +22,7 @@ When you duplicate logic that already exists in two places, say so rather than a
 
 - Input validation, `getUser()` / approval / role checks, and fail-closed behaviour on server paths.
 - Accessibility: labels, focus handling, text alternatives, contrast, reduced motion. WCAG 2.2 AA is
-  the target (`docs/ACCESSIBILITY.md`).
+  the target (`docs/guides/ACCESSIBILITY.md`).
 - All three languages (EN/RO/DE): every user-facing string goes through the copy dictionaries.
 - Tests for behaviour you change. Keep unit tests in `tests/unit/` and e2e in `tests/*.spec.ts`.
 
@@ -33,6 +33,22 @@ When you duplicate logic that already exists in two places, say so rather than a
   some older files use.
 - The displayed brand is NERUMA; VIANORAE is the repository/infrastructure name (see README). Don't
   introduce a third name.
+
+## Before you commit or open a pull request
+
+- Run `npm run typecheck && npm run lint && npm run test:unit`, then the matching browser specs from
+  `docs/guides/TESTING.md`. Before a pull request also run `npm run test:db` and `npm run test:workspace`,
+  because CI runs both.
+- `npm run test:workspace` leaves a build with fictitious auth settings in `.next`. Run `npm run build`
+  before any Playwright spec that follows it.
+- When you rename a class, id, route or visible label, search `src tests scripts` for the old name.
+  The workspace suite in `scripts/` finds elements by those names too.
+- The tests rewrite the images in `docs/verification/screenshots/`. Check `git status` for `.png`
+  changes and restore them with `git checkout -- docs/verification/screenshots` unless the screenshots
+  were meant to change.
+- Never merge while a CI check is red, even if `main` was already red. Fix it in the same pull request
+  and say so.
+- Add a `GOTCHA.md` entry for any mistake that cost real time.
 
 ## Working rules
 
