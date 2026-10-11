@@ -2,7 +2,8 @@
 
 Findings from the design review of 2026-10-11, checked at 320, 360, 390, 430, 768 and 1280px.
 Pixel heights are from a 390px-wide phone. Work top to bottom: sections 1 and 2 decide where
-content lives, so do them before trimming copy.
+content lives, so do them before trimming copy. The reasons behind these choices are in
+`DECISIONS.md`; where a task here disagrees with it, `DECISIONS.md` wins.
 
 ## Done
 
@@ -19,8 +20,9 @@ Decision needed before starting.
 
 - [ ] Visitor navigation: *How it works · Explore places · Example guide*, plus one *For organisations*
   link on the right.
-- [ ] Move *Methodology* out of the visitor navigation, into the organisations area. It is written for
-  experts (dB(A), lux, PAS 6463, "platform plan v0.1", "Working status").
+- [ ] Keep *Methodology* for visitors too, but link it from *How it works* ("How we decide →") instead of
+  the main navigation, and rewrite the top in plain language. It is written for experts (dB(A), lux,
+  PAS 6463, "platform plan v0.1", "Working status"); keep that detail further down. See `DECISIONS.md`.
 - [ ] Footer: move *Request organisation access*, *Organisation sign in* and *Demo workspace* into the
   organisations area. Keep a single *For organisations* link.
 - [ ] Home: remove the hero's *For your organisation* button and move the organisations banner to the

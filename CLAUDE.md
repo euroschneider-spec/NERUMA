@@ -1,7 +1,19 @@
 # Project rules for AI agents
 
-Read `AGENTS.md` (Next.js 16 differs from older versions) and `docs/guides/TESTING.md` (which tests to run)
-first. `GOTCHA.md` lists mistakes already made here; don't repeat them.
+These files are loaded into every conversation, so you start with them already read:
+`AGENTS.md` (Next.js 16 differs from older versions), `GOTCHA.md` (mistakes already made here; don't
+repeat them) and `docs/guides/TESTING.md` (which tests to run).
+
+@AGENTS.md
+@GOTCHA.md
+@docs/guides/TESTING.md
+
+## Briefs and decisions
+
+Non-trivial work starts from a brief in `docs/briefs/` (template: `docs/briefs/TEMPLATE.md`; the `/brief`
+command writes one). Read the brief before building, and check "Done when" before saying it is finished.
+`docs/planning/DECISIONS.md` records why things are the way they are; don't re-open an entry without the
+owner saying what changed. Write a new entry when the owner makes a deliberate choice.
 
 ## Prefer reuse over new code
 
