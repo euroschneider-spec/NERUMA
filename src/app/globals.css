@@ -718,7 +718,7 @@ html[data-density="summary"] .density-switch button[data-value="summary"] { back
 .workspace-location h2 { font-size: 1.25rem; margin-top: 0; }
 .builder-zone { margin-block: 24px; background: var(--color-surface); padding: 24px; border: 1px solid var(--color-divider); border-radius: var(--radius-lg); }
 .builder-zone h2 { font-size: 1.25rem; }
-.builder-zone > .form-field, .builder-zone > .commitment { margin-top: 16px; }
+.zone-body > .form-field, .zone-body > .commitment { margin-top: 16px; }
 .sensory-fields { margin-block: 20px; }
 .online-fields { border: 0; padding: 0; margin: 0; min-width: 0; }
 .zone-order { margin-bottom: 20px; }
@@ -1054,6 +1054,9 @@ p, li, dt, dd, summary, label, figcaption, a, .lbl, .small-label, .small-note { 
 .remove-field:disabled { opacity: 0.45; cursor: not-allowed; }
 .photo-editor > legend.label-row { display: flex; gap: 10px; margin-block: 0; }
 .builder-zone .label-row > label { flex: 1; min-width: 0; }
+/* The × is taller than the label text: let its row take that height so it never touches the box above. */
+.builder-zone .form-field > .label-row { margin-block: 0; }
+.builder-zone .commitment.label-row { margin-block: 16px 0; }
 .own-field { margin-top: 16px; padding: 16px; border: 1px solid var(--color-divider); border-radius: var(--radius-lg); }
 .own-field-head { margin-bottom: 12px; }
 .add-field { display: flex; flex-direction: column; gap: 8px; margin-top: 20px; padding-top: 16px; border-top: 1px dashed var(--color-divider); }
