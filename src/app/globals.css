@@ -807,8 +807,6 @@ html[data-density="summary"] .density-switch button[data-value="summary"] { back
 .reading-dialog-heading .panel-drag-handle { margin-left: auto; }
 .reading-dialog p { margin: 0; font-size: 0.875rem; color: var(--v-muted); }
 .reading-dialog .reading-sound-note { margin: 0; padding: 12px; }
-.reading-dialog .checkbox-label { align-items: flex-start; }
-.reading-dialog input[type="checkbox"] { flex-shrink: 0; margin-top: 4px; }
 .reading-dialog .form-field { min-width: 0; }
 .reading-dialog label { overflow-wrap: anywhere; }
 .panel-drag-handle { cursor: grab; touch-action: none; }
@@ -989,10 +987,10 @@ p, li, dt, dd, summary, label, figcaption, a, .lbl, .small-label, .small-note { 
 }
 
 /* The photo picker: our own button and status line instead of the browser's "No file chosen". */
-.file-pick { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; padding: 12px 16px; border: 1px dashed var(--color-divider); border-radius: var(--radius-lg); cursor: pointer; }
+.file-pick { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; min-height: 120px; padding: 20px 16px; text-align: center; border: 1px dashed var(--color-divider); border-radius: var(--radius-lg); cursor: pointer; }
 .file-pick:hover { border-color: var(--color-accent); }
-.file-pick:has(input:disabled) { cursor: not-allowed; }
-.file-pick-button { cursor: inherit; }
-.file-pick:has(input:disabled) .file-pick-button { opacity: 0.45; cursor: not-allowed; }
+.file-pick:has(input:disabled) { cursor: not-allowed; opacity: 0.6; }
 .file-pick:has(input:focus-visible) { outline: 2px solid var(--color-accent); outline-offset: 2px; }
+.file-pick-action { display: inline-flex; align-items: center; gap: 8px; font-weight: 600; }
+.photo-editor > .label-row { justify-content: center; margin-block: 12px 4px; }
 .file-pick-status { color: var(--v-muted); font-size: 0.9375rem; }

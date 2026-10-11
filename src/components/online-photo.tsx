@@ -1,6 +1,7 @@
 'use client';
 
 import Image from 'next/image';
+import { Upload } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import type { Locale } from '@/lib/i18n';
 import { getOrganisationCopy } from '@/lib/organisation-copy';
@@ -39,7 +40,7 @@ export function OnlinePhotoEditor({zone,placeId,locale,persisted,disabled,onChan
     <label className="file-pick">
       <input className="sr-only" type="file" accept="image/jpeg,image/png,image/webp" disabled={!persisted || disabled || busy}
         aria-describedby={`online-photo-hint-${zone.id}`} onChange={event=>{const file=event.target.files?.[0];event.target.value='';if(file) void upload(file);}}/>
-      <span className="button button-outline button-small file-pick-button">{t.choosePhoto}</span>
+      <span className="file-pick-action"><Upload size={18} aria-hidden="true" />{t.choosePhoto}</span>
       <span className="file-pick-status">{zone.photo ? t.photoAttached : t.noPhoto}</span>
     </label>
     <p id={`online-photo-hint-${zone.id}`} className="label-row">{t.photoHint}<InfoTip text={t.photoPrivacy} label={t.moreInfo} /></p>
