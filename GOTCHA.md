@@ -116,3 +116,21 @@ otherwise tiny change).
 
 **Takeaway**: before committing, check `git status` for `.png` changes and restore them
 (`git checkout -- docs/verification/screenshots`) unless the screenshots were meant to change.
+
+## 2026-10-11 — merged a pull request with one check red
+
+Pull request #16 showed two `checks` runs. One failed on "reading preferences persist and contrast
+themes pass automated checks"; the other passed. I ran `gh pr checks 16 | grep -c fail`, saw `1`, and
+merged in the same command anyway. `main`'s own run afterwards passed, so nothing was broken, but the rule
+in `CLAUDE.md` (never merge while a check is red) was broken.
+
+The failure was a flake, not a real contrast problem: `a, button { transition: background .15s, color .15s }`
+fades colours, and the test switched to the high-contrast theme and ran axe straight away, so axe sometimes
+read half-faded colours (light grey on blue) from the filled buttons. Passing and failing runs on the same
+code is the sign of it.
+
+**Fix**: the test now emulates reduced motion, which switches the fade off.
+
+**Takeaway**: never put the check and the merge in one command. Look at the check output first, and a red
+run means stop, even when another run is green. When two runs of the same code disagree, suspect timing
+(animations, transitions) before suspecting the change.
