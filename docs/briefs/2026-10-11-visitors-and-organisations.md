@@ -40,6 +40,14 @@ Checked by looking, on a phone first.
 - Register and Builder pages, apart from moving organisation links behind the single *For organisations*
   link.
 
+## Progress
+- Checks 1 and 2 done (PR #13). Check 3 half done: *Request access* and *Sign in* are at the top of the
+  organisations page (PR #14); the jump links are not yet.
+- Check 4 (the Preview strip) is **pinned** by the owner: talk about it after the organisation side.
+  Done towards it: the "Registration is not active yet" line is gone from the Register and Login forms (PR #15).
+- Also done along the way: header stays in view (#13), top-bar controls one size (#16), Register page
+  balanced and its step list removed (#17).
+
 ## Decisions
 Choices made while building, with the reason. Copy the lasting ones into `docs/planning/DECISIONS.md`.
 
