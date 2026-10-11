@@ -95,8 +95,9 @@ been discussed one by one.
 Owner, 2026-10-11. Replaces "dark is the default" (the design still treats dark as the fallback when a device
 can't say). A visitor who has not chosen gets light or dark from their device and follows it live; picking a
 theme in the reading panel (first choice there: *Match my device*) or with the header button keeps it from then on.
-Storing a setting such as text size does not count as choosing a theme. Visitors who changed any reading setting
-before this change have "dark" stored from the old code, which can't be told from a choice, so they keep dark.
+Storing a setting such as text size does not count as choosing a theme. The old code saved a theme with every
+setting, which can't be told from a choice, so themes saved before this change are reset once to follow the device
+(a `themeV` marker in the stored settings; fine while there are no real visitors, and every later choice is kept).
 High contrast stays a deliberate choice: following `prefers-contrast` was considered and left out for now.
 The language still comes from the browser later (`TECH-TASKS.md`, section 2).
 

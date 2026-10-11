@@ -14,6 +14,10 @@ export type Preferences={size:Size;theme:ThemeChoice;spacing:boolean;width:Width
 // Until a reader chooses, the theme follows their device; the stored choice is reapplied before paint in the locale layout.
 export const defaults:Preferences={size:'normal',theme:'system',spacing:false,width:'default',font:'default',density:'full',tone:'cool'};
 export const storageKey='vianorae:reading:v1';
+// Versions before this one saved the theme with every setting, so a stored theme can't be told from a choice.
+// Only a theme saved with this marker counts as chosen; older ones follow the device again, once. Safe while no
+// real visitors exist; bump it only for a reason like that.
+export const themeVersion=2;
 
 const sizes:Size[]=['normal','large','larger'];
 const themes:ThemeChoice[]=['system','light','dark','contrast'];
@@ -29,10 +33,10 @@ function one<T extends string>(value:unknown,allowed:T[],fallback:T):T {
 }
 
 export function fromStored(raw:unknown):Preferences {
-  const v=(raw||{}) as Partial<Record<keyof Preferences,unknown>>;
+  const v=(raw||{}) as Partial<Record<keyof Preferences|'themeV',unknown>>;
   return {
     size:one(v.size,sizes,defaults.size),
-    theme:one(v.theme,themes,defaults.theme),
+    theme:v.themeV===themeVersion ? one(v.theme,themes,defaults.theme) : defaults.theme,
     spacing:typeof v.spacing==='boolean'?v.spacing:defaults.spacing,
     width:one(v.width,widths,defaults.width),
     font:one(v.font,fonts,defaults.font),
@@ -61,7 +65,7 @@ export function applyPreferences(p:Preferences) {
 
 export function savePreferences(p:Preferences) {
   applyPreferences(p);
-  try { localStorage.setItem(storageKey,JSON.stringify(p)); } catch { /* Settings still work for this visit. */ }
+  try { localStorage.setItem(storageKey,JSON.stringify({...p,themeV:themeVersion})); } catch { /* Settings still work for this visit. */ }
 }
 
 /** Change one setting, leaving every other choice the reader made untouched. */

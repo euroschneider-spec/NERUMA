@@ -60,9 +60,19 @@ test.describe('a visitor who chose keeps the choice', () => {
     await expect(page.locator('html')).toHaveAttribute('data-theme', 'light');
   });
 
-  test('a theme stored before this change is kept', async ({ page }) => {
+  test('a theme saved by the older version follows the device again, once', async ({ page }) => {
     await page.emulateMedia({ colorScheme: 'light' });
-    await page.addInitScript((k) => localStorage.setItem(k, JSON.stringify({ theme: 'dark', size: 'normal' })), key);
+    await page.addInitScript((k) => { if (!localStorage.getItem(k)) localStorage.setItem(k, JSON.stringify({ theme: 'dark', size: 'larger' })); }, key);
+    await page.goto('/en');
+    await expect(page.locator('html')).toHaveAttribute('data-theme', 'light');
+    await expect(page.locator('html')).toHaveAttribute('data-text-size', 'larger');
+    await page.locator('.floating-reading').click();
+    await expect(page.getByLabel('Appearance', { exact: true })).toHaveValue('system');
+  });
+
+  test('a theme saved by this version is kept', async ({ page }) => {
+    await page.emulateMedia({ colorScheme: 'light' });
+    await page.addInitScript((k) => localStorage.setItem(k, JSON.stringify({ theme: 'dark', themeV: 2 })), key);
     await page.goto('/en');
     await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
   });
