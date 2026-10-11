@@ -7,9 +7,9 @@ import { getCopy, localeNames, type Locale } from '@/lib/i18n';
 import { getOrganisationCopy } from '@/lib/organisation-copy';
 import { getWorkspaceCopy, newZone, parsePlaceDraft, placeTypes, sensoryChannels, sensoryLevels, type PlaceDraft, type OnlineZone, type OnlinePhoto } from '@/lib/workspace';
 import { savePlaceDraft } from '@/app/workspace/actions';
-import { ResponsibilityNotice } from './responsibility-notice';
 import { OnlinePhotoEditor } from './online-photo';
 import { ChoiceGroup } from './choice-group';
+import { InfoTip } from './info-tip';
 
 export function OnlineBuilder({locale,org,initial,persistedZoneIds,missingTranslation=false}: {
   locale:Locale;org:string;initial:PlaceDraft;persistedZoneIds:string[];missingTranslation?:boolean;
@@ -49,19 +49,21 @@ export function OnlineBuilder({locale,org,initial,persistedZoneIds,missingTransl
     finally {setPending(false);}
   }
   return <>
-    <p className="eyebrow">{t.language}: {localeNames[locale]}</p>
-    <p className="notice">{t.boundary}</p><p>{t.shared}</p>
+    <p className="editor-status">
+      <span className="status-badge">{t.statusDraft}</span>
+      <span>{t.draftHint}</span>
+      <span className="editor-language">{t.editingIn} {localeNames[locale]}<InfoTip text={t.shared} label={t.moreInfo} /></span>
+    </p>
     {missingTranslation && <p className="notice">{t.missing}</p>}
-    <ResponsibilityNotice locale={locale} compact/>
     <form onSubmit={save} aria-label={t.edit}>
       <fieldset className="online-fields" disabled={disabled}>
         <legend>{t.edit}</legend>
         <div className="form-grid">
           <label className="form-field wide">{t.location}<input name="location-name" required maxLength={160} value={draft.name} onChange={e=>field('name',e.target.value)}/></label>
           <label className="form-field">{t.city}<input required maxLength={160} value={draft.city} onChange={e=>field('city',e.target.value)}/></label>
-          <label className="form-field">{t.country}<input maxLength={2} pattern="[A-Z]{2}|^$" value={draft.countryCode} onChange={e=>field('countryCode',e.target.value.toUpperCase())} aria-describedby="country-code-hint"/><small id="country-code-hint">{t.countryHint}</small></label>
+          <div className="form-field"><span className="label-row"><label htmlFor="online-country">{t.country}</label><InfoTip id="country-code-hint" text={t.countryHint} label={t.moreInfo} /></span><input id="online-country" maxLength={2} pattern="[A-Z]{2}|^$" value={draft.countryCode} onChange={e=>field('countryCode',e.target.value.toUpperCase())} aria-describedby="country-code-hint"/></div>
           <label className="form-field wide">{t.address}<input maxLength={500} value={draft.address} onChange={e=>field('address',e.target.value)}/></label>
-          <ChoiceGroup label={t.kind} value={draft.placeType} onChange={value=>field('placeType',value as PlaceDraft['placeType'])} options={placeTypes.map((kind,i)=>({value:kind,label:o.types[i]}))}/>
+          <ChoiceGroup label={t.kind} value={draft.placeType} onChange={value=>field('placeType',value as PlaceDraft['placeType'])} options={placeTypes.map((kind,i)=>({value:kind,label:kind==='other' ? t.kindOther : o.types[i]}))}/>
           <div className="form-field wide"><label htmlFor="online-description">{t.summary}</label><textarea id="online-description" rows={2} maxLength={2000} value={draft.description} onChange={e=>field('description',e.target.value)}/></div>
           <div className="form-field wide"><label htmlFor="online-arrivalInfo">{t.arrival}</label><textarea id="online-arrivalInfo" rows={3} maxLength={2000} value={draft.arrivalInfo} onChange={e=>field('arrivalInfo',e.target.value)}/></div>
         </div>
@@ -89,6 +91,6 @@ export function OnlineBuilder({locale,org,initial,persistedZoneIds,missingTransl
     </form>
     {error==='conflict' && <a className="quiet-link" href={`/${locale}/workspace/${draft.id}`} target="_blank" rel="noopener noreferrer">{t.reload}</a>}
     {error==='auth' && <Link className="quiet-link" href={`/${locale}/login`}>{t.login}</Link>}
-    <div className="button-row">{draft.revision>0 && <Link className="button button-outline" href={`/${locale}/workspace/${draft.id}/preview`}>{t.preview}</Link>}<Link className="quiet-link" href={`/${locale}/workspace`}>{t.back}</Link></div>
+    <div className="button-row">{draft.revision>0 && <Link className="button button-outline" href={`/${locale}/workspace/${draft.id}/preview`}>{t.preview}</Link>}</div>
   </>;
 }

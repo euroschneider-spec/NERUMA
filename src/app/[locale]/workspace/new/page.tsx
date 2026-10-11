@@ -1,4 +1,3 @@
-import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { isLocale } from '@/lib/i18n';
 import { getWorkspaceCopy, newPlace } from '@/lib/workspace';
@@ -14,6 +13,5 @@ export default async function NewPlace({params,searchParams}:{params:Promise<{lo
   if(chosen && !organisation) notFound();
   return <main id="main-content" className="container"><div className="page-heading"><p className="eyebrow">{organisation?.name || 'NERUMA'}</p><h1>{t.newPlace}</h1></div><div className="content-body">
     {!workspaceConfigured() ? <p className="notice">{t.readyLater}</p> : !organisation ? <p>{t.forbidden}</p> : <OnlineBuilder locale={locale} org={organisation.id} initial={newPlace()} persistedZoneIds={[]}/>}
-    <Link className="quiet-link" href={`/${locale}/workspace`}>{t.back}</Link>
   </div></main>;
 }

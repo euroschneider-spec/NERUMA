@@ -66,6 +66,13 @@ Returning organisations should not scroll to sign in. *Request access* and *Sign
 title of the organisations page, and the menu keeps its single *For organisations* button. *Demo workspace*
 is a quiet link lower down. Checked at 1280px, 390px and 320px in EN, RO and DE.
 
+### The location editor opens quietly
+The long responsibility box, the "private draft" notice and the paragraph about languages are gone from the top of
+the location editor. A single line says **Draft** · who can see it · **Editing in English**, and the language
+explanation is a "?" tooltip. Hints under fields become the same "?" tooltip (the country hint first). The
+responsibility text is shown once at registration and again at publication review, not on every page. Owner's
+wish, 2026-10-11. The location types no longer say "Other organisation": the last choice is "Other".
+
 ### The guide keeps one label: "Museum pre-visit guide"
 There are no customers yet, so the example guide is a stand-in. The "fictional" wording is scaffolding for
 that stage, not a permanent part of the design.

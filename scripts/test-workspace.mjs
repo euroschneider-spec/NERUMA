@@ -53,6 +53,19 @@ try {
     assert.ok(tab && signOut && (tab.y+tab.height<=signOut.y || signOut.y+signOut.height<=tab.y || tab.x+tab.width<=signOut.x || signOut.x+signOut.width<=tab.x),'the reading tab must not cover Sign out');
     await page.getByRole('link',{name:'Create a location',exact:true}).click();
   });
+  await check('the location editor opens quietly: a status line, no responsibility box, hints as tooltips',async()=>{
+    await expect(page.locator('.responsibility-notice')).toHaveCount(0);
+    await expect(page.locator('.editor-status').getByText('Draft',{exact:true})).toBeVisible();
+    await expect(page.locator('.editor-status')).toContainText('Editing in English');
+    const hint='Two letters, for example RO or DE.';
+    const tip=page.locator('.label-row').getByRole('button',{name:'More information',exact:true});
+    const text=page.getByRole('tooltip').filter({hasText:hint});
+    await expect(text).toBeHidden();
+    await tip.hover();await expect(text).toBeVisible();await page.mouse.move(0,0);await expect(text).toBeHidden();
+    await tip.focus();await expect(text).toBeVisible();await page.keyboard.press('Escape');await expect(text).toBeHidden();
+    await expect(page.getByLabel('Country code (optional)',{exact:true})).toHaveAccessibleDescription(hint);
+    await expect(page.getByRole('radiogroup',{name:'Location type',exact:true}).getByText('Other',{exact:true})).toBeVisible();
+  });
   await check('new zone requires initial save before private photo upload',async()=>{
     await expect(page.locator('input[type=file]')).toBeDisabled();
     await page.getByLabel('Location name',{exact:true}).fill('Fixture Gallery');await page.getByLabel('City',{exact:true}).fill('Example city');
@@ -126,7 +139,7 @@ try {
   });
   await check('unsaved navigation can be cancelled',async()=>{
     let seen=false;secondPage.once('dialog',async dialog=>{seen=true;await dialog.dismiss();});
-    await secondPage.getByRole('link',{name:'All locations',exact:true}).click();assert.equal(seen,true);await expect(secondPage).toHaveURL(editUrl);
+    await secondPage.getByRole('complementary').getByRole('link',{name:'Dashboard',exact:true}).click();assert.equal(seen,true);await expect(secondPage).toHaveURL(editUrl);
   });
   const other=await browser.newContext();const otherPage=await other.newPage();await login(otherPage,2);
   await check('another organisation cannot read the place, preview or private photo',async()=>{

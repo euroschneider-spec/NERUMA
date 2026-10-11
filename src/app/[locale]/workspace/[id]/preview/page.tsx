@@ -24,6 +24,6 @@ export default async function DraftPreview({params}:{params:Promise<{locale:stri
         {zone.photo && <><div className="guide-media"><Image unoptimized src={photoUrl(zone.photo.storageKey)} alt={zone.photo.alt || t.photoPreview} width={600} height={400} className="draft-photo"/></div><p className="muted">{zone.photo.rights} · {zone.photo.photographedOn}</p></>}
         <p className="preserve-lines">{zone.description}</p><dl className="draft-sensory">{sensoryChannels.map(channel=><div key={channel}><dt>{common[channel]}</dt><dd>{common[zone.sensory[channel]]}</dd></div>)}</dl>
         {zone.note && <p className="notice preserve-lines">{zone.note}</p>}{zone.next && <p className="preserve-lines">{zone.next}</p>}{zone.optional && <p>{t.optional}</p>}
-      </section>)}<div className="button-row"><Link className="button" href={`/${locale}/workspace/${id}`}>{t.edit}</Link><Link className="quiet-link" href={`/${locale}/workspace`}>{t.back}</Link></div>
+      </section>)}<div className="button-row"><Link className="button" href={`/${locale}/workspace/${id}`}>{t.edit}</Link></div>
     </div></main>;
 }
