@@ -283,6 +283,8 @@ input[type="checkbox"], .check {
 input[type="file"] { max-width: 100%; overflow: hidden; padding: 6px; }
 .form-error { color: var(--color-accent-800); background: var(--color-accent-100); padding: 8px 12px; border-radius: var(--radius-md); font-size: 0.875rem; margin: 0; }
 .checkbox-label { display: flex; align-items: center; gap: 10px; font-size: 0.9375rem; }
+/* Centred on the line box, a checkbox still looks low against lowercase text (the line leaves room for descenders); lift it to the middle of the letters. */
+.checkbox-label input[type="checkbox"] { position: relative; top: -2px; }
 fieldset { min-width: 0; max-width: 100%; border: 1px solid var(--color-divider); border-radius: var(--radius-lg); padding: 20px; }
 legend { padding-inline: var(--space-2); max-width: 100%; font-weight: var(--font-heading-weight); overflow-wrap: anywhere; }
 .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr)); gap: 16px; }
