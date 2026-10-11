@@ -23,7 +23,7 @@ grant all on storage.buckets to service_role;`);
 const migrations=(await readdir('supabase/migrations')).filter(f=>f.endsWith('.sql')).sort();
 assert.equal(new Set(migrations.map(f=>f.split('_')[0])).size,migrations.length,'migration timestamps must be unique');
 for(const file of migrations)await db.exec(await readFile(`supabase/migrations/${file}`,'utf8'));
-await check('all 29 public tables use RLS',async()=>{const result=await db.query("select tablename from pg_tables where schemaname='public' and not rowsecurity");assert.deepEqual(result.rows,[]);assert.equal((await db.query("select count(*)::int n from pg_tables where schemaname='public'")).rows[0].n,29);});
+await check('all 30 public tables use RLS',async()=>{const result=await db.query("select tablename from pg_tables where schemaname='public' and not rowsecurity");assert.deepEqual(result.rows,[]);assert.equal((await db.query("select count(*)::int n from pg_tables where schemaname='public'")).rows[0].n,30);});
 await db.exec(`insert into auth.users values ${[owner,admin,editor,outsider,ownerB,assessor,reviewer,dual].map(x=>`('${x}')`).join(',')};
 insert into public.organizations(id,name,approval_status) values('${orgA}','Demo A','approved'),('${orgB}','Demo B','approved');
 insert into public.organization_members(organization_id,user_id,role) values('${orgA}','${owner}','owner'),('${orgA}','${admin}','admin'),('${orgA}','${editor}','editor'),('${orgB}','${ownerB}','owner'),('${orgA}','${assessor}','assessor'),('${orgA}','${reviewer}','reviewer'),('${orgA}','${dual}','owner'),('${orgB}','${dual}','owner');
@@ -199,10 +199,51 @@ await check('another tenant cannot read or write own fields',async()=>{
 });
 await as(ownerB);
 await check('another tenant cannot read photos or edit online drafts',async()=>{assert.equal((await db.query('select count(*)::int n from storage.objects where bucket_id=\'vianorae-private-photos\'')).rows[0].n,0);await assert.rejects(()=>saveDraft(newOrg,livePlace,8,'en',draft));});
+// Problem reports: owners and admins of an approved organisation report to NERUMA; only the platform administrator closes.
+const stranger=id(77),reportText='The photo upload stops at 90 percent.';
+await db.exec(`reset role;insert into auth.users(id,email) values('${stranger}','stranger@example.test');`);
+const report=async(org,place=null,message=reportText,locale='en')=>(await db.query('select public.submit_problem_report($1,$2,$3,$4) id',[org,place,message,locale])).rows[0].id;
+await as(newOwner);
+let firstReport;
+await check('an owner reports a problem for their organisation, with or without a location',async()=>{
+ firstReport=await report(newOrg,livePlace);await report(newOrg);
+ const rows=(await db.query('select status,reporter_id,reporter_email,message from public.problem_reports')).rows;
+ await db.exec('reset role');const email=(await db.query('select email from auth.users where id=$1',[newOwner])).rows[0].email;await as(newOwner);
+ assert.equal(rows.length,2);assert.ok(rows.every(r=>r.status==='open' && r.reporter_id===newOwner && r.reporter_email===email && r.message===reportText));
+});
+await check('a report rejects bad input, another tenant\'s location and direct writes',async()=>{
+ await assert.rejects(()=>report(newOrg,null,'too short'));await assert.rejects(()=>report(newOrg,null,'x'.repeat(2001)));
+ await assert.rejects(()=>report(newOrg,null,reportText,'fr'));await assert.rejects(()=>report(newOrg,placeB));
+ await assert.rejects(()=>report(orgB));
+ await denied(`insert into public.problem_reports(organization_id,reporter_id,reporter_email,locale,message) values('${newOrg}','${newOwner}','x@example.test','en','${reportText}')`);
+ await denied("update public.problem_reports set status='closed'");await denied('delete from public.problem_reports');
+ await assert.rejects(()=>db.query('select public.close_problem_report($1)',[firstReport]));
+});
+await check('one person can send five reports an hour',async()=>{
+ await report(newOrg);await report(newOrg);await report(newOrg);
+ await assert.rejects(()=>report(newOrg),e=>e.code==='54000');assert.equal(await count('problem_reports'),5);
+});
+await as(ownerB);
+await check('another tenant cannot read, file or close an organisation\'s reports',async()=>{assert.equal(await count('problem_reports'),0);await assert.rejects(()=>report(newOrg));await assert.rejects(()=>db.query('select public.close_problem_report($1)',[firstReport]));});
+await as(editor);
+await check('an editor cannot file a report',async()=>{await assert.rejects(()=>report(orgA));});
+await as(stranger);
+await check('a signed-in user without an organisation cannot read or file reports',async()=>{assert.equal(await count('problem_reports'),0);await assert.rejects(()=>report(newOrg));});
+await as(null,'anon');
+await check('an anonymous visitor cannot read or file reports',async()=>{await denied('select * from public.problem_reports');await assert.rejects(()=>report(newOrg));});
+await as(platformAdmin);
+await check('the platform administrator reads every report and closes one once, but files none',async()=>{
+ assert.equal(await count('problem_reports'),5);await assert.rejects(()=>report(newOrg));
+ await db.query('select public.close_problem_report($1)',[firstReport]);
+ const closed=(await db.query('select status,closed_by from public.problem_reports where id=$1',[firstReport])).rows[0];
+ assert.equal(closed.status,'closed');assert.equal(closed.closed_by,platformAdmin);
+ await assert.rejects(()=>db.query('select public.close_problem_report($1)',[firstReport]));
+});
 await as(platformAdmin);
 await check('suspension immediately blocks member data and private storage with existing identity',async()=>{await review(applicationId,4,'suspended',false,false,'','','Access suspended while the mandate is investigated.');});
 await as(newOwner);
 await check('suspended tenant cannot read or write drafts/photos or reactivate itself',async()=>{assert.equal(await count('places'),0);assert.equal((await db.query('select count(*)::int n from storage.objects where bucket_id=\'vianorae-private-photos\'')).rows[0].n,0);await assert.rejects(()=>saveDraft(newOrg,livePlace,4,'en',draft));await denied("update public.organizations set approval_status='approved'");await assert.rejects(()=>submit());});
+await check('a suspended organisation cannot read or file reports; the platform administrator still reads them',async()=>{assert.equal(await count('problem_reports'),0);await assert.rejects(()=>report(newOrg));await as(platformAdmin);assert.equal(await count('problem_reports'),5);});
 await db.exec('reset role');
 await db.query("update public.organizations set approval_status='suspended' where id=$1",[orgA]);
 await as(assessor);
