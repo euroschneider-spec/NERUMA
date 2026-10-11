@@ -2,19 +2,25 @@
 
 import Image from 'next/image';
 import Link from 'next/link';
-import { ArrowDown, ArrowUp, ChevronDown, GripVertical } from 'lucide-react';
+import { ArrowDown, ArrowUp, ChevronDown, GripVertical, Plus, X } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { getCopy, type Locale } from '@/lib/i18n';
 import { getOrganisationCopy } from '@/lib/organisation-copy';
-import { getWorkspaceCopy, newZone, photoUrl, parsePlaceDraft, placeTypes, sensoryChannels, sensoryLevels, type PlaceDraft, type OnlineZone, type OnlinePhoto } from '@/lib/workspace';
+import { getWorkspaceCopy, MAX_OWN_FIELDS, newOwnField, newZone, ownFieldKinds, photoUrl, yesNoAnswers, type OwnField, type RemovableField, parsePlaceDraft, placeTypes, sensoryChannels, sensoryLevels, type PlaceDraft, type OnlineZone, type OnlinePhoto } from '@/lib/workspace';
 import { savePlaceDraft } from '@/app/workspace/actions';
 import { OnlinePhotoEditor } from './online-photo';
 import { ChoiceGroup } from './choice-group';
 import { PublishButton } from './publish-button';
 
-export function OnlineBuilder({locale,org,initial,persistedZoneIds,missingTranslation=false}: {
-  locale:Locale;org:string;initial:PlaceDraft;persistedZoneIds:string[];missingTranslation?:boolean;
+/** The small × beside a field that hides it from the step (the text is kept). */
+function RemoveField({label,disabled,onClick,enabled=true}:{label:string;disabled:boolean;onClick:()=>void;enabled?:boolean}) {
+  if(!enabled) return null;
+  return <button type="button" className="remove-field" aria-label={label} title={label} disabled={disabled} onClick={onClick}><X size={14} aria-hidden="true"/></button>;
+}
+
+export function OnlineBuilder({locale,org,initial,persistedZoneIds,missingTranslation=false,fieldsEnabled=false}: {
+  locale:Locale;org:string;initial:PlaceDraft;persistedZoneIds:string[];missingTranslation?:boolean;fieldsEnabled?:boolean;
 }) {
   const t=getWorkspaceCopy(locale);const common=getCopy(locale);const o=getOrganisationCopy(locale);const router=useRouter();
   const [draft,setDraft]=useState(initial);const [dirty,setDirty]=useState(false);const [pending,setPending]=useState(false);
@@ -50,6 +56,18 @@ export function OnlineBuilder({locale,org,initial,persistedZoneIds,missingTransl
   function change(update:(current:PlaceDraft)=>PlaceDraft){setDraft(update);setDirty(true);setMessage('');setError(null);}
   function field<K extends keyof Omit<PlaceDraft,'id'|'revision'|'zones'>>(key:K,value:PlaceDraft[K]){change(current=>({...current,[key]:value}));}
   function zoneField(index:number,update:(zone:OnlineZone)=>OnlineZone){change(current=>({...current,zones:current.zones.map((zone,i)=>i===index?update(zone):zone)}));}
+  // Removing a field only hides it; its text stays in the draft and comes back when the field is added again.
+  // Focus moves to the matching "Add a field" choice or into the new field, so keyboard users don't lose their place.
+  function focusLater(id:string){requestAnimationFrame(()=>document.getElementById(id)?.focus());}
+  function hideField(index:number,zoneId:string,name:RemovableField){zoneField(index,z=>({...z,hidden:[...z.hidden,name]}));focusLater(`add-${zoneId}-${name}`);}
+  function showField(index:number,zoneId:string,name:RemovableField){
+    zoneField(index,z=>({...z,hidden:z.hidden.filter(h=>h!==name)}));
+    focusLater(`online-${name}-${zoneId}`);
+  }
+  function addOwnField(index:number,kind:OwnField['kind']){const own=newOwnField(kind);zoneField(index,z=>({...z,fields:[...z.fields,own]}));focusLater(`own-field-${own.id}`);}
+  function removeOwnField(index:number,zoneId:string,id:string){zoneField(index,z=>({...z,fields:z.fields.filter(f=>f.id!==id)}));focusLater(`add-${zoneId}-text`);}
+  function ownField(index:number,fieldIndex:number,update:Partial<OwnField>){zoneField(index,z=>({...z,fields:z.fields.map((f,i)=>i===fieldIndex?{...f,...update}:f)}));}
+  const offeredLabel=(name:RemovableField)=>name==='photo' ? t.fieldPhoto : name==='note' ? common.note : name==='next' ? common.predictability : t.optional;
   function photoBusy(id:string,busy:boolean){setBusyPhotos(current=>{const next=new Set(current);if(busy) next.add(id);else next.delete(id);return next;});}
   async function save(event:React.FormEvent<HTMLFormElement>){
     event.preventDefault();if(disabled) return;
@@ -86,7 +104,8 @@ export function OnlineBuilder({locale,org,initial,persistedZoneIds,missingTransl
         </div>
         {draft.zones.map((zone,index)=>{
           const open=openZones.has(zone.id);
-          const complete=Boolean(zone.title.trim() && zone.description.trim() && (!zone.photo || zone.photo.alt.trim()));
+          const complete=Boolean(zone.title.trim() && zone.description.trim() && (!zone.photo || zone.hidden.includes('photo') || zone.photo.alt.trim())
+            && zone.fields.every(f=>f.label.trim() && (f.kind!=='text' || f.value.trim())));
           const name=zone.title || String(index+1);
           return <section className="builder-zone" key={zone.id} aria-labelledby={`online-zone-${zone.id}`} data-open={open} data-dragging={dragIndex===index}
             draggable={allFolded && !disabled} onDragStart={event=>{setDragIndex(index);event.dataTransfer.effectAllowed='move';}} onDragEnd={()=>setDragIndex(null)}
@@ -110,13 +129,31 @@ export function OnlineBuilder({locale,org,initial,persistedZoneIds,missingTransl
             <label className="form-field wide">{common.zoneName}<input required maxLength={160} value={zone.title} onChange={e=>zoneField(index,z=>({...z,title:e.target.value}))}/></label>
             <div className="form-field wide"><label htmlFor={`online-description-${zone.id}`}>{common.description}</label><textarea id={`online-description-${zone.id}`} required rows={3} maxLength={2000} value={zone.description} onChange={e=>zoneField(index,z=>({...z,description:e.target.value}))}/></div>
           </div>
-          <OnlinePhotoEditor zone={zone} placeId={draft.id} locale={locale} persisted={persisted.has(zone.id)} disabled={disabled} onBusy={busy=>photoBusy(zone.id,busy)} onChange={(photo?:OnlinePhoto)=>zoneField(index,z=>({...z,photo}))}/>
+          {!zone.hidden.includes('photo') && <OnlinePhotoEditor zone={zone} placeId={draft.id} locale={locale} persisted={persisted.has(zone.id)} disabled={disabled} onBusy={busy=>photoBusy(zone.id,busy)} onChange={(photo?:OnlinePhoto)=>zoneField(index,z=>({...z,photo}))}
+            remove={<RemoveField enabled={fieldsEnabled} label={`${t.removeField}: ${t.fieldPhoto}`} disabled={disabled} onClick={()=>hideField(index,zone.id,'photo')}/>}/>}
           <fieldset className="sensory-fields"><legend>{locale==='ro'?'Profil senzorial':locale==='de'?'Sensorisches Profil':'Sensory profile'}</legend>
             {sensoryChannels.map(channel=><ChoiceGroup key={channel} label={common[channel]} value={zone.sensory[channel]} onChange={value=>zoneField(index,z=>({...z,sensory:{...z.sensory,[channel]:value}}))} options={sensoryLevels.map(level=>({value:level,label:common[level]}))}/>)}
           </fieldset>
-          <div className="form-field"><label htmlFor={`online-note-${zone.id}`}>{common.note}</label><textarea id={`online-note-${zone.id}`} rows={2} maxLength={2000} value={zone.note} onChange={e=>zoneField(index,z=>({...z,note:e.target.value}))}/></div>
-          <div className="form-field"><label htmlFor={`online-next-${zone.id}`}>{common.predictability}</label><textarea id={`online-next-${zone.id}`} rows={2} maxLength={2000} value={zone.next} onChange={e=>zoneField(index,z=>({...z,next:e.target.value}))}/></div>
-          <label className="checkbox-label commitment"><input type="checkbox" checked={zone.optional} onChange={e=>zoneField(index,z=>({...z,optional:e.target.checked}))}/>{t.optional}</label>
+          {!zone.hidden.includes('note') && <div className="form-field"><span className="label-row"><label htmlFor={`online-note-${zone.id}`}>{common.note}</label><RemoveField enabled={fieldsEnabled} label={`${t.removeField}: ${common.note}`} disabled={disabled} onClick={()=>hideField(index,zone.id,'note')}/></span><textarea id={`online-note-${zone.id}`} rows={2} maxLength={2000} value={zone.note} onChange={e=>zoneField(index,z=>({...z,note:e.target.value}))}/></div>}
+          {!zone.hidden.includes('next') && <div className="form-field"><span className="label-row"><label htmlFor={`online-next-${zone.id}`}>{common.predictability}</label><RemoveField enabled={fieldsEnabled} label={`${t.removeField}: ${common.predictability}`} disabled={disabled} onClick={()=>hideField(index,zone.id,'next')}/></span><textarea id={`online-next-${zone.id}`} rows={2} maxLength={2000} value={zone.next} onChange={e=>zoneField(index,z=>({...z,next:e.target.value}))}/></div>}
+          {!zone.hidden.includes('optional') && <div className="commitment label-row"><label className="checkbox-label"><input id={`online-optional-${zone.id}`} type="checkbox" checked={zone.optional} onChange={e=>zoneField(index,z=>({...z,optional:e.target.checked}))}/>{t.optional}</label><RemoveField enabled={fieldsEnabled} label={`${t.removeField}: ${t.optional}`} disabled={disabled} onClick={()=>hideField(index,zone.id,'optional')}/></div>}
+          {zone.fields.map((own,fieldIndex)=><div className="own-field" key={own.id}>
+            <div className="label-row own-field-head"><span className="small-label">{own.kind==='text' ? t.fieldShortText : t.fieldYesNo}</span><RemoveField enabled={fieldsEnabled} label={`${t.removeField}: ${own.label || (own.kind==='text' ? t.fieldShortText : t.fieldYesNo)}`} disabled={disabled} onClick={()=>removeOwnField(index,zone.id,own.id)}/></div>
+            <div className="form-grid">
+              <label className="form-field wide">{own.kind==='text' ? t.ownLabel : t.ownQuestion}<input id={`own-field-${own.id}`} required maxLength={80} value={own.label} onChange={e=>ownField(index,fieldIndex,{label:e.target.value})}/></label>
+              {own.kind==='text'
+                ? <label className="form-field wide">{t.ownValue}<input maxLength={500} value={own.value} onChange={e=>ownField(index,fieldIndex,{value:e.target.value})}/></label>
+                : <ChoiceGroup className="wide" label={t.ownAnswer} value={own.answer} onChange={value=>ownField(index,fieldIndex,{answer:value as OwnField['answer']})} options={yesNoAnswers.map(answer=>({value:answer,label:answer==='yes' ? t.answerYes : answer==='no' ? t.answerNo : t.answerUnanswered}))}/>}
+            </div>
+          </div>)}
+          {fieldsEnabled && <div className="add-field" role="group" aria-labelledby={`add-field-${zone.id}`}>
+            <span id={`add-field-${zone.id}`} className="choice-label">{t.addField}</span>
+            <div className="add-field-options">
+              {zone.hidden.map(name=><button key={name} id={`add-${zone.id}-${name}`} type="button" className="button button-outline button-small" disabled={disabled} onClick={()=>showField(index,zone.id,name)}><Plus size={14} aria-hidden="true"/>{offeredLabel(name)}</button>)}
+              {ownFieldKinds.map(kind=><button key={kind} id={`add-${zone.id}-${kind}`} type="button" className="button button-outline button-small" disabled={disabled || zone.fields.length>=MAX_OWN_FIELDS} onClick={()=>addOwnField(index,kind)}><Plus size={14} aria-hidden="true"/>{kind==='text' ? t.fieldShortText : t.fieldYesNo}</button>)}
+            </div>
+            {zone.fields.length>=MAX_OWN_FIELDS && <p className="small-note">{t.fieldLimit}</p>}
+          </div>}
           </div>
         </section>;})}
         {draft.zones.length>1 && !allFolded && <p className="small-note">{t.reorderHint}</p>}

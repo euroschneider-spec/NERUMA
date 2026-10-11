@@ -12,6 +12,6 @@ export default async function EditPlace({params}:{params:Promise<{locale:string;
   if(!workspaceConfigured()) return <main id="main-content" className="app-main"><div className="app-heading"><h1>{t.edit}</h1></div><p>{t.readyLater}</p></main>;
   const result=await loadPlace(context.supabase,id,context.organisations,locale);if(!result) notFound();
   return <main id="main-content" className="app-main"><div className="app-heading"><h1>{result.draft.name || t.edit}</h1></div>
-    <OnlineBuilder key={`${id}:${locale}`} locale={locale} org={result.org} initial={result.draft} persistedZoneIds={result.persistedZoneIds} missingTranslation={result.missingTranslation}/>
+    <OnlineBuilder key={`${id}:${locale}`} locale={locale} org={result.org} initial={result.draft} persistedZoneIds={result.persistedZoneIds} fieldsEnabled={result.fieldsEnabled} missingTranslation={result.missingTranslation}/>
   </main>;
 }

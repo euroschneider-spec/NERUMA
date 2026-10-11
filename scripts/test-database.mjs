@@ -23,7 +23,7 @@ grant all on storage.buckets to service_role;`);
 const migrations=(await readdir('supabase/migrations')).filter(f=>f.endsWith('.sql')).sort();
 assert.equal(new Set(migrations.map(f=>f.split('_')[0])).size,migrations.length,'migration timestamps must be unique');
 for(const file of migrations)await db.exec(await readFile(`supabase/migrations/${file}`,'utf8'));
-await check('all 27 public tables use RLS',async()=>{const result=await db.query("select tablename from pg_tables where schemaname='public' and not rowsecurity");assert.deepEqual(result.rows,[]);assert.equal((await db.query("select count(*)::int n from pg_tables where schemaname='public'")).rows[0].n,27);});
+await check('all 29 public tables use RLS',async()=>{const result=await db.query("select tablename from pg_tables where schemaname='public' and not rowsecurity");assert.deepEqual(result.rows,[]);assert.equal((await db.query("select count(*)::int n from pg_tables where schemaname='public'")).rows[0].n,29);});
 await db.exec(`insert into auth.users values ${[owner,admin,editor,outsider,ownerB,assessor,reviewer,dual].map(x=>`('${x}')`).join(',')};
 insert into public.organizations(id,name,approval_status) values('${orgA}','Demo A','approved'),('${orgB}','Demo B','approved');
 insert into public.organization_members(organization_id,user_id,role) values('${orgA}','${owner}','owner'),('${orgA}','${admin}','admin'),('${orgA}','${editor}','editor'),('${orgB}','${ownerB}','owner'),('${orgA}','${assessor}','assessor'),('${orgA}','${reviewer}','reviewer'),('${orgA}','${dual}','owner'),('${orgB}','${dual}','owner');
@@ -160,8 +160,45 @@ await check('missing photo objects cause no partial metadata or revision writes'
 await check('uploaded photos attach with locale-specific alt and required rights/date',async()=>{assert.equal(await saveDraft(newOrg,livePlace,2,'en',{...draft,zones:[{...draft.zones[0],photo:{id:asset,storageKey:key,alt:'Entrance',rights:'Team photograph',photographedOn:'2026-10-06'}}]}),3);assert.equal((await db.query('select alt_text from public.media_assets where id=$1',[asset])).rows[0].alt_text.en,'Entrance');});
 await check('private photo objects cannot be overwritten or deleted',async()=>{assert.equal((await db.query("update storage.objects set name='forged.webp' returning name")).rows.length,0);assert.equal((await db.query('delete from storage.objects returning name')).rows.length,0);});
 await check('reordering and detaching retain history without deleting content',async()=>{const expanded={...draft,zones:[{...draft.zones[0],id:id(903),title:'Second space'},draft.zones[0]]};await saveDraft(newOrg,livePlace,3,'en',expanded);const ordered=await db.query("select s.zone_id from public.guide_steps s join public.guides g on g.id=s.guide_id where g.place_id=$1 and g.locale='en' and s.active order by s.draft_position",[livePlace]);assert.deepEqual(ordered.rows.map(r=>r.zone_id),[id(903),liveZone]);assert.equal((await db.query('select active from public.media_assets where id=$1',[asset])).rows[0].active,false);assert.equal((await db.query('select count(*)::int n from storage.objects where bucket_id=\'vianorae-private-photos\'')).rows[0].n,1);});
+const textField=id(1101),questionField=id(1102);
+const withFields=(fields,hidden=['note'])=>({...draft,zones:[{...draft.zones[0],hidden,fields}]});
+const ownFields=[{id:textField,kind:'text',label:'Opening hours',value:'10-18'},{id:questionField,kind:'yes_no',label:'Seating available?',answer:'yes'}];
+await check('removed and own fields save per step; structure and answers are shared, labels per language',async()=>{
+ assert.equal((await db.query('select public.step_fields_schema_version() v')).rows[0].v,1);
+ assert.equal(await saveDraft(newOrg,livePlace,4,'en',withFields(ownFields)),5);
+ assert.deepEqual((await db.query('select hidden_fields from public.zones where id=$1',[liveZone])).rows[0].hidden_fields,['note']);
+ assert.equal((await db.query('select useful_note from public.zone_translations where zone_id=$1 and locale=$2',[liveZone,'en'])).rows[0].useful_note,'Ask staff for help');
+ assert.equal(await saveDraft(newOrg,livePlace,5,'ro',withFields([{...ownFields[0],label:'Program'},{...ownFields[1],label:'Locuri de stat?',answer:'no'}])),6);
+ const rows=(await db.query('select f.kind,f.sort_order,f.answer,t.locale,t.label,t.value from public.zone_fields f join public.zone_field_translations t on t.field_id=f.id where f.zone_id=$1 and f.active order by f.sort_order,t.locale',[liveZone])).rows;
+ assert.deepEqual(rows.map(r=>[r.kind,r.sort_order,r.answer,r.locale,r.label,r.value]),[['text',0,'unanswered','en','Opening hours','10-18'],['text',0,'unanswered','ro','Program','10-18'],['yes_no',1,'no','en','Seating available?',''],['yes_no',1,'no','ro','Locuri de stat?','']]);
+});
+await check('own fields are limited to five valid fields; removed offered fields are a fixed list',async()=>{
+ const many=Array.from({length:6},(_,n)=>({id:id(1110+n),kind:'text',label:`Field ${n}`,value:''}));
+ await assert.rejects(()=>saveDraft(newOrg,livePlace,6,'en',withFields(many)),/up to five/);
+ await assert.rejects(()=>saveDraft(newOrg,livePlace,6,'en',withFields([{id:id(1120),kind:'photo',label:'Extra',value:''}])),/Invalid field kind/);
+ await assert.rejects(()=>saveDraft(newOrg,livePlace,6,'en',withFields([{...ownFields[1],answer:'maybe'}])),/Invalid answer/);
+ await assert.rejects(()=>saveDraft(newOrg,livePlace,6,'en',withFields([{...ownFields[0],label:''}])),/length/);
+ await assert.rejects(()=>saveDraft(newOrg,livePlace,6,'en',withFields([{...ownFields[0],value:'x'.repeat(501)}])),/length/);
+ await assert.rejects(()=>saveDraft(newOrg,livePlace,6,'en',withFields(ownFields,['description'])),/hidden fields/);
+ await assert.rejects(()=>saveDraft(newOrg,livePlace,6,'en',withFields([{...ownFields[1],kind:'text',value:'Yes'}])),/Field is not available/);
+ assert.equal((await db.query('select revision from public.places where id=$1',[livePlace])).rows[0].revision,6);
+});
+await check('a removed own field is switched off with its text kept; a draft without field keys still saves',async()=>{
+ assert.equal(await saveDraft(newOrg,livePlace,6,'en',withFields([ownFields[1]],[])),7);
+ assert.equal((await db.query('select active from public.zone_fields where id=$1',[textField])).rows[0].active,false);
+ assert.equal((await db.query('select count(*)::int n from public.zone_field_translations where field_id=$1',[textField])).rows[0].n,2);
+ assert.deepEqual((await db.query('select hidden_fields from public.zones where id=$1',[liveZone])).rows[0].hidden_fields,[]);
+ assert.equal(await saveDraft(newOrg,livePlace,7,'en',draft),8);
+ assert.equal((await db.query('select count(*)::int n from public.zone_fields where zone_id=$1 and active',[liveZone])).rows[0].n,0);
+});
 await as(ownerB);
-await check('another tenant cannot read photos or edit online drafts',async()=>{assert.equal((await db.query('select count(*)::int n from storage.objects where bucket_id=\'vianorae-private-photos\'')).rows[0].n,0);await assert.rejects(()=>saveDraft(newOrg,livePlace,4,'en',draft));});
+await check('another tenant cannot read or write own fields',async()=>{
+ assert.equal(await count('zone_fields'),0);assert.equal(await count('zone_field_translations'),0);
+ assert.equal((await db.query("update public.zone_fields set answer='no' returning id")).rows.length,0);
+ await assert.rejects(()=>saveDraft(newOrg,livePlace,8,'en',withFields(ownFields)));
+});
+await as(ownerB);
+await check('another tenant cannot read photos or edit online drafts',async()=>{assert.equal((await db.query('select count(*)::int n from storage.objects where bucket_id=\'vianorae-private-photos\'')).rows[0].n,0);await assert.rejects(()=>saveDraft(newOrg,livePlace,8,'en',draft));});
 await as(platformAdmin);
 await check('suspension immediately blocks member data and private storage with existing identity',async()=>{await review(applicationId,4,'suspended',false,false,'','','Access suspended while the mandate is investigated.');});
 await as(newOwner);

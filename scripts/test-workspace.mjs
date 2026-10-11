@@ -205,6 +205,41 @@ try {
     await page.goto(editUrl);await expect(page.getByLabel('Location name',{exact:true})).toHaveValue('Latest fixture name');
     await expect(page.getByLabel('Image description (alternative text)',{exact:true})).toHaveValue('Fictional green entrance illustration');
   });
+  await check('a step removes a field and adds it back with its text, and keeps its own short text and yes / no per language',async()=>{
+    const zone=page.locator('.builder-zone').first();
+    await zone.getByLabel('Useful note',{exact:true}).fill('Ask staff at the desk');
+    await zone.getByRole('button',{name:'Remove: Useful note',exact:true}).click();
+    await expect(zone.getByLabel('Useful note',{exact:true})).toHaveCount(0);
+    await expect(zone.getByRole('button',{name:'Useful note',exact:true})).toBeFocused();
+    await zone.getByRole('button',{name:'Short text',exact:true}).click();
+    await expect(zone.getByLabel('Field name',{exact:true})).toBeFocused();
+    await zone.getByLabel('Field name',{exact:true}).fill('Opening hours');await zone.getByLabel('Text',{exact:true}).fill('10-18');
+    await zone.getByRole('button',{name:'Yes / no',exact:true}).click();
+    await zone.getByLabel('Question',{exact:true}).fill('Seating available?');
+    await zone.getByRole('radiogroup',{name:'Answer'}).getByText('Yes',{exact:true}).click();
+    await expect(zone.getByRole('button',{name:'Remove: Seating available?',exact:true})).toBeVisible();
+    await expect(zone.getByRole('button',{name:'Remove: Sensory profile'})).toHaveCount(0);
+    await save(page);await page.reload();
+    await expect(zone.getByLabel('Useful note',{exact:true})).toHaveCount(0);
+    await expect(zone.getByLabel('Field name',{exact:true})).toHaveValue('Opening hours');
+    await page.getByRole('link',{name:'Preview',exact:true}).first().click();
+    await expect(page.locator('.own-fields')).toContainText('Opening hours10-18');await expect(page.locator('.own-fields')).toContainText('Seating available?Yes');
+    await expect(page.getByText('Ask staff at the desk')).toHaveCount(0);
+    await page.goto(editUrl.replace('/en/','/ro/'));
+    await expect(zone.locator('.zone-toggle')).toContainText('Necesită detalii');
+    await expect(zone.getByLabel('Numele câmpului',{exact:true})).toHaveValue('');
+    await expect(zone.getByRole('radiogroup',{name:'Răspuns'}).getByRole('radio',{name:'Da',exact:true})).toBeChecked();
+    await zone.getByLabel('Numele câmpului',{exact:true}).fill('Program');await zone.getByLabel('Text',{exact:true}).fill('10-18');
+    await zone.getByLabel('Întrebare',{exact:true}).fill('Locuri de stat?');
+    await page.getByRole('button',{name:'Salvează online',exact:true}).last().click();
+    await expect(page.locator('.status-message[role]')).toContainText('Draft salvat online');
+    await page.goto(editUrl);
+    await expect(zone.getByLabel('Field name',{exact:true})).toHaveValue('Opening hours');
+    await zone.getByRole('button',{name:'Useful note',exact:true}).click();
+    await expect(zone.getByLabel('Useful note',{exact:true})).toHaveValue('Ask staff at the desk');
+    await expect(zone.getByLabel('Useful note',{exact:true})).toBeFocused();
+    await save(page);
+  });
   for(const locale of ['en','ro','de']) {
     await check(`${locale.toUpperCase()} online editor passes automated WCAG A/AA checks and narrow-screen reflow`,async()=>{
       await page.goto(editUrl.replace('/en/',`/${locale}/`));

@@ -8,18 +8,43 @@ export const sensoryChannels = ['sound', 'light', 'crowding', 'smell', 'temperat
 export const sensoryLevels: SensoryLevel[] = ['unknown', 'low', 'moderate', 'high', 'variable'];
 export const placeTypes = ['institution', 'museum', 'hotel', 'cultural', 'public_service', 'other'] as const;
 export type OnlinePhoto = { id: string; storageKey: string; alt: string; rights: string; photographedOn: string };
-export type OnlineZone = { id: string; title: string; description: string; note: string; next: string; type: string; optional: boolean; sensory: SensoryProfile; photo?: OnlinePhoto };
+/** Offered fields an organisation may remove from a step and add back; the text stays stored while removed. */
+export const removableFields = ['photo', 'note', 'next', 'optional'] as const;
+export type RemovableField = typeof removableFields[number];
+/** An organisation's own field: a short text, or a yes / no question whose "not answered" is never shown as "no". */
+export const ownFieldKinds = ['text', 'yes_no'] as const;
+export const yesNoAnswers = ['unanswered', 'yes', 'no'] as const;
+export const MAX_OWN_FIELDS = 5;
+export type OwnField = { id: string; kind: typeof ownFieldKinds[number]; label: string; value: string; answer: typeof yesNoAnswers[number] };
+export function newOwnField(kind: OwnField['kind']): OwnField {
+  return { id: crypto.randomUUID(), kind, label: '', value: '', answer: 'unanswered' };
+}
+export type OnlineZone = { id: string; title: string; description: string; note: string; next: string; type: string; optional: boolean; sensory: SensoryProfile; photo?: OnlinePhoto; hidden: RemovableField[]; fields: OwnField[] };
 export type PlaceDraft = {
   id: string; revision: number; name: string; city: string; address: string; countryCode: string;
   placeType: typeof placeTypes[number]; description: string; arrivalInfo: string; zones: OnlineZone[];
 };
 export type PlaceSummary = { id: string; name: string; city: string; address: string; status: string; updatedAt: string; revision: number };
 export function newZone(): OnlineZone {
-  return { id: crypto.randomUUID(), title: '', description: '', note: '', next: '', type: 'visit-space', optional: false,
+  return { id: crypto.randomUUID(), title: '', description: '', note: '', next: '', type: 'visit-space', optional: false, hidden: [], fields: [],
     sensory: { sound: 'unknown', light: 'unknown', crowding: 'unknown', smell: 'unknown', temperature: 'unknown', visual: 'unknown' } };
 }
 export function newPlace(): PlaceDraft {
   return { id: crypto.randomUUID(), revision: 0, name: '', city: '', address: '', countryCode: '', placeType: 'museum', description: '', arrivalInfo: '', zones: [newZone()] };
+}
+/**
+ * What visitors see of a step: removed fields are left out, and an own field shows only when it says something
+ * (a text with a value, a yes / no that was answered). The preview, read-aloud and, later, publishing use this.
+ */
+export function visibleZone(zone: OnlineZone) {
+  const shown = (name: RemovableField) => !zone.hidden.includes(name);
+  return {
+    photo: shown('photo') ? zone.photo : undefined,
+    note: shown('note') ? zone.note : '',
+    next: shown('next') ? zone.next : '',
+    optional: shown('optional') && zone.optional,
+    fields: zone.fields.filter(f => f.label && (f.kind === 'text' ? f.value : f.answer !== 'unanswered')),
+  };
 }
 export const photoUrl = (key: string) => `/api/workspace/photos?key=${encodeURIComponent(key)}`;
 const record = (value: unknown): value is Record<string, unknown> => Boolean(value) && typeof value === 'object' && !Array.isArray(value);
@@ -49,8 +74,21 @@ export function parsePlaceDraft(value: unknown, org: string): PlaceDraft | null 
         || p.photographedOn > new Date().toISOString().slice(0,10)) return null;
       photo = { id:p.id.toLowerCase(), storageKey:p.storageKey, alt:p.alt.trim(), rights:p.rights.trim(), photographedOn:p.photographedOn };
     }
+    // Older drafts have neither key: nothing hidden, no own fields.
+    const hiddenValue = zone.hidden ?? [];
+    if (!Array.isArray(hiddenValue) || hiddenValue.some(name => !removableFields.includes(name as RemovableField))) return null;
+    const fieldsValue = zone.fields ?? [];
+    if (!Array.isArray(fieldsValue) || fieldsValue.length > MAX_OWN_FIELDS) return null;
+    const fields: OwnField[] = [];
+    for (const field of fieldsValue) {
+      if (!record(field) || !text(field.id,36,36) || !uuidPattern.test(field.id) || fields.some(f => f.id === (field.id as string).toLowerCase())
+        || !ownFieldKinds.includes(field.kind as OwnField['kind']) || !text(field.label,1,80) || !text(field.value,0,500)
+        || !yesNoAnswers.includes(field.answer as OwnField['answer'])) return null;
+      fields.push({ id:field.id.toLowerCase(), kind:field.kind as OwnField['kind'], label:field.label.trim(), value:field.kind === 'text' ? field.value.trim() : '',
+        answer:field.kind === 'yes_no' ? field.answer as OwnField['answer'] : 'unanswered' });
+    }
     zones.push({ id:zone.id.toLowerCase(), title:zone.title.trim(), description:zone.description.trim(), note:zone.note.trim(), next:zone.next.trim(),
-      type:zone.type.trim(), optional:zone.optional, sensory:zone.sensory as SensoryProfile, photo });
+      type:zone.type.trim(), optional:zone.optional, sensory:zone.sensory as SensoryProfile, photo, hidden:[...new Set(hiddenValue as RemovableField[])], fields });
   }
   return { id:value.id.toLowerCase(), revision:Number(value.revision), name:value.name.trim(), city:value.city.trim(), address:value.address.trim(), countryCode:value.countryCode,
     placeType:value.placeType as PlaceDraft['placeType'], description:value.description.trim(), arrivalInfo:value.arrivalInfo.trim(), zones };
@@ -76,7 +114,7 @@ const en = {
   forbidden: 'You need an owner or admin role to edit locations.',
   photoHint: `JPEG, PNG or WebP · up to ${MAX_ONLINE_PHOTO / 1024 / 1024} MB. Images are resized.`,
   photoPrivacy: 'Images are saved privately for your organisation. Original location metadata is removed.',
-  saveFirst: 'Save the step first, then add a photo.', moveUp: 'Move up', moveDown: 'Move down', dragStep: 'Drag to reorder', reorderHint: 'Fold all steps to drag them into a new order.',
+  saveFirst: 'Save the step first, then add a photo.', moveUp: 'Move up', removeField: 'Remove', addField: 'Add a field', fieldPhoto: 'Photo', fieldShortText: 'Short text', fieldYesNo: 'Yes / no', ownLabel: 'Field name', ownValue: 'Text', ownQuestion: 'Question', ownAnswer: 'Answer', answerUnanswered: 'Not answered', answerYes: 'Yes', answerNo: 'No', fieldLimit: 'A step can have up to 5 own fields.', moveDown: 'Move down', dragStep: 'Drag to reorder', reorderHint: 'Fold all steps to drag them into a new order.',
   photoAdded: 'Photograph uploaded privately. Complete its details and save the draft to attach it.',
   photoError: 'The photograph could not be uploaded. The previous saved photograph is unchanged.',
   photoPreview: 'Zone photograph', removePhoto: 'Detach photograph from draft',
@@ -103,7 +141,7 @@ const ro: WorkspaceCopy = {
   readyLater:'Spațiul online este în pregătire. Contul organizației este disponibil.', forbidden:'Ai nevoie de rolul de proprietar sau administrator pentru a edita locații.',
   photoHint: `JPEG, PNG sau WebP · maximum ${MAX_ONLINE_PHOTO / 1024 / 1024} MB. Imaginile sunt redimensionate.`,
   photoPrivacy:'Imaginile sunt salvate privat pentru organizație. Metadatele originale de localizare sunt eliminate.',
-  saveFirst:'Salvează mai întâi pasul, apoi adaugă o fotografie.', moveUp:'Mută mai sus', moveDown:'Mută mai jos', dragStep:'Trage pentru a reordona', reorderHint:'Pliază toți pașii ca să-i poți trage într-o altă ordine.', photoAdded:'Fotografie încărcată privat. Completează detaliile și salvează draftul pentru a o asocia.',
+  saveFirst:'Salvează mai întâi pasul, apoi adaugă o fotografie.', moveUp:'Mută mai sus', removeField:'Elimină', addField:'Adaugă un câmp', fieldPhoto:'Fotografie', fieldShortText:'Text scurt', fieldYesNo:'Da / nu', ownLabel:'Numele câmpului', ownValue:'Text', ownQuestion:'Întrebare', ownAnswer:'Răspuns', answerUnanswered:'Fără răspuns', answerYes:'Da', answerNo:'Nu', fieldLimit:'Un pas poate avea cel mult 5 câmpuri proprii.', moveDown:'Mută mai jos', dragStep:'Trage pentru a reordona', reorderHint:'Pliază toți pașii ca să-i poți trage într-o altă ordine.', photoAdded:'Fotografie încărcată privat. Completează detaliile și salvează draftul pentru a o asocia.',
   photoError:'Fotografia nu a putut fi încărcată. Fotografia salvată anterior nu a fost modificată.', photoPreview:'Fotografia zonei', removePhoto:'Detașează fotografia din draft',
   noPhoto:'Nu este asociată nicio fotografie.', choosePhoto:'Încarcă imaginea', photoAttached:'Fotografie asociată.', login:'Autentifică-te din nou', draft:'Draft salvat al organizației',
   retained:'Detașarea sau înlocuirea unei fotografii o scoate din draft; fișierul privat este păstrat.',
@@ -126,7 +164,7 @@ const de: WorkspaceCopy = {
   forbidden:'Zum Bearbeiten benötigen Sie die Rolle Eigentümer oder Administrator.',
   photoHint: `JPEG, PNG oder WebP · bis ${MAX_ONLINE_PHOTO / 1024 / 1024} MB. Bilder werden verkleinert.`,
   photoPrivacy:'Bilder werden privat für Ihre Organisation gespeichert. Ursprüngliche Standort-Metadaten werden entfernt.',
-  saveFirst:'Speichern Sie zuerst den Schritt, dann fügen Sie ein Foto hinzu.', moveUp:'Nach oben', moveDown:'Nach unten', dragStep:'Zum Sortieren ziehen', reorderHint:'Klappen Sie alle Schritte ein, um sie per Ziehen neu zu ordnen.', photoAdded:'Foto privat hochgeladen. Ergänzen Sie die Angaben und speichern Sie den Entwurf, um es zuzuordnen.',
+  saveFirst:'Speichern Sie zuerst den Schritt, dann fügen Sie ein Foto hinzu.', moveUp:'Nach oben', removeField:'Entfernen', addField:'Feld hinzufügen', fieldPhoto:'Foto', fieldShortText:'Kurzer Text', fieldYesNo:'Ja / Nein', ownLabel:'Feldname', ownValue:'Text', ownQuestion:'Frage', ownAnswer:'Antwort', answerUnanswered:'Nicht beantwortet', answerYes:'Ja', answerNo:'Nein', fieldLimit:'Ein Schritt kann bis zu 5 eigene Felder haben.', moveDown:'Nach unten', dragStep:'Zum Sortieren ziehen', reorderHint:'Klappen Sie alle Schritte ein, um sie per Ziehen neu zu ordnen.', photoAdded:'Foto privat hochgeladen. Ergänzen Sie die Angaben und speichern Sie den Entwurf, um es zuzuordnen.',
   photoError:'Das Foto konnte nicht hochgeladen werden. Das zuvor gespeicherte Foto bleibt unverändert.', photoPreview:'Foto des Bereichs', removePhoto:'Foto vom Entwurf lösen',
   noPhoto:'Kein Foto zugeordnet.', choosePhoto:'Bild hochladen', photoAttached:'Foto zugeordnet.', login:'Erneut anmelden', draft:'Gespeicherter Organisationsentwurf', retained:'Lösen oder Ersetzen entfernt das Foto aus dem Entwurf; die private Datei bleibt gespeichert.',
   discard:'Es gibt ungespeicherte Änderungen. Möchten Sie diese Seite verlassen und die Änderungen verwerfen?',
