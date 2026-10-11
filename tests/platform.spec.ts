@@ -186,6 +186,21 @@ test('Register fields share rows in every language and the dropdown matches the 
  }
 });
 
+// Every dropdown draws its own arrow with room to the right, not the browser's arrow against the border.
+test('every dropdown keeps its arrow 16px in from the edge',async({page})=>{
+ const check=async(where:string)=>{
+  const styles=await page.evaluate(()=>[...document.querySelectorAll('select')].map(el=>{const c=getComputedStyle(el);return {appearance:c.appearance,padding:c.paddingRight,position:c.backgroundPosition};}));
+  expect(styles.length,where).toBeGreaterThan(0);
+  for(const style of styles) {
+   expect(style.appearance,where).toBe('none');
+   expect(style.padding,where).toBe('40px');
+   expect(style.position,where).toContain('100% - 16px');
+  }
+ };
+ for(const path of ['/en/register','/en/explore','/en/dashboard/builder']) {await page.goto(path);await check(path);}
+ await page.goto('/en');await page.locator('.floating-reading').click();await check('reading panel');
+});
+
 // One door for organisations: the menu and the footer each carry a single For organisations link,
 // and registering, signing in and the demo workspace sit behind that page. One sign-in serves every
 // tier (landingPath() routes administrators, members and everyone else after authentication).
