@@ -43,7 +43,8 @@ Part 1 — the look and navigation, using what the database already has:
 address and a photo; a QR code and link per location; visitor counts; billing (owner only); what needs
 attention (unpublished changes, missing alt text, too few zones).
 - 1a Sidebar shell and a locations overview (name, address, status). 1b Needs attention. 1c QR and link per
-  location, plus a photo on the card. 1d Plan & billing page, owners only, a placeholder until payments exist.
+  location, plus a photo on the card. (Photo and 1b done in PR #29. The QR code is made at publishing, so it
+  moves into the publishing task: `DECISIONS.md`, "QR codes".) 1d Plan & billing page, owners only, a placeholder until payments exist.
   1e Visit counts (privacy decision first).
 
 **Task 2, seeing changes live** (desktop and laptop only; no effort for phones): the editor keeps changes in

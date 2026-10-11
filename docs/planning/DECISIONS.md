@@ -107,6 +107,21 @@ Owner's question, 2026-10-11. Only for what can't be undone with one click: **re
 responsibility text). Removing a *field* (the ×) does not ask: its text is kept and *Add a field* brings it back.
 Save stays on screen in a bar at the bottom of the editor, so a small change deep in a step never means scrolling.
 
+### QR codes: one per location, made at publishing, never reused
+Owner, 2026-10-11. A printed code can never change, so these rules are fixed before anything is printed.
+- **Only after publishing.** A location gets its code the first time a guide of it is published, in the same
+  step. Before that the dashboard card shows no code, so no printed code ever leads to an unfinished guide.
+  Not chosen: a code from the start that "works once published" (it would have let signs be printed earlier).
+- **A short random code** (`/q/k7f3qz2m`), not one made from the name: it can't clash between places with the
+  same name and still fits after a rename. The link shown on the card is the same short link.
+- **One code per location, not per language.** One sign for everyone; the guide opens in the visitor's phone
+  language when it is published, otherwise in a published one, with the language switch. The `qr_redirects`
+  table points at one guide (one language) today, so this needs a database change with publishing.
+- **Kept forever.** The code stays with its location for good and is never given to another. If the location
+  is unpublished or removed, scanning shows "This guide isn't available right now", not a bare 404;
+  publishing again makes it work. Visitors can't read unpublished rows, so the notice needs a server check that
+  says only "exists, not available", never the location's name.
+
 ## Not yet discussed
 
 - `DESIGN-TASKS.md` sections 5, 6 (other items) and 7.
