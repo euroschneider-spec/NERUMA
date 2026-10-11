@@ -1,4 +1,5 @@
 import 'server-only';
+import { cache } from 'react';
 import { redirect } from 'next/navigation';
 import type { Locale } from './i18n';
 import { confirmedUser, createClient, type SupabaseClient } from './supabase/server';
@@ -9,7 +10,8 @@ import { verificationReady } from './verification-server';
 import { getViewer } from './viewer-server';
 
 export const workspaceConfigured = () => authConfigured() && process.env.VIANORAE_WORKSPACE_ENABLED === '1';
-export async function workspaceSession(locale: Locale) {
+// Cached per request: the shell and the page both ask for the session, and it is only fetched once.
+export const workspaceSession = cache(async (locale: Locale) => {
   if (!authConfigured()) redirect(`/${locale}/login`);
   const supabase = await createClient();
   const user = await confirmedUser(supabase);
@@ -19,17 +21,17 @@ export async function workspaceSession(locale: Locale) {
   if (!viewer) throw new Error('workspace-unavailable');
   const organisations = viewer.memberships.map(m => ({ id: m.organisation, name: m.name }));
   if(!organisations.length) redirect(`/${locale}/account`);
-  return { supabase, user, organisations };
-}
+  return { supabase, user, organisations, memberships: viewer.memberships };
+});
 export async function listPlaces(supabase: SupabaseClient, org: string, locale: Locale): Promise<PlaceSummary[]> {
-  const { data, error } = await supabase.from('places').select('id,city,revision,updated_at,place_translations(name,locale)')
+  const { data, error } = await supabase.from('places').select('id,city,address,status,revision,updated_at,place_translations(name,locale)')
     .eq('organization_id',org).neq('status','archived').order('updated_at',{ascending:false}).limit(100);
   if (error) throw new Error('workspace-unavailable');
   return (data || []).map(row => {
     const translations = row.place_translations as {name:string;locale:string}[];
     const current = translations.find(t=>t.locale===locale);
     const fallback = translations[0];
-    return {id:row.id,city:row.city,revision:Number(row.revision),updatedAt:row.updated_at,
+    return {id:row.id,city:row.city,address:row.address || '',status:row.status,revision:Number(row.revision),updatedAt:row.updated_at,
       name:current?.name || (fallback ? `${fallback.name} (${fallback.locale.toUpperCase()})` : row.city)};
   });
 }

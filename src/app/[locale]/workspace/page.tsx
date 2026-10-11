@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import { isLocale, getCopy } from '@/lib/i18n';
+import { isLocale } from '@/lib/i18n';
 import { getOrganisationCopy } from '@/lib/organisation-copy';
 import { getWorkspaceCopy } from '@/lib/workspace';
 import { listPlaces, workspaceConfigured, workspaceSession } from '@/lib/workspace-server';
@@ -15,13 +15,20 @@ export default async function Workspace({params,searchParams}:{params:Promise<{l
   const organisation=chosen ? context.organisations.find(o=>o.id===chosen) : context.organisations[0];
   if(chosen && !organisation) notFound();
   const places=organisation && workspaceConfigured() ? await listPlaces(context.supabase,organisation.id,locale) : [];
-  return <main id="main-content" className="container"><div className="page-heading"><p className="eyebrow">NERUMA</p><h1>{t.workspace}</h1>{organisation && <p className="lead">{organisation.name}</p>}</div>
-    <div className="content-body"><p className="notice">{t.boundary}</p>
-      {context.organisations.length>1 && <nav className="button-row" aria-label={getOrganisationCopy(locale).organisation}>{context.organisations.map(o=><Link key={o.id} className="quiet-link" href={`/${locale}/workspace?org=${o.id}`} aria-current={o.id===organisation?.id?'page':undefined}>{o.name}</Link>)}</nav>}
-      {!workspaceConfigured() ? <p>{t.readyLater}</p> : !organisation ? <p>{t.forbidden}</p> : <>
-        <Link className="button" href={`/${locale}/workspace/new?org=${organisation.id}`}>{t.newPlace}</Link>
-        {!places.length ? <p>{t.empty}</p> : <ul className="workspace-locations">{places.map(place=><li key={place.id} className="workspace-location"><h2><Link href={`/${locale}/workspace/${place.id}`}>{place.name}</Link></h2><p>{place.city}</p><Link className="quiet-link" href={`/${locale}/workspace/${place.id}`}>{t.edit}</Link></li>)}</ul>}
-      </>}
-      <div className="button-row"><Link className="quiet-link" href={`/${locale}/account`}>{getOrganisationCopy(locale).account}</Link><Link className="quiet-link" href={`/${locale}/dashboard`}>{getCopy(locale).openWorkspace}</Link></div>
-    </div></main>;
+  const newPlaceHref=organisation ? `/${locale}/workspace/new?org=${organisation.id}` : '';
+  return <main id="main-content" className="app-main">
+    <div className="app-heading">
+      <h1>{t.dashboard}</h1>
+      {organisation && workspaceConfigured() && places.length>0 && <Link className="button" href={newPlaceHref}>{t.newPlace}</Link>}
+    </div>
+    {context.organisations.length>1 && <nav className="button-row" aria-label={getOrganisationCopy(locale).organisation}>{context.organisations.map(o=><Link key={o.id} className="quiet-link" href={`/${locale}/workspace?org=${o.id}`} aria-current={o.id===organisation?.id?'page':undefined}>{o.name}</Link>)}</nav>}
+    {!workspaceConfigured() ? <p>{t.readyLater}</p> : !organisation ? <p>{t.forbidden}</p> : <section aria-labelledby="locations-heading">
+      <h2 id="locations-heading">{t.locationsHeading}</h2>
+      {!places.length ? <div className="empty-state"><p>{t.empty}</p><Link className="button" href={newPlaceHref}>{t.newPlace}</Link></div> : <ul className="location-cards">{places.map(place=><li key={place.id} className="location-card">
+        <div className="location-card-head"><h3><Link href={`/${locale}/workspace/${place.id}`}>{place.name}</Link></h3><span className={place.status==='published' ? 'status-badge is-published' : 'status-badge'}>{place.status==='published' ? t.statusPublished : t.statusDraft}</span></div>
+        <p className="location-address">{[place.address,place.city].filter(Boolean).join(', ') || t.addressMissing}</p>
+        <Link className="quiet-link" href={`/${locale}/workspace/${place.id}`}>{t.edit}</Link>
+      </li>)}</ul>}
+    </section>}
+  </main>;
 }
