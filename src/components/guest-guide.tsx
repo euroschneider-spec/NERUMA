@@ -68,7 +68,6 @@ export function GuestGuide({locale}:{locale:Locale}) {
           : <details key={heading}><summary>{heading}</summary><p>{body}</p></details>)}</div>
         <p className="notice sound-independent">{a.withoutSound}</p>
         <p className="source-label"><ShieldCheck size={14} aria-hidden="true"/>{t.source}</p>
-        <p className="small-label">{t.demo} · {t.methodVersion}</p>
       </div>
     </div>
 

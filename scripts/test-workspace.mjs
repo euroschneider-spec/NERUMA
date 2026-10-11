@@ -56,9 +56,9 @@ try {
   });
   const editUrl=page.url();
   await check('saved draft and sensory data survive a full reload',async()=>{
-    await page.getByLabel('Sound',{exact:true}).selectOption('moderate');await save(page);await page.reload();
+    await page.getByRole('radiogroup',{name:'Sound',exact:true}).getByText('Moderate',{exact:true}).click();await save(page);await page.reload();
     await expect(page.getByLabel('Location name',{exact:true})).toHaveValue('Fixture Gallery');
-    await expect(page.getByLabel('Sound',{exact:true})).toHaveValue('moderate');
+    await expect(page.getByRole('radiogroup',{name:'Sound',exact:true}).getByLabel('Moderate',{exact:true})).toBeChecked();
   });
   const png=await sharp({create:{width:1900,height:1100,channels:3,background:'#668878'}}).png().toBuffer();
   await check('PNG upload is converted into a private WebP and requires attribution',async()=>{
@@ -229,7 +229,7 @@ try {
     await adminPage.getByLabel('Message for the applicant',{exact:true}).fill('Please identify the official contact for confirming your mandate.');
     await adminPage.getByRole('button',{name:'Record decision',exact:true}).click();
     await expect(adminPage.getByRole('heading',{name:'Verified fixture museum',exact:true})).toBeVisible();
-    await adminPage.getByLabel('Decision',{exact:true}).selectOption('needs_information');
+    await adminPage.getByRole('radiogroup',{name:'Decision',exact:true}).getByText('Request more information',{exact:true}).click();
     await adminPage.getByRole('button',{name:'Record decision',exact:true}).click();
     await expect(adminPage.getByRole('heading',{name:'Verified fixture museum',exact:true})).toHaveCount(0);
     await applicant.goto(`${base}/en/account`);await expect(applicant.getByRole('heading',{name:'More information required',exact:true})).toBeVisible();
@@ -269,7 +269,7 @@ try {
     await adminPage.screenshot({path:'docs/verification/screenshots/organisation-verification-preview.png',fullPage:true});
   });
   await check('suspending an approved organisation removes access without signing the applicant out',async()=>{
-    await adminPage.getByLabel('Decision',{exact:true}).selectOption('suspended');
+    await adminPage.getByRole('radiogroup',{name:'Decision',exact:true}).getByText('Suspend access',{exact:true}).click();
     await adminPage.getByLabel('Message for the applicant',{exact:true}).fill('Access suspended until the representative mandate is reconfirmed.');
     await adminPage.getByRole('button',{name:'Record decision',exact:true}).click();
     await expect(adminPage.getByText('Organisation access suspended',{exact:false}).first()).toBeVisible();
