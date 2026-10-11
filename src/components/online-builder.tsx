@@ -52,7 +52,7 @@ export function OnlineBuilder({locale,org,initial,persistedZoneIds,missingTransl
   // so a screen reader hears each message once.
   const actions=(announce:boolean)=><div className="editor-actions">
     <button className="button" type="submit" disabled={disabled}>{pending?t.saving:t.save}</button>
-    {draft.revision>0 && <Link className="button button-outline" href={`/${locale}/workspace/${draft.id}/preview`}>{t.preview}</Link>}
+    {draft.revision>0 ? <Link className="button button-outline" href={`/${locale}/workspace/${draft.id}/preview`}>{t.preview}</Link> : <button className="button button-outline" type="button" disabled>{t.preview}</button>}
     <span className="publish-group"><button className="button button-outline" type="button" disabled>{t.publish}</button><InfoTip text={t.publishSoon} label={t.moreInfo} /></span>
     <p className="status-message" {...(announce ? {role:error?'alert':'status'} : {'aria-hidden':true as const})}>{message || (dirty?t.unsaved:'')}</p>
   </div>;
@@ -64,7 +64,6 @@ export function OnlineBuilder({locale,org,initial,persistedZoneIds,missingTransl
     <form onSubmit={save} aria-label={t.edit}>
       {actions(false)}
       <fieldset className="online-fields" disabled={disabled}>
-        <legend>{t.edit}</legend>
         <div className="form-grid">
           <label className="form-field wide">{t.location}<input name="location-name" required maxLength={160} value={draft.name} onChange={e=>field('name',e.target.value)}/></label>
           <label className="form-field">{t.city}<input required maxLength={160} value={draft.city} onChange={e=>field('city',e.target.value)}/></label>

@@ -11,7 +11,7 @@ export default async function NewPlace({params,searchParams}:{params:Promise<{lo
   const t=getWorkspaceCopy(locale);const context=await workspaceSession(locale);const {org:chosen}=await searchParams;
   const organisation=chosen ? context.organisations.find(o=>o.id===chosen) : context.organisations[0];
   if(chosen && !organisation) notFound();
-  return <main id="main-content" className="container"><div className="page-heading"><p className="eyebrow">{organisation?.name || 'NERUMA'}</p><h1>{t.newPlace}</h1></div><div className="content-body">
+  return <main id="main-content" className="app-main"><div className="app-heading"><h1>{t.newPlace}</h1></div>
     {!workspaceConfigured() ? <p className="notice">{t.readyLater}</p> : !organisation ? <p>{t.forbidden}</p> : <OnlineBuilder locale={locale} org={organisation.id} initial={newPlace()} persistedZoneIds={[]}/>}
-  </div></main>;
+  </main>;
 }

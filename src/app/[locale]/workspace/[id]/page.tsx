@@ -9,9 +9,9 @@ export const metadata={title:'Edit organisation draft',robots:{index:false,follo
 export default async function EditPlace({params}:{params:Promise<{locale:string;id:string}>}) {
   const {locale,id}=await params;if(!isLocale(locale)) notFound();const t=getWorkspaceCopy(locale);
   const context=await workspaceSession(locale);
-  if(!workspaceConfigured()) return <main id="main-content" className="container"><div className="page-heading"><h1>{t.edit}</h1></div><p>{t.readyLater}</p></main>;
+  if(!workspaceConfigured()) return <main id="main-content" className="app-main"><div className="app-heading"><h1>{t.edit}</h1></div><p>{t.readyLater}</p></main>;
   const result=await loadPlace(context.supabase,id,context.organisations,locale);if(!result) notFound();
-  return <main id="main-content" className="container"><div className="page-heading"><p className="eyebrow">{context.organisations.find(o=>o.id===result.org)?.name}</p><h1>{result.draft.name || t.edit}</h1></div><div className="content-body">
+  return <main id="main-content" className="app-main"><div className="app-heading"><h1>{result.draft.name || t.edit}</h1></div>
     <OnlineBuilder key={`${id}:${locale}`} locale={locale} org={result.org} initial={result.draft} persistedZoneIds={result.persistedZoneIds} missingTranslation={result.missingTranslation}/>
-  </div></main>;
+  </main>;
 }

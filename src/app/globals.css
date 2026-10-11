@@ -259,7 +259,7 @@ main { min-height: 65vh; }
 
 /* ── Forms ────────────────────────────────────────────────────────────── */
 .field, .form-field { display: flex; flex-direction: column; gap: 5px; min-width: 0; }
-.field > label, .label, .form-field > label, label.form-field { font-size: 0.8125rem; color: color-mix(in srgb, var(--color-text) 75%, transparent); }
+.field > label, .label, .form-field > label, .form-field .label-row > label, label.form-field { font-size: 0.8125rem; color: color-mix(in srgb, var(--color-text) 75%, transparent); }
 .input, input, select, textarea {
   width: 100%; min-width: 0; min-height: 36px; padding: 6px 10px; font: inherit;
   font-size: 0.9375rem; color: var(--color-text); caret-color: var(--color-accent);
@@ -371,10 +371,11 @@ legend { padding-inline: var(--space-2); max-width: 100%; font-weight: var(--fon
 .editor-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 16px; margin: 20px 0; }
 .editor-add { margin-top: 24px; }
 .publish-group { display: inline-flex; align-items: center; gap: 8px; position: relative; }
-.publish-group .button:disabled { opacity: 0.55; }
+.publish-group .button:disabled { opacity: 0.7; border-style: dashed; }
 .location-card-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 16px; margin-top: 8px; }
 .location-card-actions .publish-group .infotip-text { right: 0; left: auto; }
-.label-row { position: relative; display: flex; align-items: center; gap: 6px; }
+/* The 24px "?" must not make this row taller than a plain label, or its field sits lower than its neighbour. */
+.label-row { position: relative; display: flex; align-items: center; gap: 6px; margin-block: -3px; }
 /* A "?" that explains a field (InfoTip): hover, focus or tap shows it, Escape closes it. */
 /* The hint is placed against the whole row (.label-row / .editor-status), never against the small button, so it
    always stays inside the screen, even closed. */
@@ -713,9 +714,9 @@ html[data-density="summary"] .density-switch button[data-value="summary"] { back
 .workspace-location h2 { font-size: 1.25rem; margin-top: 0; }
 .builder-zone { margin-block: 24px; background: var(--color-surface); padding: 24px; border: 1px solid var(--color-divider); border-radius: var(--radius-lg); }
 .builder-zone h2 { font-size: 1.25rem; }
+.builder-zone > .form-field, .builder-zone > .commitment { margin-top: 16px; }
 .sensory-fields { margin-block: 20px; }
 .online-fields { border: 0; padding: 0; margin: 0; min-width: 0; }
-.online-fields > legend { font-size: 1.25rem; font-weight: var(--font-heading-weight); margin-bottom: 20px; padding-inline: 0; }
 .zone-order { margin-bottom: 20px; }
 .draft-sensory { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 144px), 1fr)); gap: 16px; margin: 20px 0; }
 .draft-sensory dt { font-weight: 600; font-size: 0.8125rem; color: var(--v-muted); }
@@ -957,7 +958,11 @@ p, li, dt, dd, summary, label, figcaption, a, .lbl, .small-label, .small-note { 
 .app-nav a { display: flex; align-items: center; gap: 10px; min-height: 40px; padding: 0 12px; border-radius: var(--radius-md); color: var(--color-text); text-decoration: none; font-size: 0.9375rem; font-weight: 600; }
 .app-nav a:hover { background: color-mix(in srgb, var(--color-text) 7%, transparent); }
 .app-nav a[data-active="true"] { background: var(--color-accent); color: var(--color-bg); }
-.app-sidebar-foot { margin-top: auto; display: flex; flex-direction: column; gap: 10px; align-items: flex-start; }
+.app-sidebar-foot { margin-top: auto; display: flex; flex-direction: column; gap: 8px; align-items: stretch; }
+.app-sidebar-foot .language-switch summary, .app-sidebar-foot .theme-toggle, .app-signout { width: 100%; min-height: 36px; justify-content: flex-start; }
+.app-sidebar-foot .tone-switch { display: flex; }
+.app-sidebar-foot .tone-switch button { flex: 1; min-height: 36px; }
+.app-sidebar-foot form { margin-top: 8px; padding-top: 16px; border-top: 1px solid var(--color-divider); }
 /* The sidebar sits at the bottom of the screen, so its language menu opens upwards. */
 .app-sidebar .language-switch nav { top: auto; bottom: calc(100% + 8px); }
 .app-signout { gap: 8px; }
