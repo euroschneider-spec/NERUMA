@@ -177,7 +177,7 @@ try {
     await applicant.getByLabel('Responsible representative',{exact:true}).fill('Fixture director');
     await applicant.getByLabel('Official website (https://)',{exact:true}).fill('https://museum.example.test');
     await applicant.getByLabel('Country code (two letters)',{exact:true}).fill('DE');
-    await applicant.getByLabel('Public registry reference (if applicable)',{exact:true}).fill('Fixture register 42');
+    await applicant.getByLabel('Registry reference (optional)',{exact:true}).fill('Fixture register 42');
     await applicant.getByLabel('Your role in the organisation',{exact:true}).fill('Director');
     await applicant.getByLabel('How can your authority to represent the organisation be confirmed?',{exact:true}).fill('The registered office can independently confirm the director’s written mandate.');
     for(const checkbox of await applicant.locator('.organisation-form').getByRole('checkbox').all()) await checkbox.check();
