@@ -59,18 +59,17 @@ try {
   });
   await check('the location editor opens quietly: a status line, no responsibility box, hints as tooltips',async()=>{
     await expect(page.locator('.responsibility-notice')).toHaveCount(0);
-    await expect(page.locator('.editor-status').getByText('Draft',{exact:true})).toHaveCount(0);
     await expect(page.getByRole('button',{name:'Save online',exact:true})).toHaveCount(2);
     const publish=page.getByRole('button',{name:'Publish',exact:true});
-    await expect(publish).toHaveCount(2);for(const button of await publish.all()) await expect(button).toBeDisabled();
-    await expect(page.locator('.editor-status')).toContainText('Editing in English');
-    const hint='Two letters, for example RO or DE.';
-    const tip=page.locator('button[aria-controls="country-code-hint"]');
+    await expect(publish).toHaveCount(2);for(const button of await publish.all()) await expect(button).toHaveAttribute('aria-disabled','true');
+    await expect(page.getByText('Editing in')).toHaveCount(0);
+    const hint='Publishing is not available yet';
+    const tip=page.getByRole('button',{name:'Publish',exact:true}).first();
     const text=page.getByRole('tooltip').filter({hasText:hint});
     await expect(text).toBeHidden();
     await tip.hover();await expect(text).toBeVisible();await page.mouse.move(0,0);await expect(text).toBeHidden();
     await tip.focus();await expect(text).toBeVisible();await page.keyboard.press('Escape');await expect(text).toBeHidden();
-    await expect(page.getByLabel('Country code (optional)',{exact:true})).toHaveAccessibleDescription(hint);
+    await expect(page.getByLabel('Country code',{exact:false})).toHaveCount(0);
     await expect(page.getByRole('radiogroup',{name:'Location type',exact:true}).getByText('Other',{exact:true})).toBeVisible();
   });
   await check('new zone requires initial save before private photo upload',async()=>{
@@ -85,7 +84,7 @@ try {
     await page.goto(`${base}/en/workspace`);
     await expect(page.getByRole('heading',{name:'Fixture Gallery',level:3})).toBeVisible();
     await expect(page.locator('.location-card').getByText('Draft',{exact:true})).toBeVisible();
-    await expect(page.locator('.location-card').getByRole('button',{name:'Publish',exact:true})).toBeDisabled();
+    await expect(page.locator('.location-card').getByRole('button',{name:'Publish',exact:true})).toHaveAttribute('aria-disabled','true');
     await expect(page.locator('.location-card').getByText('Example city',{exact:false})).toBeVisible();
     const other=await (await browser.newContext()).newPage();
     await login(other);await other.getByRole('button',{name:'Sign out',exact:true}).click();
@@ -164,13 +163,14 @@ try {
     const response=await context.request.post(endpoint,{headers:{Origin:base},multipart:{...fields,file:{name:'bad.webp',mimeType:'image/webp',buffer:Buffer.from('not an image')}}});
     assert.equal(response.status(),400);await page.reload();await expect(page.getByLabel('Image rights / credit',{exact:true})).toHaveValue('VIANORAE test fixture');
   });
-  await check('step reorder and removal persist without deleting zone history',async()=>{
+  await check('adding and removing a step persists without deleting zone history',async()=>{
     await page.getByRole('button',{name:'Add a zone',exact:true}).click();
     const zone=page.locator('.builder-zone').nth(1);await zone.getByLabel('Zone title',{exact:true}).fill('Quiet room');
     await zone.getByLabel('Short description',{exact:true}).fill('A fictional quiet room.');
-    await zone.getByRole('button',{name:'Move earlier: Quiet room',exact:true}).click();await save(page);await page.reload();
-    await expect(page.locator('.builder-zone').first().getByLabel('Zone title',{exact:true})).toHaveValue('Quiet room');
-    await page.locator('.builder-zone').first().getByRole('button',{name:'Remove this step: Quiet room',exact:true}).click();await save(page);await page.reload();
+    await expect(page.getByRole('button',{name:/^Move (earlier|later)/})).toHaveCount(0);
+    await save(page);await page.reload();
+    await expect(page.locator('.builder-zone').nth(1).getByLabel('Zone title',{exact:true})).toHaveValue('Quiet room');
+    await page.locator('.builder-zone').nth(1).getByRole('button',{name:'Remove this step: Quiet room',exact:true}).click();await save(page);await page.reload();
     assert.equal(await page.locator('.builder-zone').count(),1);
   });
   await check('Romanian descriptions and photo alternative text persist separately from English',async()=>{

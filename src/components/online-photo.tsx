@@ -35,10 +35,14 @@ export function OnlinePhotoEditor({zone,placeId,locale,persisted,disabled,onChan
   }
   return <fieldset className="photo-editor" disabled={disabled || busy}>
     <legend>{o.photo}</legend>
-    <p id={`online-photo-hint-${zone.id}`} className="label-row">{t.photoHint}<InfoTip text={t.photoPrivacy} label={t.moreInfo} /></p>
     {!persisted && <p className="notice">{t.saveFirst}</p>}
-    <label className="form-field"><span className="sr-only">{o.photo}</span><input type="file" accept="image/jpeg,image/png,image/webp" disabled={!persisted || disabled || busy}
-      aria-describedby={`online-photo-hint-${zone.id}`} onChange={event=>{const file=event.target.files?.[0];event.target.value='';if(file) void upload(file);}}/></label>
+    <label className="file-pick">
+      <input className="sr-only" type="file" accept="image/jpeg,image/png,image/webp" disabled={!persisted || disabled || busy}
+        aria-describedby={`online-photo-hint-${zone.id}`} onChange={event=>{const file=event.target.files?.[0];event.target.value='';if(file) void upload(file);}}/>
+      <span className="button button-outline button-small file-pick-button">{t.choosePhoto}</span>
+      <span className="file-pick-status">{zone.photo ? t.photoAttached : t.noPhoto}</span>
+    </label>
+    <p id={`online-photo-hint-${zone.id}`} className="label-row">{t.photoHint}<InfoTip text={t.photoPrivacy} label={t.moreInfo} /></p>
     {zone.photo ? <>
       <Image unoptimized src={photoUrl(zone.photo.storageKey)} alt={zone.photo.alt || t.photoPreview} width={600} height={400} className="draft-photo"/>
       <div className="form-grid">
@@ -47,7 +51,7 @@ export function OnlinePhotoEditor({zone,placeId,locale,persisted,disabled,onChan
         <label className="form-field">{o.photoDate}<input required type="date" max={new Date().toISOString().slice(0,10)} value={zone.photo.photographedOn} onChange={e=>onChange({...zone.photo!,photographedOn:e.target.value})}/></label>
       </div><p>{o.sensitive}</p><p className="muted">{t.retained}</p>
       <button type="button" className="text-button" onClick={()=>{onChange(undefined);setStatus('');}}>{t.removePhoto}</button>
-    </> : <p>{t.noPhoto}</p>}
+    </> : null}
     {status && <p role={error?'alert':'status'}>{status}</p>}
   </fieldset>;
 }

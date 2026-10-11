@@ -3,7 +3,7 @@ import { notFound } from 'next/navigation';
 import { isLocale } from '@/lib/i18n';
 import { getOrganisationCopy } from '@/lib/organisation-copy';
 import { getWorkspaceCopy } from '@/lib/workspace';
-import { InfoTip } from '@/components/info-tip';
+import { PublishButton } from '@/components/publish-button';
 import { listPlaces, workspaceConfigured, workspaceSession } from '@/lib/workspace-server';
 
 export const dynamic='force-dynamic';
@@ -30,7 +30,7 @@ export default async function Workspace({params,searchParams}:{params:Promise<{l
         <p className="location-address">{[place.address,place.city].filter(Boolean).join(', ') || t.addressMissing}</p>
         <div className="location-card-actions">
           <Link className="button button-outline button-small" href={`/${locale}/workspace/${place.id}`}>{t.edit}</Link>
-          <span className="publish-group"><button className="button button-outline button-small" type="button" disabled>{t.publish}</button><InfoTip text={t.publishSoon} label={t.moreInfo} /></span>
+          <PublishButton label={t.publish} hint={t.publishSoon} small />
         </div>
       </li>)}</ul>}
     </section>}

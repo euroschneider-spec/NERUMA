@@ -3,13 +3,13 @@
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
-import { getCopy, localeNames, type Locale } from '@/lib/i18n';
+import { getCopy, type Locale } from '@/lib/i18n';
 import { getOrganisationCopy } from '@/lib/organisation-copy';
 import { getWorkspaceCopy, newZone, parsePlaceDraft, placeTypes, sensoryChannels, sensoryLevels, type PlaceDraft, type OnlineZone, type OnlinePhoto } from '@/lib/workspace';
 import { savePlaceDraft } from '@/app/workspace/actions';
 import { OnlinePhotoEditor } from './online-photo';
 import { ChoiceGroup } from './choice-group';
-import { InfoTip } from './info-tip';
+import { PublishButton } from './publish-button';
 
 export function OnlineBuilder({locale,org,initial,persistedZoneIds,missingTranslation=false}: {
   locale:Locale;org:string;initial:PlaceDraft;persistedZoneIds:string[];missingTranslation?:boolean;
@@ -35,7 +35,6 @@ export function OnlineBuilder({locale,org,initial,persistedZoneIds,missingTransl
   function field<K extends keyof Omit<PlaceDraft,'id'|'revision'|'zones'>>(key:K,value:PlaceDraft[K]){change(current=>({...current,[key]:value}));}
   function zoneField(index:number,update:(zone:OnlineZone)=>OnlineZone){change(current=>({...current,zones:current.zones.map((zone,i)=>i===index?update(zone):zone)}));}
   function photoBusy(id:string,busy:boolean){setBusyPhotos(current=>{const next=new Set(current);if(busy) next.add(id);else next.delete(id);return next;});}
-  function move(index:number,offset:number){change(current=>{const zones=[...current.zones];[zones[index],zones[index+offset]]=[zones[index+offset],zones[index]];return {...current,zones};});}
   async function save(event:React.FormEvent<HTMLFormElement>){
     event.preventDefault();if(disabled) return;
     if(!parsePlaceDraft(draft,org)){setMessage(t.invalid);setError('other');return;}
@@ -53,21 +52,17 @@ export function OnlineBuilder({locale,org,initial,persistedZoneIds,missingTransl
   const actions=(announce:boolean)=><div className="editor-actions">
     <button className="button" type="submit" disabled={disabled}>{pending?t.saving:t.save}</button>
     {draft.revision>0 ? <Link className="button button-outline" href={`/${locale}/workspace/${draft.id}/preview`}>{t.preview}</Link> : <button className="button button-outline" type="button" disabled>{t.preview}</button>}
-    <span className="publish-group"><button className="button button-outline" type="button" disabled>{t.publish}</button><InfoTip text={t.publishSoon} label={t.moreInfo} /></span>
+    <PublishButton label={t.publish} hint={t.publishSoon} />
     <p className="status-message" {...(announce ? {role:error?'alert':'status'} : {'aria-hidden':true as const})}>{message || (dirty?t.unsaved:'')}</p>
   </div>;
   return <>
-    <p className="editor-status">
-      <span className="editor-language">{t.editingIn} {localeNames[locale]}<InfoTip text={t.shared} label={t.moreInfo} /></span>
-    </p>
     {missingTranslation && <p className="notice">{t.missing}</p>}
     <form onSubmit={save} aria-label={t.edit}>
       {actions(false)}
       <fieldset className="online-fields" disabled={disabled}>
         <div className="form-grid">
           <label className="form-field wide">{t.location}<input name="location-name" required maxLength={160} value={draft.name} onChange={e=>field('name',e.target.value)}/></label>
-          <label className="form-field">{t.city}<input required maxLength={160} value={draft.city} onChange={e=>field('city',e.target.value)}/></label>
-          <div className="form-field"><span className="label-row"><label htmlFor="online-country">{t.country}</label><InfoTip id="country-code-hint" text={t.countryHint} label={t.moreInfo} /></span><input id="online-country" maxLength={2} pattern="[A-Z]{2}|^$" value={draft.countryCode} onChange={e=>field('countryCode',e.target.value.toUpperCase())} aria-describedby="country-code-hint"/></div>
+          <label className="form-field wide">{t.city}<input required maxLength={160} value={draft.city} onChange={e=>field('city',e.target.value)}/></label>
           <label className="form-field wide">{t.address}<input maxLength={500} value={draft.address} onChange={e=>field('address',e.target.value)}/></label>
           <ChoiceGroup label={t.kind} value={draft.placeType} onChange={value=>field('placeType',value as PlaceDraft['placeType'])} options={placeTypes.map((kind,i)=>({value:kind,label:kind==='other' ? t.kindOther : o.types[i]}))}/>
           <div className="form-field wide"><label htmlFor="online-description">{t.summary}</label><textarea id="online-description" rows={2} maxLength={2000} value={draft.description} onChange={e=>field('description',e.target.value)}/></div>
@@ -75,9 +70,7 @@ export function OnlineBuilder({locale,org,initial,persistedZoneIds,missingTransl
         </div>
         {draft.zones.map((zone,index)=><section className="builder-zone" key={zone.id} aria-labelledby={`online-zone-${zone.id}`}>
           <h2 id={`online-zone-${zone.id}`}>{common.step} {index+1}{zone.title?` · ${zone.title}`:''}</h2>
-          <div className="button-row zone-order"><button type="button" className="text-button" disabled={disabled || index===0} onClick={()=>move(index,-1)} aria-label={`${t.up}: ${zone.title || index+1}`}>{t.up}</button>
-            <button type="button" className="text-button" disabled={disabled || index===draft.zones.length-1} onClick={()=>move(index,1)} aria-label={`${t.down}: ${zone.title || index+1}`}>{t.down}</button>
-            <button type="button" className="text-button" disabled={disabled || draft.zones.length===1} onClick={()=>change(current=>({...current,zones:current.zones.filter(z=>z.id!==zone.id)}))} aria-label={`${t.removeZone}: ${zone.title || index+1}`}>{t.removeZone}</button></div>
+          <div className="button-row zone-order"><button type="button" className="text-button" disabled={disabled || draft.zones.length===1} onClick={()=>change(current=>({...current,zones:current.zones.filter(z=>z.id!==zone.id)}))} aria-label={`${t.removeZone}: ${zone.title || index+1}`}>{t.removeZone}</button></div>
           <div className="form-grid">
             <label className="form-field wide">{common.zoneName}<input required maxLength={160} value={zone.title} onChange={e=>zoneField(index,z=>({...z,title:e.target.value}))}/></label>
             <div className="form-field wide"><label htmlFor={`online-description-${zone.id}`}>{common.description}</label><textarea id={`online-description-${zone.id}`} required rows={3} maxLength={2000} value={zone.description} onChange={e=>zoneField(index,z=>({...z,description:e.target.value}))}/></div>

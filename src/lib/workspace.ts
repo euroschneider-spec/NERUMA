@@ -80,7 +80,7 @@ const en = {
   photoAdded: 'Photograph uploaded privately. Complete its details and save the draft to attach it.',
   photoError: 'The photograph could not be uploaded. The previous saved photograph is unchanged.',
   photoPreview: 'Zone photograph', removePhoto: 'Detach photograph from draft',
-  noPhoto: 'No photograph attached.', login: 'Sign in again', draft: 'Saved organisation draft',
+  noPhoto: 'No photograph attached.', choosePhoto: 'Choose a photograph', photoAttached: 'Photograph attached.', login: 'Sign in again', draft: 'Saved organisation draft',
   retained: 'Detaching or replacing a photograph removes it from the draft; the private file is retained.',
   discard: 'You have unsaved changes. Leave this page and discard them?',
 };
@@ -105,7 +105,7 @@ const ro: WorkspaceCopy = {
   photoPrivacy:'Imaginile sunt salvate privat pentru organizație. Metadatele originale de localizare sunt eliminate.',
   saveFirst:'Salvează locația și zona înainte să încarci fotografia.', photoAdded:'Fotografie încărcată privat. Completează detaliile și salvează draftul pentru a o asocia.',
   photoError:'Fotografia nu a putut fi încărcată. Fotografia salvată anterior nu a fost modificată.', photoPreview:'Fotografia zonei', removePhoto:'Detașează fotografia din draft',
-  noPhoto:'Nu este asociată nicio fotografie.', login:'Autentifică-te din nou', draft:'Draft salvat al organizației',
+  noPhoto:'Nu este asociată nicio fotografie.', choosePhoto:'Alege o fotografie', photoAttached:'Fotografie asociată.', login:'Autentifică-te din nou', draft:'Draft salvat al organizației',
   retained:'Detașarea sau înlocuirea unei fotografii o scoate din draft; fișierul privat este păstrat.',
   discard:'Ai modificări nesalvate. Părăsești pagina și renunți la ele?',
 };
@@ -128,7 +128,7 @@ const de: WorkspaceCopy = {
   photoPrivacy:'Bilder werden privat für Ihre Organisation gespeichert. Ursprüngliche Standort-Metadaten werden entfernt.',
   saveFirst:'Speichern Sie Ort und Bereich, bevor Sie ein Foto hochladen.', photoAdded:'Foto privat hochgeladen. Ergänzen Sie die Angaben und speichern Sie den Entwurf, um es zuzuordnen.',
   photoError:'Das Foto konnte nicht hochgeladen werden. Das zuvor gespeicherte Foto bleibt unverändert.', photoPreview:'Foto des Bereichs', removePhoto:'Foto vom Entwurf lösen',
-  noPhoto:'Kein Foto zugeordnet.', login:'Erneut anmelden', draft:'Gespeicherter Organisationsentwurf', retained:'Lösen oder Ersetzen entfernt das Foto aus dem Entwurf; die private Datei bleibt gespeichert.',
+  noPhoto:'Kein Foto zugeordnet.', choosePhoto:'Foto auswählen', photoAttached:'Foto zugeordnet.', login:'Erneut anmelden', draft:'Gespeicherter Organisationsentwurf', retained:'Lösen oder Ersetzen entfernt das Foto aus dem Entwurf; die private Datei bleibt gespeichert.',
   discard:'Es gibt ungespeicherte Änderungen. Möchten Sie diese Seite verlassen und die Änderungen verwerfen?',
 };
 export const getWorkspaceCopy = (locale: Locale): WorkspaceCopy => ({ en, ro, de })[locale];
