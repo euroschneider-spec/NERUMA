@@ -10,4 +10,6 @@ The current delivery includes manual organisation verification and approval (SQL
 6. **Pilot trust workflow:** assessor assignment, instruments, timestamps, evidence, independent review, protocol version, validity and re-assessment.
 7. **Pilot readiness:** specialist methodological calibration, lived-experience feedback, native-language review, manual WCAG audit, screen-reader testing, legal/GDPR review, and 3–5 real partners.
 
+8. **Release prerequisites:** activate only the missing mandate-evidence migration in the live database (the migration history there is empty because setup was manual, so do not replay old migrations), verify the Vercel project and production branch, configure the NERUMA domain and the Supabase callback allowlist, then verify production. `npm audit` reports five high-severity findings in the development-only `eslint-config-next` chain with no fix offered; they are not resolved.
+
 Billing, email providers, analytics subscriptions, API keys, PDF export, certification claims and native mobile apps remain outside this foundation.

@@ -79,3 +79,40 @@ entirely but opts all 76 prerendered pages into dynamic rendering.
 
 **Takeaway**: before silencing a framework warning, confirm the replacement still does the job the
 original did. Check the served HTML, not just the console.
+
+## 2026-10-11 — a rename left CI red on `main` for several merges
+
+`.header-login` was renamed to `.nav-login` when sign-in moved into the menu. The Playwright specs in
+`tests/` were updated, but `scripts/test-workspace.mjs` still looked for the old class, so
+`npm run test:workspace` failed in CI on `main` from then on. Two more workspace checks were already
+red for unrelated reasons (a bare `getByRole('alert')` also matching Next's route announcer, and the
+fixture returning auth errors as `code` instead of `error_code`, which supabase-js ignores). Pull
+requests kept merging because nothing required the checks to pass.
+
+**Fix**: updated the selector, scoped the alert checks to `main`, and fixed the fixture's error field.
+
+**Takeaway**: when renaming a class, id or visible label, search `scripts/` as well as `tests/`
+(`grep -rn "old-name" src tests scripts`). Also turn on branch protection so a red `checks` job blocks
+the merge.
+
+## 2026-10-11 — `test:workspace` leaves a fixture build that breaks the browser tests
+
+`npm run test:workspace` builds the app with fictitious Supabase settings into `.next`, and leaves
+that build there. Running `npm run test:e2e` or any Playwright spec afterwards starts the same build,
+where sign-in is enabled. The "registration is discoverable and inactive" and "publication review"
+tests then fail, with no connection to the code that was changed.
+
+**Fix**: `npm run build` (no environment settings) before running the browser specs again.
+
+**Takeaway**: after `test:workspace`, rebuild before running Playwright. Better: build the fixture
+version into its own `distDir`, or have the script clean up when it finishes.
+
+## 2026-10-11 — test runs rewrite tracked screenshots
+
+The Playwright specs and `test-workspace.mjs` write eleven preview images into
+`docs/verification/screenshots/` on every run, and those files are tracked. Every local run
+therefore leaves modified binary files that are easy to commit by accident (a stray image diff in an
+otherwise tiny change).
+
+**Takeaway**: before committing, check `git status` for `.png` changes and restore them
+(`git checkout -- docs/verification/screenshots`) unless the screenshots were meant to change.

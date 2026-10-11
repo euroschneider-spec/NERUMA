@@ -159,7 +159,7 @@ try {
       await page.setViewportSize({width:1280,height:900});
     });
   }
-  await page.goto(editUrl);await page.screenshot({path:'docs/online-builder-preview.png',fullPage:true});
+  await page.goto(editUrl);await page.screenshot({path:'docs/verification/screenshots/online-builder-preview.png',fullPage:true});
   await check('detaching a photo persists while retaining the private file',async()=>{
     await page.getByRole('button',{name:'Detach photograph from draft',exact:true}).click();await save(page);await page.reload();
     await expect(page.getByText('No photograph attached.',{exact:true})).toBeVisible();
@@ -266,7 +266,7 @@ try {
     await adminPage.goto(`${base}/en/admin/organisations?history=1`);
     await adminPage.locator('.verification-request details').getByText('Review history (administrators only)',{exact:true}).click();
     await expect(adminPage.getByText('Fixture mandate confirmed by the independently sourced registered office on 2026-10-07.',{exact:true})).toBeVisible();
-    await adminPage.screenshot({path:'docs/organisation-verification-preview.png',fullPage:true});
+    await adminPage.screenshot({path:'docs/verification/screenshots/organisation-verification-preview.png',fullPage:true});
   });
   await check('suspending an approved organisation removes access without signing the applicant out',async()=>{
     await adminPage.getByLabel('Decision',{exact:true}).selectOption('suspended');
