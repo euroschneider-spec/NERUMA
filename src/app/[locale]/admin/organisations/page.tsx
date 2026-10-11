@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { notFound, redirect } from 'next/navigation';
 import { isLocale } from '@/lib/i18n';
 import { getOrganisationCopy } from '@/lib/organisation-copy';
+import { getWorkspaceCopy } from '@/lib/workspace';
 import { getVerificationCopy, type OrganizationApplication, type ReviewEvent } from '@/lib/verification';
 import { MandateDocuments } from '@/components/mandate-documents';
 import { getEvidenceCopy, type MandateDocument } from '@/lib/mandate-evidence';
@@ -31,7 +32,7 @@ export default async function ReviewQueue({params,searchParams}:{params:Promise<
   const documents=documentResults.flatMap(result=>result.data||[]) as MandateDocument[];
   const base=`/${locale}/admin/organisations`;
   return <main id="main-content" className="container verification-page"><div className="page-heading"><h1>{v.admin}</h1><p className="lead">{v.adminIntro}</p></div><div className="content-body">
-    <nav aria-label={v.title} className="button-row"><Link className="quiet-link" href={base}>{v.statuses.pending}</Link><Link className="quiet-link" href={`${base}?history=1`}>{v.history}</Link><Link className="quiet-link" href={`/${locale}/account`}>{t.account}</Link></nav>
+    <nav aria-label={v.title} className="button-row"><Link className="quiet-link" href={base}>{v.statuses.pending}</Link><Link className="quiet-link" href={`${base}?history=1`}>{v.history}</Link><Link className="quiet-link" href={`/${locale}/admin/reports`}>{getWorkspaceCopy(locale).reportsAdmin}</Link><Link className="quiet-link" href={`/${locale}/account`}>{t.account}</Link></nav>
     {!documentsEnabled && <p className="notice">{getEvidenceCopy(locale).setup}</p>}
     {!requests.length && <p className="notice">{v.empty}</p>}
     {requests.map(request=><section key={request.id} className="verification-request" aria-labelledby={`request-${request.id}`}>

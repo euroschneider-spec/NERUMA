@@ -1098,3 +1098,7 @@ p, li, dt, dd, summary, label, figcaption, a, .lbl, .small-label, .small-note { 
 .confirm-dialog h2 { margin: 0 0 8px; font-size: 1.25rem; }
 .confirm-dialog p { margin: 0 0 20px; }
 .confirm-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 12px; }
+
+.report-message { margin: 0 0 12px; white-space: pre-wrap; overflow-wrap: anywhere; }
+.report-done { display: flex; flex-direction: column; align-items: flex-start; gap: 16px; }
+.report-done p { margin: 0; }

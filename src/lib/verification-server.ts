@@ -18,6 +18,8 @@ function schemaVersionIsOne(supabase:SupabaseClient,rpc:string):Promise<boolean>
 export const verificationReady=(supabase:SupabaseClient)=>schemaVersionIsOne(supabase,'organization_verification_schema_version');
 // Fields per step (removed and own fields) exist only after the 2026-10-11 migration.
 export const stepFieldsReady=(supabase:SupabaseClient)=>schemaVersionIsOne(supabase,'step_fields_schema_version');
+// Problem reports exist only after the 2026-10-12 migration.
+export const problemReportsReady=(supabase:SupabaseClient)=>schemaVersionIsOne(supabase,'problem_reports_schema_version');
 export const evidenceReady=(supabase:SupabaseClient)=>schemaVersionIsOne(supabase,'mandate_evidence_schema_version');
 
 export async function approvedOrganization(supabase:SupabaseClient,org:string):Promise<boolean> {

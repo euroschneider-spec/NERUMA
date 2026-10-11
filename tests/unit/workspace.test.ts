@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { newOwnField, newPlace, parsePlaceDraft, placeAttention, visibleZone } from '@/lib/workspace';
+import { newOwnField, newPlace, parsePlaceDraft, parseReportMessage, placeAttention, visibleZone } from '@/lib/workspace';
 
 const org = crypto.randomUUID();
 const filled = () => {
@@ -126,7 +126,6 @@ describe('visibleZone', () => {
   });
 });
 
-
 describe('placeAttention', () => {
   const steps = (n: number, hasText = true) => Array.from({ length: n }, (_, i) => ({ id: `z${i}`, hasText }));
   it('is empty for three complete steps', () => {
@@ -141,5 +140,19 @@ describe('placeAttention', () => {
   it('flags a photo with blank alt text, but not one on a removed step', () => {
     expect(placeAttention(steps(3), [{ zoneId: 'z1', alt: '  ' }])).toEqual(['missingAlt']);
     expect(placeAttention(steps(3), [{ zoneId: 'gone', alt: '' }])).toEqual([]);
+  });
+});
+
+describe('parseReportMessage', () => {
+  it('trims and accepts 10 to 2000 characters', () => {
+    expect(parseReportMessage('  The upload stops.  ')).toBe('The upload stops.');
+    expect(parseReportMessage('x'.repeat(2000))).toHaveLength(2000);
+  });
+  it('rejects short, long, blank and non-text input', () => {
+    expect(parseReportMessage('too short')).toBeNull();
+    expect(parseReportMessage('   ' + 'x'.repeat(5) + '   ')).toBeNull();
+    expect(parseReportMessage('x'.repeat(2001))).toBeNull();
+    expect(parseReportMessage(null)).toBeNull();
+    expect(parseReportMessage(42)).toBeNull();
   });
 });

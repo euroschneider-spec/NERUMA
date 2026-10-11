@@ -3,7 +3,7 @@ import { revalidatePath } from 'next/cache';
 import { isLocale } from '@/lib/i18n';
 import { getVerificationCopy } from '@/lib/verification';
 import { confirmedUser, createClient } from '@/lib/supabase/server';
-import { evidenceReady, verificationReady } from '@/lib/verification-server';
+import { evidenceReady, problemReportsReady, verificationReady } from '@/lib/verification-server';
 import { uuidPattern } from '@/lib/workspace';
 import type { AuthState } from '@/app/auth/actions';
 
@@ -27,4 +27,18 @@ export async function reviewOrganization(locale:string,_previous:AuthState,form:
     revalidatePath(`/${locale}/admin/organisations`);revalidatePath(`/${locale}/account`);revalidatePath(`/${locale}/workspace`);
     return {message:v.audit};
   } catch {return {message:v.error};}
+}
+
+/** The platform administrator closes one report. The database refuses anyone else and a report that is already closed. */
+export async function closeProblemReport(locale:string,form:FormData):Promise<void> {
+  const id=String(form.get('report')||'');
+  if(!isLocale(locale) || !uuidPattern.test(id)) return;
+  try {
+    const supabase=await createClient();
+    if(!await confirmedUser(supabase) || !await problemReportsReady(supabase)) return;
+    await supabase.rpc('close_problem_report',{report:id});
+  } catch {
+    // Nothing to show: the list still shows the report as open.
+  }
+  revalidatePath(`/${locale}/admin/reports`);
 }
