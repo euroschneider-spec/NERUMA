@@ -719,8 +719,6 @@ html[data-density="summary"] .density-switch button[data-value="summary"] { back
 /* In the warm tone only the heading carries the green; running text stays neutral. */
 :root[data-tone="warm"] .auth-feedback { color: var(--color-text); }
 :root[data-tone="warm"] .auth-feedback h2 { color: var(--color-accent-800); }
-.auth-progress { display: flex; flex-wrap: wrap; gap: 8px 24px; padding-left: 24px; }
-.auth-progress li { padding: 6px 0; }
 
 /* ── Reading settings: edge tab and nonmodal movable panel ───────────── */
 .reading-trigger {

@@ -1,4 +1,3 @@
-import { getAuthFeedback } from '@/lib/auth-feedback';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { getCopy, isLocale } from '@/lib/i18n';
@@ -19,7 +18,7 @@ export default async function Register({ params }: { params: Promise<{ locale: s
   const enabled=authConfigured() && await verificationReady(await createClient());
   return <main id="main-content" className="container">
     <div className="page-heading"><p className="eyebrow">NERUMA</p><h1>{v.request}</h1><p className="lead">{v.intro}</p></div>
-    <div className="content-body"><ol className="auth-progress">{getAuthFeedback(locale).progress.map(step=><li key={step}>{step}</li>)}</ol><ResponsibilityNotice locale={locale}/>
+    <div className="content-body"><ResponsibilityNotice locale={locale}/>
       {authConfigured() && !enabled && <p className="notice" role="status">{v.setup}</p>}
       <OrganisationForm locale={locale} mode="register" enabled={enabled}/>
       <div className="button-row"><Link className="quiet-link" href={`/${locale}/login`}>{t.login}</Link><Link className="quiet-link" href={`/${locale}/dashboard`}>{getCopy(locale).openWorkspace}</Link></div>
