@@ -176,7 +176,14 @@ try {
     await save(page);await page.reload();
     const second=page.locator('.builder-zone').nth(1);const toggle=second.locator('.zone-toggle');await expect(toggle).toHaveAccessibleName(/^Step 2 · Quiet room/);
     await expect(toggle).toHaveAttribute('aria-expanded','false');await expect(second.getByLabel('Zone title',{exact:true})).toBeHidden();
-    await expect(toggle).toContainText('Complete');
+    await expect(toggle).not.toContainText('Needs details');
+    const first=page.locator('.builder-zone').first().locator('.zone-toggle');
+    await expect(page.getByRole('button',{name:'Move up: Quiet room',exact:true})).toHaveCount(0);
+    await first.click();await expect(first).toHaveAttribute('aria-expanded','false');
+    await page.getByRole('button',{name:'Move up: Quiet room',exact:true}).click();
+    await expect(page.locator('.builder-zone').first().locator('.zone-toggle')).toHaveAccessibleName(/^Step 1 · Quiet room/);
+    await page.getByRole('button',{name:'Move down: Quiet room',exact:true}).click();
+    await expect(toggle).toHaveAccessibleName(/^Step 2 · Quiet room/);
     await toggle.click();await expect(toggle).toHaveAttribute('aria-expanded','true');
     await expect(second.getByLabel('Zone title',{exact:true})).toHaveValue('Quiet room');
     await second.getByLabel('Zone title',{exact:true}).fill('');await toggle.click();

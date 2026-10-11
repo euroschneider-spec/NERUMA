@@ -49,7 +49,7 @@ export function OrgSidebar({ locale, memberships, copy, signOutAction }: {
     <aside className="app-sidebar" aria-label={copy.sidebarLabel} data-collapsed={collapsed}>
       <div className="app-sidebar-top">
         <Link className="brand-link" href={`/${locale}`} aria-label="NERUMA"><Brand /></Link>
-        <button type="button" className="app-collapse" onClick={toggle} aria-expanded={!collapsed} aria-label={collapsed ? copy.expand : copy.collapse} title={collapsed ? copy.expand : copy.collapse}>
+        <button type="button" className="app-collapse" onClick={toggle} aria-expanded={!collapsed} aria-label={collapsed ? copy.expand : copy.collapse} data-tip={collapsed ? copy.expand : copy.collapse}>
           {collapsed ? <PanelLeftOpen size={18} aria-hidden="true" /> : <PanelLeftClose size={18} aria-hidden="true" />}
         </button>
       </div>
@@ -58,7 +58,7 @@ export function OrgSidebar({ locale, memberships, copy, signOutAction }: {
         <p className="app-org-role">{current.roleLabel}</p>
       </div>
       <nav className="app-nav" aria-label={copy.sidebarLabel}>
-        <Link href={dashboard} aria-current={path === `/${locale}/workspace` ? 'page' : undefined} data-active={path.startsWith(`/${locale}/workspace`)}>
+        <Link href={dashboard} aria-current={path === `/${locale}/workspace` ? 'page' : undefined} data-active={path.startsWith(`/${locale}/workspace`)} data-tip={copy.dashboard}>
           <LayoutDashboard size={16} aria-hidden="true" />
           <span className="app-label">{copy.dashboard}</span>
         </Link>
@@ -68,7 +68,7 @@ export function OrgSidebar({ locale, memberships, copy, signOutAction }: {
         <ToneSwitch locale={locale} />
         <ThemeToggle locale={locale} />
         <form action={signOutAction}>
-          <button type="submit" className="button button-small button-outline app-signout">
+          <button type="submit" className="button button-small button-outline app-signout" data-tip={copy.signOut}>
             <LogOut size={16} aria-hidden="true" />
             <span className="app-label">{copy.signOut}</span>
           </button>
