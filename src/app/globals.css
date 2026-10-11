@@ -259,7 +259,7 @@ main { min-height: 65vh; }
 
 /* ── Forms ────────────────────────────────────────────────────────────── */
 .field, .form-field { display: flex; flex-direction: column; gap: 5px; min-width: 0; }
-.field > label, .label, .form-field > label, label.form-field { font-size: 0.8125rem; color: color-mix(in srgb, var(--color-text) 75%, transparent); }
+.field > label, .label, .form-field > label, .form-field .label-row > label, label.form-field { font-size: 0.8125rem; color: color-mix(in srgb, var(--color-text) 75%, transparent); }
 .input, input, select, textarea {
   width: 100%; min-width: 0; min-height: 36px; padding: 6px 10px; font: inherit;
   font-size: 0.9375rem; color: var(--color-text); caret-color: var(--color-accent);
@@ -283,6 +283,8 @@ input[type="checkbox"], .check {
 input[type="file"] { max-width: 100%; overflow: hidden; padding: 6px; }
 .form-error { color: var(--color-accent-800); background: var(--color-accent-100); padding: 8px 12px; border-radius: var(--radius-md); font-size: 0.875rem; margin: 0; }
 .checkbox-label { display: flex; align-items: center; gap: 10px; font-size: 0.9375rem; }
+/* Centred on the line box, a checkbox still looks low against lowercase text (the line leaves room for descenders); lift it to the middle of the letters. */
+.checkbox-label input[type="checkbox"] { position: relative; top: -2px; }
 fieldset { min-width: 0; max-width: 100%; border: 1px solid var(--color-divider); border-radius: var(--radius-lg); padding: 20px; }
 legend { padding-inline: var(--space-2); max-width: 100%; font-weight: var(--font-heading-weight); overflow-wrap: anywhere; }
 .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr)); gap: 16px; }
@@ -290,6 +292,7 @@ legend { padding-inline: var(--space-2); max-width: 100%; font-weight: var(--fon
 /* Visible choices instead of a dropdown (ChoiceGroup): every option on screen, wrapping on narrow screens. */
 .choice-label { font-size: 0.8125rem; color: color-mix(in srgb, var(--color-text) 75%, transparent); }
 .choice-options { display: flex; flex-wrap: wrap; gap: 6px; }
+.choice-field.wide .choice-options { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 170px), 1fr)); }
 .choice-options .seg-opt { min-height: 36px; justify-content: center; border: 1px solid var(--color-divider); border-radius: var(--radius-md); }
 .choice-options .seg-opt + .seg-opt { border-left: 1px solid var(--color-divider); }
 .choice-options .seg-opt:has(input:checked) { border-color: var(--color-accent); font-weight: 600; }
@@ -365,6 +368,26 @@ legend { padding-inline: var(--space-2); max-width: 100%; font-weight: var(--fon
 .copy-box { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 0.8125rem; word-break: break-all; background: var(--color-bg); border: 1px solid var(--color-divider); border-radius: var(--radius-md); padding: 8px 10px; }
 .small-note { font-size: 0.8125rem; color: var(--v-muted); }
 .small-label { font-size: 0.6875rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.09em; color: var(--v-muted); }
+/* The quiet line at the top of the location editor: status, who can see it, and the language being edited. */
+.editor-status { position: relative; display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px; margin: 0 0 20px; font-size: 0.875rem; color: var(--v-muted); }
+.editor-language { display: inline-flex; align-items: center; gap: 6px; }
+.editor-actions { position: relative; display: flex; flex-wrap: wrap; align-items: center; gap: 12px 16px; margin: 20px 0; }
+.editor-add { margin-top: 24px; }
+.publish-group { display: inline-flex; align-items: center; gap: 8px; }
+.publish-group .button[aria-disabled="true"], .publish-group .button[aria-disabled="true"]:hover { opacity: 0.7; border-style: dashed; background: transparent; color: inherit; cursor: not-allowed; }
+.publish-group .infotip-text { width: 260px; max-width: 100%; }
+.location-card-actions { position: relative; display: flex; flex-wrap: wrap; align-items: center; gap: 10px 16px; margin-top: 8px; }
+.location-card-actions .publish-group .infotip-text { right: 0; left: auto; }
+/* The 24px "?" must not make this row taller than a plain label, or its field sits lower than its neighbour. */
+.label-row { position: relative; display: flex; align-items: center; gap: 6px; margin-block: -3px; }
+/* A "?" that explains a field (InfoTip): hover, focus or tap shows it, Escape closes it. */
+/* The hint is placed against the whole row (.label-row / .publish-group), never against the small button, so it
+   always stays inside the screen, even closed. */
+.infotip { display: inline-flex; }
+.infotip-button { width: 24px; height: 24px; min-width: 24px; min-height: 24px; padding: 0; border: 1px solid var(--color-divider); border-radius: 50%; background: transparent; color: var(--v-muted); font-size: 0.75rem; font-weight: 700; line-height: 1; cursor: help; }
+.infotip-button:hover, .infotip-button[aria-expanded="true"] { color: var(--color-text); border-color: var(--color-accent); }
+.infotip-text { position: absolute; z-index: 30; left: 0; top: calc(100% + 6px); width: max-content; max-width: min(320px, 100%); padding: 8px 12px; background: var(--color-surface); color: var(--color-text); border: 1px solid var(--color-divider); border-radius: var(--radius-md); box-shadow: var(--shadow-lg); font-size: 0.8125rem; font-weight: 400; line-height: 1.5; visibility: hidden; opacity: 0; pointer-events: none; }
+.infotip-text[data-open="true"] { visibility: visible; opacity: 1; }
 .status-message { min-height: 24px; margin: 0; font-size: 0.875rem; color: var(--color-accent-700); }
 .preserve-lines { white-space: pre-line; }
 .level-dot { display: inline-block; height: 7px; width: 7px; border-radius: 50%; background: var(--color-accent); }
@@ -695,9 +718,9 @@ html[data-density="summary"] .density-switch button[data-value="summary"] { back
 .workspace-location h2 { font-size: 1.25rem; margin-top: 0; }
 .builder-zone { margin-block: 24px; background: var(--color-surface); padding: 24px; border: 1px solid var(--color-divider); border-radius: var(--radius-lg); }
 .builder-zone h2 { font-size: 1.25rem; }
+.builder-zone > .form-field, .builder-zone > .commitment { margin-top: 16px; }
 .sensory-fields { margin-block: 20px; }
 .online-fields { border: 0; padding: 0; margin: 0; min-width: 0; }
-.online-fields > legend { font-size: 1.25rem; font-weight: var(--font-heading-weight); margin-bottom: 20px; padding-inline: 0; }
 .zone-order { margin-bottom: 20px; }
 .draft-sensory { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 144px), 1fr)); gap: 16px; margin: 20px 0; }
 .draft-sensory dt { font-weight: 600; font-size: 0.8125rem; color: var(--v-muted); }
@@ -787,8 +810,6 @@ html[data-density="summary"] .density-switch button[data-value="summary"] { back
 .reading-dialog-heading .panel-drag-handle { margin-left: auto; }
 .reading-dialog p { margin: 0; font-size: 0.875rem; color: var(--v-muted); }
 .reading-dialog .reading-sound-note { margin: 0; padding: 12px; }
-.reading-dialog .checkbox-label { align-items: flex-start; }
-.reading-dialog input[type="checkbox"] { flex-shrink: 0; margin-top: 4px; }
 .reading-dialog .form-field { min-width: 0; }
 .reading-dialog label { overflow-wrap: anywhere; }
 .panel-drag-handle { cursor: grab; touch-action: none; }
@@ -939,9 +960,13 @@ p, li, dt, dd, summary, label, figcaption, a, .lbl, .small-label, .small-note { 
 .app-nav a { display: flex; align-items: center; gap: 10px; min-height: 40px; padding: 0 12px; border-radius: var(--radius-md); color: var(--color-text); text-decoration: none; font-size: 0.9375rem; font-weight: 600; }
 .app-nav a:hover { background: color-mix(in srgb, var(--color-text) 7%, transparent); }
 .app-nav a[data-active="true"] { background: var(--color-accent); color: var(--color-bg); }
-.app-sidebar-foot { margin-top: auto; display: flex; flex-direction: column; gap: 10px; align-items: flex-start; }
-.app-lang a.seg-opt { text-decoration: none; color: var(--color-text); min-height: 36px; }
-.app-lang a.seg-opt[aria-current="true"] { background: var(--color-accent); color: var(--color-bg); font-weight: 600; }
+.app-sidebar-foot { margin-top: auto; display: flex; flex-direction: column; gap: 8px; align-items: stretch; }
+.app-sidebar-foot .language-switch summary, .app-sidebar-foot .theme-toggle, .app-signout { width: 100%; min-height: 36px; justify-content: flex-start; }
+.app-sidebar-foot .tone-switch { display: flex; }
+.app-sidebar-foot .tone-switch button { flex: 1; min-height: 36px; }
+.app-sidebar-foot form { margin-top: 8px; padding-top: 16px; border-top: 1px solid var(--color-divider); }
+/* The sidebar sits at the bottom of the screen, so its language menu opens upwards. */
+.app-sidebar .language-switch nav { top: auto; bottom: calc(100% + 8px); }
 .app-signout { gap: 8px; }
 .app-content { min-width: 0; }
 .app-main { max-width: 1100px; margin: 0 auto; padding: 40px 40px 72px; }
@@ -963,3 +988,12 @@ p, li, dt, dd, summary, label, figcaption, a, .lbl, .small-label, .small-note { 
   .app-sidebar { position: static; height: auto; border-right: 0; border-bottom: 1px solid var(--color-divider); }
   .app-main { padding: 24px 16px 48px; }
 }
+
+/* The photo picker: our own button and status line instead of the browser's "No file chosen". */
+.file-pick { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; min-height: 120px; padding: 20px 16px; text-align: center; border: 1px dashed var(--color-divider); border-radius: var(--radius-lg); cursor: pointer; }
+.file-pick:hover { border-color: var(--color-accent); }
+.file-pick:has(input:disabled) { cursor: not-allowed; opacity: 0.6; }
+.file-pick:has(input:focus-visible) { outline: 2px solid var(--color-accent); outline-offset: 2px; }
+.file-pick-action { display: inline-flex; align-items: center; gap: 8px; font-weight: 600; }
+.photo-editor > .label-row { justify-content: center; margin-block: 12px 4px; }
+.file-pick-status { color: var(--v-muted); font-size: 0.9375rem; }

@@ -26,8 +26,8 @@ async function login(page,owner=1) {
   await page.getByRole('button',{name:'Sign in',exact:true}).click();
   await page.waitForURL(/\/en\/(account|workspace|admin\/organisations)$/);
 }
-const saved=page=>expect(page.locator('.status-message')).toContainText('Draft saved online');
-const save=async page=>{await page.getByRole('button',{name:'Save online',exact:true}).click();await saved(page);};
+const saved=page=>expect(page.locator('.status-message[role]')).toContainText('Draft saved online');
+const save=async page=>{await page.getByRole('button',{name:'Save online',exact:true}).last().click();await saved(page);};
 try {
   if(!process.argv.includes('--skip-build')) {
     const build=start('npm',['run','build'],{},'/tmp/vianorae-workspace-build.log');
@@ -49,9 +49,28 @@ try {
     await expect(sidebar.getByText('Owner',{exact:true})).toBeVisible();
     await expect(page.locator('.site-header')).toHaveCount(0);
     await expect(page.getByRole('heading',{name:'Dashboard',level:1})).toBeVisible();
+    await expect(sidebar.getByRole('link',{name:'Public site'})).toHaveCount(0);
+    await expect(sidebar.getByRole('link',{name:'NERUMA'})).toHaveAttribute('href','/en');
+    await expect(sidebar.locator('.language-switch summary')).toBeVisible();
+    await expect(sidebar.getByRole('group',{name:'Colour tone'}).getByRole('button',{name:'Warm'})).toBeVisible();
     const tab=await page.locator('.floating-reading').boundingBox();const signOut=await sidebar.getByRole('button',{name:'Sign out',exact:true}).boundingBox();
     assert.ok(tab && signOut && (tab.y+tab.height<=signOut.y || signOut.y+signOut.height<=tab.y || tab.x+tab.width<=signOut.x || signOut.x+signOut.width<=tab.x),'the reading tab must not cover Sign out');
     await page.getByRole('link',{name:'Create a location',exact:true}).click();
+  });
+  await check('the location editor opens quietly: a status line, no responsibility box, hints as tooltips',async()=>{
+    await expect(page.locator('.responsibility-notice')).toHaveCount(0);
+    await expect(page.getByRole('button',{name:'Save online',exact:true})).toHaveCount(2);
+    const publish=page.getByRole('button',{name:'Publish',exact:true});
+    await expect(publish).toHaveCount(2);for(const button of await publish.all()) await expect(button).toHaveAttribute('aria-disabled','true');
+    await expect(page.getByText('Editing in')).toHaveCount(0);
+    const hint='Publishing is not available yet';
+    const tip=page.getByRole('button',{name:'Publish',exact:true}).first();
+    const text=page.getByRole('tooltip').filter({hasText:hint});
+    await expect(text).toBeHidden();
+    await tip.hover();await expect(text).toBeVisible();await page.mouse.move(0,0);await expect(text).toBeHidden();
+    await tip.focus();await expect(text).toBeVisible();await page.keyboard.press('Escape');await expect(text).toBeHidden();
+    await expect(page.getByLabel('Country code',{exact:false})).toHaveCount(0);
+    await expect(page.getByRole('radiogroup',{name:'Location type',exact:true}).getByText('Other',{exact:true})).toBeVisible();
   });
   await check('new zone requires initial save before private photo upload',async()=>{
     await expect(page.locator('input[type=file]')).toBeDisabled();
@@ -65,6 +84,7 @@ try {
     await page.goto(`${base}/en/workspace`);
     await expect(page.getByRole('heading',{name:'Fixture Gallery',level:3})).toBeVisible();
     await expect(page.locator('.location-card').getByText('Draft',{exact:true})).toBeVisible();
+    await expect(page.locator('.location-card').getByRole('button',{name:'Publish',exact:true})).toHaveAttribute('aria-disabled','true');
     await expect(page.locator('.location-card').getByText('Example city',{exact:false})).toBeVisible();
     const other=await (await browser.newContext()).newPage();
     await login(other);await other.getByRole('button',{name:'Sign out',exact:true}).click();
@@ -91,7 +111,7 @@ try {
     const info=await sharp(await response.body()).metadata();assert.equal(info.format,'webp');assert.equal(info.width,1600);assert.equal(info.exif,undefined);assert.equal(info.xmp,undefined);
   });
   await check('saved preview reads persisted photograph and description',async()=>{
-    await page.getByRole('link',{name:'Preview saved draft',exact:true}).click();
+    await page.getByRole('link',{name:'Preview',exact:true}).first().click();
     await expect(page.getByText('A step-free entrance, checked by the venue.',{exact:true})).toBeVisible();
     await expect(page.getByRole('img',{name:'Fictional green entrance illustration'})).toBeVisible();
     assert.match((await context.request.get(page.url())).headers()['cache-control'],/private.*no-store/);
@@ -119,14 +139,14 @@ try {
   await check('concurrent stale save preserves unsaved text and does not overwrite the newer revision',async()=>{
     await page.getByLabel('Location name',{exact:true}).fill('Latest fixture name');await save(page);
     await secondPage.getByLabel('Location name',{exact:true}).fill('Unsaved conflicting name');
-    await secondPage.getByRole('button',{name:'Save online',exact:true}).click();
+    await secondPage.getByRole('button',{name:'Save online',exact:true}).last().click();
     await expect(secondPage.locator('.status-message[role=alert]')).toContainText('Someone saved a newer version');
     await expect(secondPage.getByLabel('Location name',{exact:true})).toHaveValue('Unsaved conflicting name');
     await page.reload();await expect(page.getByLabel('Location name',{exact:true})).toHaveValue('Latest fixture name');
   });
   await check('unsaved navigation can be cancelled',async()=>{
     let seen=false;secondPage.once('dialog',async dialog=>{seen=true;await dialog.dismiss();});
-    await secondPage.getByRole('link',{name:'All locations',exact:true}).click();assert.equal(seen,true);await expect(secondPage).toHaveURL(editUrl);
+    await secondPage.getByRole('complementary').getByRole('link',{name:'Dashboard',exact:true}).click();assert.equal(seen,true);await expect(secondPage).toHaveURL(editUrl);
   });
   const other=await browser.newContext();const otherPage=await other.newPage();await login(otherPage,2);
   await check('another organisation cannot read the place, preview or private photo',async()=>{
@@ -143,13 +163,14 @@ try {
     const response=await context.request.post(endpoint,{headers:{Origin:base},multipart:{...fields,file:{name:'bad.webp',mimeType:'image/webp',buffer:Buffer.from('not an image')}}});
     assert.equal(response.status(),400);await page.reload();await expect(page.getByLabel('Image rights / credit',{exact:true})).toHaveValue('VIANORAE test fixture');
   });
-  await check('step reorder and removal persist without deleting zone history',async()=>{
+  await check('adding and removing a step persists without deleting zone history',async()=>{
     await page.getByRole('button',{name:'Add a zone',exact:true}).click();
     const zone=page.locator('.builder-zone').nth(1);await zone.getByLabel('Zone title',{exact:true}).fill('Quiet room');
     await zone.getByLabel('Short description',{exact:true}).fill('A fictional quiet room.');
-    await zone.getByRole('button',{name:'Move earlier: Quiet room',exact:true}).click();await save(page);await page.reload();
-    await expect(page.locator('.builder-zone').first().getByLabel('Zone title',{exact:true})).toHaveValue('Quiet room');
-    await page.locator('.builder-zone').first().getByRole('button',{name:'Remove this step: Quiet room',exact:true}).click();await save(page);await page.reload();
+    await expect(page.getByRole('button',{name:/^Move (earlier|later)/})).toHaveCount(0);
+    await save(page);await page.reload();
+    await expect(page.locator('.builder-zone').nth(1).getByLabel('Zone title',{exact:true})).toHaveValue('Quiet room');
+    await page.locator('.builder-zone').nth(1).getByRole('button',{name:'Remove this step: Quiet room',exact:true}).click();await save(page);await page.reload();
     assert.equal(await page.locator('.builder-zone').count(),1);
   });
   await check('Romanian descriptions and photo alternative text persist separately from English',async()=>{
@@ -158,8 +179,8 @@ try {
     await page.getByLabel('Titlul zonei',{exact:true}).fill('Intrarea principală');
     await page.locator('.builder-zone').getByLabel('Descriere scurtă',{exact:true}).fill('O intrare fictivă fără trepte.');
     await page.getByLabel('Descrierea imaginii (text alternativ)',{exact:true}).fill('Ilustrație fictivă a intrării');
-    await page.getByRole('button',{name:'Salvează online',exact:true}).click();
-    await expect(page.locator('.status-message')).toContainText('Draft salvat online');await page.reload();
+    await page.getByRole('button',{name:'Salvează online',exact:true}).last().click();
+    await expect(page.locator('.status-message[role]')).toContainText('Draft salvat online');await page.reload();
     await expect(page.getByLabel('Numele locației',{exact:true})).toHaveValue('Galerie fictivă');
     await page.goto(editUrl);await expect(page.getByLabel('Location name',{exact:true})).toHaveValue('Latest fixture name');
     await expect(page.getByLabel('Image description (alternative text)',{exact:true})).toHaveValue('Fictional green entrance illustration');

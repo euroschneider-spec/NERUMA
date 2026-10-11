@@ -25,10 +25,8 @@ export default async function WorkspaceLayout({ children, params }: { children: 
         memberships={memberships}
         copy={{
           dashboard: t.dashboard,
-          publicSite: t.publicSite,
           signOut: getOrganisationCopy(locale).signOut,
           sidebarLabel: t.sidebarLabel,
-          languageLabel: t.languageLabel,
         }}
         signOutAction={signOut.bind(null, locale)}
       />
