@@ -4,6 +4,7 @@ import { notFound } from 'next/navigation';
 import { isLocale } from '@/lib/i18n';
 import { getOrganisationCopy } from '@/lib/organisation-copy';
 import { getWorkspaceCopy, photoUrl } from '@/lib/workspace';
+import { QrDialog } from '@/components/qr-dialog';
 import { PublishButton } from '@/components/publish-button';
 import { listPlaces, workspaceConfigured, workspaceSession } from '@/lib/workspace-server';
 
@@ -13,6 +14,9 @@ export async function generateMetadata({params}:{params:Promise<{locale:string}>
   const {locale}=await params;const t=getWorkspaceCopy(isLocale(locale) ? locale : 'en');
   return {title:t.dashboard,robots:{index:false,follow:false}};
 }
+// Design sample for dev:mock only: real locations get a code and counts when publishing exists (DECISIONS.md, "QR codes").
+const sampleOnly = process.env.VIANORAE_FIXTURE_DEMO_DATA==='1';
+const sampleVisits = 128;
 export default async function Workspace({params,searchParams}:{params:Promise<{locale:string}>;searchParams:Promise<{org?:string}>}) {
   const {locale}=await params;if(!isLocale(locale)) notFound();
   const t=getWorkspaceCopy(locale);
@@ -38,8 +42,10 @@ export default async function Workspace({params,searchParams}:{params:Promise<{l
           <h4>{t.attentionHeading}</h4>
           {place.attention.length ? <ul>{place.attention.map(kind=><li key={kind}>{t[kind==='fewSteps' ? 'attentionFewSteps' : kind==='missingText' ? 'attentionMissingText' : 'attentionMissingAlt']}</li>)}</ul> : <p>{t.attentionClear}</p>}
         </div>
+        {sampleOnly && <p className="location-visits"><span>{t.visitsLabel}</span> <strong>{sampleVisits}</strong> <em>({t.visitsSample})</em></p>}
         <div className="location-card-actions">
           <Link className="button button-outline button-small" href={`/${locale}/workspace/${place.id}`}>{t.edit}</Link>
+          {sampleOnly && <QrDialog code="willow-museum" name={place.name} locale={locale} t={t} />}
           <PublishButton label={t.publish} hint={t.publishSoon} small />
         </div>
       </li>)}</ul>}

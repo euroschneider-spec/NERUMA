@@ -984,6 +984,13 @@ p, li, dt, dd, summary, label, figcaption, a, .lbl, .small-label, .small-note { 
 .location-card-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
 .location-photo { display: block; width: 100%; aspect-ratio: 16 / 9; object-fit: cover; border-radius: var(--radius-md, 8px); background: var(--color-divider); }
 .location-photo-empty { aspect-ratio: 4 / 1; background: transparent; border: 1px dashed var(--color-divider); display: flex; align-items: center; justify-content: center; color: var(--v-muted); font-size: 0.875rem; }
+.location-visits { margin: 0; font-size: 0.9375rem; }
+.location-visits span, .location-visits em { color: var(--v-muted); }
+.qr-dialog { text-align: center; }
+.qr-image { display: block; margin: 0 auto 12px; max-width: 100%; height: auto; border-radius: var(--radius-md, 8px); }
+.qr-link { font-size: 0.875rem; overflow-wrap: anywhere; }
+.confirm-actions.qr-actions { justify-content: center; }
+.qr-status { min-height: 1.5em; margin: 12px 0 0; font-size: 0.875rem; color: var(--v-muted); }
 .location-attention h4 { margin: 4px 0; font-size: 0.875rem; }
 .location-attention ul { margin: 0; padding-left: 20px; font-size: 0.9375rem; }
 .location-attention p { margin: 0; color: var(--v-muted); font-size: 0.9375rem; }
