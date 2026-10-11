@@ -55,6 +55,11 @@ try {
     await expect(sidebar.getByRole('group',{name:'Colour tone'}).getByRole('button',{name:'Warm'})).toBeVisible();
     const tab=await page.locator('.floating-reading').boundingBox();const signOut=await sidebar.getByRole('button',{name:'Sign out',exact:true}).boundingBox();
     assert.ok(tab && signOut && (tab.y+tab.height<=signOut.y || signOut.y+signOut.height<=tab.y || tab.x+tab.width<=signOut.x || signOut.x+signOut.width<=tab.x),'the reading tab must not cover Sign out');
+    await sidebar.getByRole('button',{name:'Collapse sidebar',exact:true}).click();
+    await expect(sidebar.getByText('Fixture museum 1',{exact:true})).toBeHidden();
+    await expect(sidebar.getByRole('link',{name:'Dashboard',exact:true})).toBeVisible();
+    await page.reload();await expect(sidebar.getByRole('button',{name:'Expand sidebar',exact:true})).toBeVisible();
+    await sidebar.getByRole('button',{name:'Expand sidebar',exact:true}).click();await expect(sidebar.getByText('Fixture museum 1',{exact:true})).toBeVisible();
     await page.getByRole('link',{name:'Create a location',exact:true}).click();
   });
   await check('the location editor opens quietly: a status line, no responsibility box, hints as tooltips',async()=>{
@@ -163,13 +168,21 @@ try {
     const response=await context.request.post(endpoint,{headers:{Origin:base},multipart:{...fields,file:{name:'bad.webp',mimeType:'image/webp',buffer:Buffer.from('not an image')}}});
     assert.equal(response.status(),400);await page.reload();await expect(page.getByLabel('Image rights / credit',{exact:true})).toHaveValue('VIANORAE test fixture');
   });
-  await check('adding and removing a step persists without deleting zone history',async()=>{
+  await check('steps fold, a folded required field opens its step, and adding and removing a step persists without deleting zone history',async()=>{
     await page.getByRole('button',{name:'Add a zone',exact:true}).click();
     const zone=page.locator('.builder-zone').nth(1);await zone.getByLabel('Zone title',{exact:true}).fill('Quiet room');
     await zone.getByLabel('Short description',{exact:true}).fill('A fictional quiet room.');
     await expect(page.getByRole('button',{name:/^Move (earlier|later)/})).toHaveCount(0);
     await save(page);await page.reload();
-    await expect(page.locator('.builder-zone').nth(1).getByLabel('Zone title',{exact:true})).toHaveValue('Quiet room');
+    const second=page.locator('.builder-zone').nth(1);const toggle=second.locator('.zone-toggle');await expect(toggle).toHaveAccessibleName(/^Step 2 · Quiet room/);
+    await expect(toggle).toHaveAttribute('aria-expanded','false');await expect(second.getByLabel('Zone title',{exact:true})).toBeHidden();
+    await expect(toggle).toContainText('Complete');
+    await toggle.click();await expect(toggle).toHaveAttribute('aria-expanded','true');
+    await expect(second.getByLabel('Zone title',{exact:true})).toHaveValue('Quiet room');
+    await second.getByLabel('Zone title',{exact:true}).fill('');await toggle.click();
+    await page.getByRole('button',{name:'Save online',exact:true}).last().click();
+    await expect(toggle).toHaveAttribute('aria-expanded','true');await expect(second.getByLabel('Zone title',{exact:true})).toBeFocused();
+    await second.getByLabel('Zone title',{exact:true}).fill('Quiet room');
     await page.locator('.builder-zone').nth(1).getByRole('button',{name:'Remove this step: Quiet room',exact:true}).click();await save(page);await page.reload();
     assert.equal(await page.locator('.builder-zone').count(),1);
   });

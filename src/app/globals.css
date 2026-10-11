@@ -292,7 +292,7 @@ legend { padding-inline: var(--space-2); max-width: 100%; font-weight: var(--fon
 /* Visible choices instead of a dropdown (ChoiceGroup): every option on screen, wrapping on narrow screens. */
 .choice-label { font-size: 0.8125rem; color: color-mix(in srgb, var(--color-text) 75%, transparent); }
 .choice-options { display: flex; flex-wrap: wrap; gap: 6px; }
-.choice-field.wide .choice-options { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 170px), 1fr)); }
+.choice-field.wide .choice-options { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 150px), 1fr)); }
 .choice-options .seg-opt { min-height: 36px; justify-content: center; border: 1px solid var(--color-divider); border-radius: var(--radius-md); }
 .choice-options .seg-opt + .seg-opt { border-left: 1px solid var(--color-divider); }
 .choice-options .seg-opt:has(input:checked) { border-color: var(--color-accent); font-weight: 600; }
@@ -997,3 +997,36 @@ p, li, dt, dd, summary, label, figcaption, a, .lbl, .small-label, .small-note { 
 .file-pick-action { display: inline-flex; align-items: center; gap: 8px; font-weight: 600; }
 .photo-editor > .label-row { justify-content: center; margin-block: 12px 4px; }
 .file-pick-status { color: var(--v-muted); font-size: 0.9375rem; }
+
+/* The sidebar folds to a strip of icons (desktop and laptop; on narrow screens it already stacks above the page). */
+.app-sidebar-top { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.app-collapse { display: inline-flex; align-items: center; justify-content: center; width: 36px; height: 36px; min-width: 36px; padding: 0; border: 1px solid transparent; border-radius: var(--radius-md); background: transparent; color: var(--v-muted); cursor: pointer; }
+.app-collapse:hover { color: var(--color-text); border-color: var(--color-divider); }
+@media (min-width: 900px) {
+  .app-shell:has(.app-sidebar[data-collapsed="true"]) { grid-template-columns: 72px minmax(0, 1fr); }
+  .app-sidebar[data-collapsed="true"] { padding-inline: 12px; align-items: center; overflow: visible; } /* visible: the language menu is wider than the strip */
+  .app-sidebar[data-collapsed="true"] .app-sidebar-top { flex-direction: column; }
+  .app-sidebar[data-collapsed="true"] .brand { gap: 0; font-size: 0; }
+  .app-sidebar[data-collapsed="true"] .app-org,
+  .app-sidebar[data-collapsed="true"] .tone-switch,
+  .app-sidebar[data-collapsed="true"] .theme-toggle { display: none; }
+  .app-sidebar[data-collapsed="true"] .app-label { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; }
+  .app-sidebar[data-collapsed="true"] .app-nav a,
+  .app-sidebar[data-collapsed="true"] .app-signout { width: 44px; justify-content: center; padding: 0; }
+  .app-sidebar[data-collapsed="true"] .app-sidebar-foot { align-items: center; }
+  .app-sidebar[data-collapsed="true"] .app-sidebar-foot .language-switch summary { width: auto; white-space: nowrap; }
+  .app-sidebar[data-collapsed="true"] .app-sidebar-foot form { padding-top: 12px; }
+}
+@media (max-width: 899px) { .app-collapse { display: none; } }
+
+/* Step cards fold in place: the heading is the button, with a thumbnail and a complete / needs-details mark. */
+.builder-zone .zone-heading { margin: 0; font-size: 1.25rem; }
+.zone-toggle { display: flex; align-items: center; gap: 12px; width: 100%; min-height: 44px; padding: 0; border: 0; background: transparent; color: var(--color-text); font: inherit; font-weight: var(--font-heading-weight); text-align: left; cursor: pointer; }
+.zone-toggle-title { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+.zone-chevron { flex: none; color: var(--v-muted); transition: transform .15s; }
+.builder-zone[data-open="true"] .zone-chevron { transform: rotate(90deg); }
+.zone-thumb { flex: none; width: 40px; height: 40px; object-fit: cover; border-radius: var(--radius-md); }
+.zone-state { flex: none; display: inline-flex; align-items: center; justify-content: center; width: 28px; height: 28px; border-radius: 50%; color: var(--v-muted); border: 1px solid var(--color-divider); }
+.zone-state.is-complete { color: var(--color-bg); background: var(--color-accent); border-color: var(--color-accent); }
+.builder-zone[data-open="false"] { padding-block: 12px; }
+.zone-body { margin-top: 16px; }

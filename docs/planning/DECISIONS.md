@@ -91,6 +91,13 @@ Mobile first: the floating edge tab is easy to miss, has no label, and covers co
 Covers: `DESIGN-TASKS.md` section 6. Sections 5 and 7 follow from the three principles above and have not
 been discussed one by one.
 
+### Organisations shape their own steps, within limits
+More flexibility in the editor (owner, 2026-10-11). Each step card folds in place to one line; the sidebar folds
+to icons. Fields are chosen per step: name, description and the sensory profile always stay, so visitors can
+compare places; photo, useful note, what happens next and "may skip" can be removed and added back, and
+organisations can add their own fields from a few types (short text, yes/no, photo). Not chosen: a list of
+steps on the left with one open, dragging the sidebar wider or to the other side, removable sensory channels.
+
 ## Not yet discussed
 
 - `DESIGN-TASKS.md` sections 5, 6 (other items) and 7.
