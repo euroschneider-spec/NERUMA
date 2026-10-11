@@ -37,7 +37,7 @@ try {
   await ready('http://127.0.0.1:3012/health');
   start('node',['node_modules/next/dist/bin/next','start','--hostname','127.0.0.1','--port','3011'],{NODE_OPTIONS:`${process.env.NODE_OPTIONS || ''} --import ${process.cwd()}/scripts/workspace-fixture-fetch.mjs`},'/tmp/vianorae-workspace-server.log');
   await ready(`${base}/en/login`);browser=await chromium.launch();
-  const context=await browser.newContext();const page=await context.newPage();
+  const context=await browser.newContext({colorScheme:'dark'});const page=await context.newPage();
   await check('unauthenticated workspace redirects to sign in and photo API returns 401',async()=>{
     await page.goto(`${base}/en/workspace`);await expect(page).toHaveURL(/\/en\/login$/);
     assert.equal((await context.request.get(`${base}/api/workspace/photos?key=anything`)).status(),401);
@@ -93,7 +93,7 @@ try {
     await expect(page.locator('.location-card').getByText('Draft',{exact:true})).toBeVisible();
     await expect(page.locator('.location-card').getByRole('button',{name:'Publish',exact:true})).toHaveAttribute('aria-disabled','true');
     await expect(page.locator('.location-card').getByText('Example city',{exact:false})).toBeVisible();
-    const other=await (await browser.newContext()).newPage();
+    const other=await (await browser.newContext({colorScheme:'dark'})).newPage();
     await login(other);await other.getByRole('button',{name:'Sign out',exact:true}).click();
     await expect(other).toHaveURL(/\/en\/login$/);await other.goto(`${base}/en/workspace`);await expect(other).toHaveURL(/\/en\/login$/);
     await page.goto(editUrl);
@@ -136,7 +136,7 @@ try {
     const spoken=await page.evaluate(()=>window.__privateSpeech.spoken.join('\n'));
     assert.match(spoken,/Fixture Gallery/);assert.match(spoken,/A step-free entrance, checked by the venue/);assert.match(spoken,/Fictional green entrance illustration/);assert.match(spoken,/Sound: Moderate/);assert.doesNotMatch(spoken,/Willow Museum|Willow Square/);
   });
-  const second=await browser.newContext();const secondPage=await second.newPage();await login(secondPage);await secondPage.goto(editUrl);
+  const second=await browser.newContext({colorScheme:'dark'});const secondPage=await second.newPage();await login(secondPage);await secondPage.goto(editUrl);
   await check('a separate browser session sees the saved draft and photo',async()=>{
     await expect(secondPage.getByLabel('Step name',{exact:true})).toHaveValue('Main entrance');
     await expect(secondPage.getByLabel('Image rights / credit',{exact:true})).toHaveValue('VIANORAE test fixture');
@@ -155,7 +155,7 @@ try {
     let seen=false;secondPage.once('dialog',async dialog=>{seen=true;await dialog.dismiss();});
     await secondPage.getByRole('complementary').getByRole('link',{name:'Dashboard',exact:true}).click();assert.equal(seen,true);await expect(secondPage).toHaveURL(editUrl);
   });
-  const other=await browser.newContext();const otherPage=await other.newPage();await login(otherPage,2);
+  const other=await browser.newContext({colorScheme:'dark'});const otherPage=await other.newPage();await login(otherPage,2);
   await check('another organisation cannot read the place, preview or private photo',async()=>{
     const place=await otherPage.goto(editUrl);assert.equal(place.status(),404);
     const preview=await otherPage.goto(`${editUrl}/preview`);assert.equal(preview.status(),404);
@@ -281,8 +281,8 @@ try {
     assert.equal((await context.request.get(`${base}${photoPath}`)).status(),401);
     await page.goto(editUrl);await expect(page).toHaveURL(/\/en\/login$/);
   });
-  const applicantContext=await browser.newContext();const applicant=await applicantContext.newPage();
-  const adminContext=await browser.newContext();const adminPage=await adminContext.newPage();
+  const applicantContext=await browser.newContext({colorScheme:'dark'});const applicant=await applicantContext.newPage();
+  const adminContext=await browser.newContext({colorScheme:'dark'});const adminPage=await adminContext.newPage();
   const fillApplication=async()=>{
     await applicant.getByLabel('Organisation name',{exact:true}).fill('Verified fixture museum');
     await applicant.getByLabel('Responsible representative',{exact:true}).fill('Fixture director');
@@ -313,7 +313,7 @@ try {
   });
   await check('mandate download is private, immutable and served as an attachment',async()=>{
     const owner=await applicantContext.request.get(base+mandatePath);assert.equal(owner.status(),200);assert.deepEqual(await owner.body(),pdf);assert.match(owner.headers()['content-disposition'],/^attachment;/);assert.equal(owner.headers()['cache-control'],'private, no-store');
-    assert.equal((await browser.newContext().then(async c=>{try{return (await c.request.get(base+mandatePath)).status();}finally{await c.close();}})),401);
+    assert.equal((await browser.newContext({colorScheme:'dark'}).then(async c=>{try{return (await c.request.get(base+mandatePath)).status();}finally{await c.close();}})),401);
     await login(page,2);assert.equal((await context.request.get(base+mandatePath)).status(),404);
   });
   await check('cross-origin and malformed mandate uploads are rejected',async()=>{

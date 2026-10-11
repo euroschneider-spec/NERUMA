@@ -2,19 +2,21 @@
 import { useSyncExternalStore } from 'react';
 
 export type Theme='light'|'dark'|'contrast';
+/** What the reader chose: a theme, or 'system' to follow the device until they choose one. */
+export type ThemeChoice='system'|Theme;
 export type Size='normal'|'large'|'larger';
 export type Width='default'|'narrow';
 export type Font='default'|'hyperlegible';
 export type Density='full'|'summary';
 export type Tone='cool'|'warm';
-export type Preferences={size:Size;theme:Theme;spacing:boolean;width:Width;font:Font;density:Density;tone:Tone};
+export type Preferences={size:Size;theme:ThemeChoice;spacing:boolean;width:Width;font:Font;density:Density;tone:Tone};
 
-// Dark is the design default; the stored choice is reapplied before paint in the locale layout.
-export const defaults:Preferences={size:'normal',theme:'dark',spacing:false,width:'default',font:'default',density:'full',tone:'cool'};
+// Until a reader chooses, the theme follows their device; the stored choice is reapplied before paint in the locale layout.
+export const defaults:Preferences={size:'normal',theme:'system',spacing:false,width:'default',font:'default',density:'full',tone:'cool'};
 export const storageKey='vianorae:reading:v1';
 
 const sizes:Size[]=['normal','large','larger'];
-const themes:Theme[]=['light','dark','contrast'];
+const themes:ThemeChoice[]=['system','light','dark','contrast'];
 const widths:Width[]=['default','narrow'];
 const fonts:Font[]=['default','hyperlegible'];
 const densities:Density[]=['full','summary'];
@@ -44,9 +46,16 @@ export function readPreferences():Preferences {
   catch { return defaults; }
 }
 
+/** The theme on screen for a choice. 'system' follows the device and falls back to dark, the design default, when it can't be asked. */
+export function resolveTheme(choice:ThemeChoice,deviceIsLight:boolean):Theme {
+  return choice==='system' ? (deviceIsLight ? 'light' : 'dark') : choice;
+}
+const lightQuery='(prefers-color-scheme: light)';
+const deviceIsLight=()=>typeof window.matchMedia==='function' && window.matchMedia(lightQuery).matches;
+
 export function applyPreferences(p:Preferences) {
   const root=document.documentElement;
-  root.dataset.theme=p.theme;root.dataset.textSize=p.size;root.dataset.spacing=String(p.spacing);
+  root.dataset.themeChoice=p.theme;root.dataset.theme=resolveTheme(p.theme,deviceIsLight());root.dataset.textSize=p.size;root.dataset.spacing=String(p.spacing);
   root.dataset.width=p.width;root.dataset.font=p.font;root.dataset.density=p.density;root.dataset.tone=p.tone;
 }
 
@@ -71,13 +80,33 @@ function watch(attribute:string) {
 }
 
 const themeStore=watch('data-theme');
+const themeChoiceStore=watch('data-theme-choice');
 const densityStore=watch('data-density');
 const toneStore=watch('data-tone');
 
 export function useTheme():Theme {
   return useSyncExternalStore<Theme>(themeStore,
-    ()=>one(document.documentElement.dataset.theme,themes,defaults.theme),
+    ()=>one(document.documentElement.dataset.theme,['light','dark','contrast'],'dark'),
+    ()=>'dark');
+}
+
+/** The reader's choice (including 'system'), as opposed to the theme on screen. */
+export function useThemeChoice():ThemeChoice {
+  return useSyncExternalStore<ThemeChoice>(themeChoiceStore,
+    ()=>one(document.documentElement.dataset.themeChoice,themes,defaults.theme),
     ()=>defaults.theme);
+}
+
+/** While the choice is 'system', follow the device when it switches between light and dark. Returns the cleanup. */
+export function followSystemTheme():()=>void {
+  if(typeof window.matchMedia!=='function') return ()=>{};
+  const query=window.matchMedia(lightQuery);
+  const update=()=>{
+    const root=document.documentElement;
+    if(root.dataset.themeChoice==='system') root.dataset.theme=resolveTheme('system',query.matches);
+  };
+  query.addEventListener('change',update);
+  return ()=>query.removeEventListener('change',update);
 }
 
 export function useDensity():Density {
