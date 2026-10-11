@@ -7,6 +7,7 @@ import { authenticate, onboardOrganisation } from '@/app/auth/actions';
 import type { Locale } from '@/lib/i18n';
 import { getOrganisationCopy, organisationTypes } from '@/lib/organisation-copy';
 import { MandateUpload } from './mandate-upload';
+import { ChoiceGroup } from './choice-group';
 import { getEvidenceCopy, type MandateDocument } from '@/lib/mandate-evidence';
 import { getVerificationCopy } from '@/lib/verification';
 
@@ -33,8 +34,8 @@ export function OrganisationForm({ locale, mode, enabled, initial, initialDocume
       <legend>{button}</legend>
       <div className="form-grid">
         {hasOrganisation && <>
-          <label className="form-field">{t.organisation}<input name="organisation" autoComplete="organization" required maxLength={160} defaultValue={initial?.organisation}/></label>
-          <div className="form-field"><label htmlFor="organisation-type">{t.type}</label><select id="organisation-type" name="type" defaultValue={initial?.type || 'institution'}>{organisationTypes.map((type,i) => <option key={type} value={type}>{t.types[i]}</option>)}</select></div>
+          <label className="form-field wide">{t.organisation}<input name="organisation" autoComplete="organization" required maxLength={160} defaultValue={initial?.organisation}/></label>
+          <ChoiceGroup className="wide" label={t.type} name="type" defaultValue={initial?.type || 'institution'} options={organisationTypes.map((type,i) => ({ value: type, label: t.types[i] }))} />
           <label className="form-field">{t.representative}<input name="representative" autoComplete="name" required maxLength={160} defaultValue={initial?.representative}/></label>
           <label className="form-field">{v.role}<input name="representativeRole" required minLength={2} maxLength={160} autoComplete="organization-title" defaultValue={initial?.representativeRole}/></label>
           <label className="form-field third">{v.website}<input type="url" name="website" required maxLength={500} pattern="https://.*" defaultValue={initial?.website}/></label>

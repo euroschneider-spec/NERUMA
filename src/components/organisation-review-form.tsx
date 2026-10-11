@@ -4,6 +4,7 @@ import type { Locale } from '@/lib/i18n';
 import { getVerificationCopy, type OrganizationApplication } from '@/lib/verification';
 import { getEvidenceCopy, type MandateDocument } from '@/lib/mandate-evidence';
 import { reviewOrganization } from '@/app/admin/actions';
+import { ChoiceGroup } from './choice-group';
 
 export function OrganisationReviewForm({locale,application,self,documents}:{locale:Locale;application:Pick<OrganizationApplication,'id'|'revision'|'status'>;self:boolean;documents:MandateDocument[]}) {
   const v=getVerificationCopy(locale);const e=getEvidenceCopy(locale);
@@ -15,9 +16,7 @@ export function OrganisationReviewForm({locale,application,self,documents}:{loca
   return <form action={submit} className="organisation-form">
     <input type="hidden" name="application" value={application.id}/><input type="hidden" name="revision" value={application.revision}/>
     <fieldset disabled={pending}><legend>{v.decision}</legend><div className="form-grid">
-      <div className="form-field wide"><label htmlFor={`decision-${application.id}`}>{v.decision}</label><select id={`decision-${application.id}`} name="decision" value={decision} onChange={event=>setDecision(event.target.value)}>
-        {application.status==='approved' ? <option value="suspended">{v.suspend}</option> : <><option value="approved">{v.approve}</option>{application.status!=='suspended' && <><option value="needs_information">{v.more}</option><option value="rejected">{v.reject}</option></>}</>}
-      </select></div>
+      <ChoiceGroup className="wide" label={v.decision} name="decision" value={decision} onChange={setDecision} options={application.status==='approved' ? [{value:'suspended',label:v.suspend}] : [{value:'approved',label:v.approve},...(application.status!=='suspended' ? [{value:'needs_information',label:v.more},{value:'rejected',label:v.reject}] : [])]}/>
       <label className="form-field wide">{v.source}<input name="source" required={approving} minLength={approving?10:undefined} maxLength={1000}/></label>
       <label className="form-field wide">{v.evidence}<textarea name="evidence" required={approving} minLength={approving?20:undefined} maxLength={2000} rows={3}/></label>
       <label className="form-field wide">{v.note}<textarea name="note" required minLength={10} maxLength={2000} rows={3}/></label>

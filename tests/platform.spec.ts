@@ -164,25 +164,19 @@ test('Register blocks share both edges, one 24px rhythm and one label size',asyn
 });
 
 // Fields sit on shared rows whatever the language: a long label must not push its field lower than its neighbours.
-test('Register fields share rows in every language and the dropdown matches the text fields',async({page})=>{
+test('Register fields share rows in every language',async({page})=>{
  await page.setViewportSize({width:1280,height:800});
  for(const locale of ['en','ro','de']) {
   await page.goto(`/${locale}/register`);
   const m=await page.evaluate(()=>{
    const top=(sel:string)=>Math.round(document.querySelector(sel)!.getBoundingClientRect().top);
-   const h=(sel:string)=>Math.round(document.querySelector(sel)!.getBoundingClientRect().height);
-   return {
-    pair1:[top('input[name=organisation]'),top('#organisation-type')],
+      return {
     pair2:[top('input[name=representative]'),top('input[name=representativeRole]')],
     thirds:[top('input[name=website]'),top('input[name=country]'),top('input[name=registry]')],
     pair3:[top('input[name=email]'),top('input[name=password]')],
-    heights:[h('input[name=organisation]'),h('#organisation-type')],
-    appearance:getComputedStyle(document.querySelector('#organisation-type')!).appearance,
    };
   });
-  for(const row of [m.pair1,m.pair2,m.thirds,m.pair3]) expect(new Set(row).size,`${locale} ${JSON.stringify(m)}`).toBe(1);
-  expect(m.heights[0],JSON.stringify(m)).toBe(m.heights[1]);
-  expect(m.appearance).toBe('none');
+  for(const row of [m.pair2,m.thirds,m.pair3]) expect(new Set(row).size,`${locale} ${JSON.stringify(m)}`).toBe(1);
  }
 });
 
@@ -197,8 +191,25 @@ test('every dropdown keeps its arrow 16px in from the edge',async({page})=>{
    expect(style.position,where).toContain('100% - 16px');
   }
  };
- for(const path of ['/en/register','/en/explore','/en/dashboard/builder']) {await page.goto(path);await check(path);}
+ await page.goto('/en/explore');await check('/en/explore');
  await page.goto('/en');await page.locator('.floating-reading').click();await check('reading panel');
+});
+
+// Organisation and admin forms use visible choices, never dropdowns.
+test('organisation forms use visible choices instead of dropdowns',async({page})=>{
+ await page.goto('/en/register');
+ await expect(page.locator('main select')).toHaveCount(0);
+ const type=page.getByRole('radiogroup',{name:'Organisation type',exact:true});
+ await expect(type.getByRole('radio')).toHaveCount(6);
+ await expect(type.getByLabel('Institution',{exact:true})).toBeChecked();
+ await page.goto('/en/dashboard/builder');
+ await expect(page.locator('main select')).toHaveCount(0);
+ const sound=page.getByRole('radiogroup',{name:'Sound',exact:true}).first();
+ await expect(sound.getByRole('radio')).toHaveCount(5);
+ await sound.getByText('Low',{exact:true}).click();
+ await sound.getByLabel('Low',{exact:true}).press('ArrowRight');
+ await expect(sound.getByLabel('Moderate',{exact:true})).toBeChecked();
+ await expect(sound.getByLabel('Low',{exact:true})).not.toBeChecked();
 });
 
 // One door for organisations: the menu and the footer each carry a single For organisations link,

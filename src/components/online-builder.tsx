@@ -9,6 +9,7 @@ import { getWorkspaceCopy, newZone, parsePlaceDraft, placeTypes, sensoryChannels
 import { savePlaceDraft } from '@/app/workspace/actions';
 import { ResponsibilityNotice } from './responsibility-notice';
 import { OnlinePhotoEditor } from './online-photo';
+import { ChoiceGroup } from './choice-group';
 
 export function OnlineBuilder({locale,org,initial,persistedZoneIds,missingTranslation=false}: {
   locale:Locale;org:string;initial:PlaceDraft;persistedZoneIds:string[];missingTranslation?:boolean;
@@ -60,7 +61,7 @@ export function OnlineBuilder({locale,org,initial,persistedZoneIds,missingTransl
           <label className="form-field">{t.city}<input required maxLength={160} value={draft.city} onChange={e=>field('city',e.target.value)}/></label>
           <label className="form-field">{t.country}<input maxLength={2} pattern="[A-Z]{2}|^$" value={draft.countryCode} onChange={e=>field('countryCode',e.target.value.toUpperCase())} aria-describedby="country-code-hint"/><small id="country-code-hint">{t.countryHint}</small></label>
           <label className="form-field wide">{t.address}<input maxLength={500} value={draft.address} onChange={e=>field('address',e.target.value)}/></label>
-          <div className="form-field"><label htmlFor="online-place-kind">{t.kind}</label><select id="online-place-kind" value={draft.placeType} onChange={e=>field('placeType',e.target.value as PlaceDraft['placeType'])}>{placeTypes.map((kind,i)=><option key={kind} value={kind}>{o.types[i]}</option>)}</select></div>
+          <ChoiceGroup label={t.kind} value={draft.placeType} onChange={value=>field('placeType',value as PlaceDraft['placeType'])} options={placeTypes.map((kind,i)=>({value:kind,label:o.types[i]}))}/>
           <div className="form-field wide"><label htmlFor="online-description">{t.summary}</label><textarea id="online-description" rows={2} maxLength={2000} value={draft.description} onChange={e=>field('description',e.target.value)}/></div>
           <div className="form-field wide"><label htmlFor="online-arrivalInfo">{t.arrival}</label><textarea id="online-arrivalInfo" rows={3} maxLength={2000} value={draft.arrivalInfo} onChange={e=>field('arrivalInfo',e.target.value)}/></div>
         </div>
@@ -75,17 +76,17 @@ export function OnlineBuilder({locale,org,initial,persistedZoneIds,missingTransl
           </div>
           <OnlinePhotoEditor zone={zone} placeId={draft.id} locale={locale} persisted={persisted.has(zone.id)} disabled={disabled} onBusy={busy=>photoBusy(zone.id,busy)} onChange={(photo?:OnlinePhoto)=>zoneField(index,z=>({...z,photo}))}/>
           <fieldset className="sensory-fields"><legend>{locale==='ro'?'Profil senzorial':locale==='de'?'Sensorisches Profil':'Sensory profile'}</legend>
-            {sensoryChannels.map(channel=><div className="form-field" key={channel}><label htmlFor={`online-${zone.id}-${channel}`}>{common[channel]}</label><select id={`online-${zone.id}-${channel}`} value={zone.sensory[channel]} onChange={e=>zoneField(index,z=>({...z,sensory:{...z.sensory,[channel]:e.target.value}}))}>{sensoryLevels.map(level=><option key={level} value={level}>{common[level]}</option>)}</select></div>)}
+            {sensoryChannels.map(channel=><ChoiceGroup key={channel} label={common[channel]} value={zone.sensory[channel]} onChange={value=>zoneField(index,z=>({...z,sensory:{...z.sensory,[channel]:value}}))} options={sensoryLevels.map(level=>({value:level,label:common[level]}))}/>)}
           </fieldset>
           <div className="form-field"><label htmlFor={`online-note-${zone.id}`}>{common.note}</label><textarea id={`online-note-${zone.id}`} rows={2} maxLength={2000} value={zone.note} onChange={e=>zoneField(index,z=>({...z,note:e.target.value}))}/></div>
           <div className="form-field"><label htmlFor={`online-next-${zone.id}`}>{common.predictability}</label><textarea id={`online-next-${zone.id}`} rows={2} maxLength={2000} value={zone.next} onChange={e=>zoneField(index,z=>({...z,next:e.target.value}))}/></div>
           <label className="checkbox-label commitment"><input type="checkbox" checked={zone.optional} onChange={e=>zoneField(index,z=>({...z,optional:e.target.checked}))}/>{t.optional}</label>
         </section>)}
         <div className="button-row"><button className="button button-outline" type="button" disabled={disabled || draft.zones.length>=8} onClick={()=>change(current=>({...current,zones:[...current.zones,newZone()]}))}>{t.addZone}</button>
-          <button className="button" type="submit" disabled={disabled}>{pending?t.saving:t.save}</button></div>
+          <button className="button" type="submit" disabled={disabled}>{pending?t.saving:t.save}</button>
+          <p className="status-message" role={error?'alert':'status'}>{message || (dirty?t.unsaved:'')}</p></div>
       </fieldset>
     </form>
-    <p className="status-message" role={error?'alert':'status'}>{message || (dirty?t.unsaved:'')}</p>
     {error==='conflict' && <a className="quiet-link" href={`/${locale}/workspace/${draft.id}`} target="_blank" rel="noopener noreferrer">{t.reload}</a>}
     {error==='auth' && <Link className="quiet-link" href={`/${locale}/login`}>{t.login}</Link>}
     <div className="button-row">{draft.revision>0 && <Link className="button button-outline" href={`/${locale}/workspace/${draft.id}/preview`}>{t.preview}</Link>}<Link className="quiet-link" href={`/${locale}/workspace`}>{t.back}</Link></div>

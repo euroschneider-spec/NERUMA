@@ -287,6 +287,21 @@ fieldset { min-width: 0; max-width: 100%; border: 1px solid var(--color-divider)
 legend { padding-inline: var(--space-2); max-width: 100%; font-weight: var(--font-heading-weight); overflow-wrap: anywhere; }
 .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr)); gap: 16px; }
 .form-field.wide { grid-column: 1 / -1; }
+/* Visible choices instead of a dropdown (ChoiceGroup): every option on screen, wrapping on narrow screens. */
+.choice-label { font-size: 0.8125rem; color: color-mix(in srgb, var(--color-text) 75%, transparent); }
+.choice-options { display: flex; flex-wrap: wrap; gap: 6px; }
+.choice-options .seg-opt { min-height: 36px; justify-content: center; border: 1px solid var(--color-divider); border-radius: var(--radius-md); }
+.choice-options .seg-opt + .seg-opt { border-left: 1px solid var(--color-divider); }
+.choice-options .seg-opt:has(input:checked) { border-color: var(--color-accent); font-weight: 600; }
+.choice-options .seg-opt:has(input:disabled) { opacity: 0.6; cursor: not-allowed; }
+/* Sensory profile: one row per channel on wide screens, name on the left and the choices on the right. */
+.sensory-fields .choice-field { padding-block: 10px; border-bottom: 1px solid var(--color-divider); }
+.sensory-fields .choice-field:last-of-type { border-bottom: 0; }
+@media (min-width: 720px) {
+  .sensory-fields .choice-field { flex-direction: row; align-items: center; justify-content: space-between; gap: 16px; }
+  .sensory-fields .choice-label { flex: 0 0 150px; font-size: 0.875rem; color: var(--color-text); font-weight: 600; }
+  .sensory-fields .choice-options { justify-content: flex-end; }
+}
 .form-field small { color: var(--v-muted); font-size: 0.8125rem; }
 
 .radio { display: inline-flex; align-items: center; gap: 8px; cursor: pointer; font-size: 0.875rem; }
@@ -350,7 +365,7 @@ legend { padding-inline: var(--space-2); max-width: 100%; font-weight: var(--fon
 .copy-box { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 0.8125rem; word-break: break-all; background: var(--color-bg); border: 1px solid var(--color-divider); border-radius: var(--radius-md); padding: 8px 10px; }
 .small-note { font-size: 0.8125rem; color: var(--v-muted); }
 .small-label { font-size: 0.6875rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.09em; color: var(--v-muted); }
-.status-message { min-height: 24px; font-size: 0.875rem; color: var(--color-accent-700); }
+.status-message { min-height: 24px; margin: 0; font-size: 0.875rem; color: var(--color-accent-700); }
 .preserve-lines { white-space: pre-line; }
 .level-dot { display: inline-block; height: 7px; width: 7px; border-radius: 50%; background: var(--color-accent); }
 
@@ -680,7 +695,7 @@ html[data-density="summary"] .density-switch button[data-value="summary"] { back
 .workspace-location h2 { font-size: 1.25rem; margin-top: 0; }
 .builder-zone { margin-block: 24px; background: var(--color-surface); padding: 24px; border: 1px solid var(--color-divider); border-radius: var(--radius-lg); }
 .builder-zone h2 { font-size: 1.25rem; }
-.sensory-fields { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 180px), 1fr)); gap: 16px; margin-block: 20px; }
+.sensory-fields { margin-block: 20px; }
 .online-fields { border: 0; padding: 0; margin: 0; min-width: 0; }
 .online-fields > legend { font-size: 1.25rem; font-weight: var(--font-heading-weight); margin-bottom: 20px; padding-inline: 0; }
 .zone-order { margin-bottom: 20px; }
