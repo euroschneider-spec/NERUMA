@@ -260,6 +260,11 @@ main { min-height: 65vh; }
 /* ── Forms ────────────────────────────────────────────────────────────── */
 .field, .form-field { display: flex; flex-direction: column; gap: 8px; min-width: 0; } /* label to box: 8px, so the label doesn't sit on the border */
 .field > label, .label, .form-field > label, .form-field .label-row > label, label.form-field { font-size: 0.8125rem; color: color-mix(in srgb, var(--color-text) 75%, transparent); }
+/* A label starts where the text inside its box starts (box padding 10px + 1px border), not on the box's edge. The box
+   itself must not inherit the indent, so it is reset. */
+.field > label, .label, .form-field > label, label.form-field, .choice-label { text-indent: 11px; }
+.form-field .label-row > label { padding-left: 11px; }
+.form-field input, .form-field textarea, .form-field select, .field input, .field textarea, .field select { text-indent: 0; }
 .input, input, select, textarea {
   width: 100%; min-width: 0; min-height: 36px; padding: 6px 10px; font: inherit;
   font-size: 0.9375rem; color: var(--color-text); caret-color: var(--color-accent);
