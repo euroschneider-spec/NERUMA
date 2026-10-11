@@ -366,7 +366,9 @@ legend { padding-inline: var(--space-2); max-width: 100%; font-weight: var(--fon
   padding: 6px max(var(--gutter), calc((100% - var(--container)) / 2 + var(--gutter)));
   border-bottom: 1px solid var(--color-divider); background: var(--color-bg);
 }
-.theme-toggle { gap: 6px; }
+/* Language, appearance and reading-width controls share one height and text size, on every screen. */
+.topbar { --topbar-control: 36px; }
+.topbar .theme-toggle { gap: 6px; min-height: var(--topbar-control); padding: 0 12px; font-size: 0.8125rem; }
 /* Stays at the top while the page scrolls. The language and appearance row above it scrolls away. */
 .site-header { position: sticky; top: 0; z-index: 50; border-bottom: 1px solid var(--color-divider); background: var(--color-bg); }
 .header-inner {
@@ -402,7 +404,7 @@ legend { padding-inline: var(--space-2); max-width: 100%; font-weight: var(--fon
 .language-switch { position: relative; }
 .language-switch summary {
   display: flex; align-items: center; gap: 4px; list-style: none; cursor: pointer;
-  min-height: 32px; padding: 0 8px 0 10px; font-size: 0.75rem; color: var(--color-text);
+  min-height: var(--topbar-control, 32px); padding: 0 8px 0 10px; font-size: 0.8125rem; color: var(--color-text);
   border: 1px solid var(--color-divider); border-radius: var(--radius-md);
 }
 .language-switch summary::-webkit-details-marker { display: none; }
@@ -426,7 +428,7 @@ legend { padding-inline: var(--space-2); max-width: 100%; font-weight: var(--fon
 .density-switch, .tone-switch { display: inline-flex; overflow: hidden; border: 1px solid var(--color-divider); border-radius: var(--radius-md); }
 .density-switch button, .tone-switch button {
   display: flex; align-items: center; justify-content: center;
-  min-height: 32px; padding: 0 10px; font-size: 0.75rem;
+  min-height: var(--topbar-control, 32px); padding: 0 10px; font-size: 0.8125rem;
   color: var(--v-muted); background: transparent; border: 0;
 }
 .density-switch button + button, .tone-switch button + button { border-left: 1px solid var(--color-divider); }

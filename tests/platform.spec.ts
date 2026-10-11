@@ -135,6 +135,16 @@ test('Sign in and Request access are on screen when the organisations page opens
  }
 });
 
+// Language, tone, reading width and appearance share one height, however the page is sized.
+test('the controls above the menu are all the same height',async({page})=>{
+ for(const size of [{width:1280,height:800},{width:390,height:844},{width:320,height:700}]) {
+  await page.setViewportSize(size);await page.goto('/en/methodology');
+  const heights=await page.evaluate(()=>[...document.querySelectorAll('.topbar .language-switch summary, .topbar .density-switch button, .topbar .tone-switch button, .topbar .theme-toggle')].map(el=>Math.round(el.getBoundingClientRect().height)));
+  expect(heights.length).toBe(6);
+  expect(new Set(heights).size,JSON.stringify(heights)).toBe(1);
+ }
+});
+
 // One door for organisations: the menu and the footer each carry a single For organisations link,
 // and registering, signing in and the demo workspace sit behind that page. One sign-in serves every
 // tier (landingPath() routes administrators, members and everyone else after authentication).
