@@ -123,6 +123,18 @@ test('the header stays in view while the page scrolls, on desktop and on a phone
  }
 });
 
+// Returning organisations should not have to scroll to sign in, whatever the screen.
+test('Sign in and Request access are on screen when the organisations page opens',async({page})=>{
+ for(const size of [{width:1280,height:800},{width:390,height:844},{width:320,height:700}]) {
+  await page.setViewportSize(size);
+  for(const [locale,signIn,request] of [['en','Sign in','Request organisation access'],['ro','Autentificare','Solicită acces pentru organizație'],['de','Anmelden','Zugang für eine Organisation beantragen']]) {
+   await page.goto(`/${locale}/for-organisations`);
+   await expect(page.getByRole('main').getByRole('link',{name:signIn,exact:true})).toBeInViewport();
+   await expect(page.getByRole('main').getByRole('link',{name:request,exact:true})).toBeInViewport();
+  }
+ }
+});
+
 // One door for organisations: the menu and the footer each carry a single For organisations link,
 // and registering, signing in and the demo workspace sit behind that page. One sign-in serves every
 // tier (landingPath() routes administrators, members and everyone else after authentication).
