@@ -28,8 +28,11 @@ Part 1 — the look and navigation, using what the database already has:
 - [ ] 2. No dropdowns in organisation and admin forms: one shared sensory control (*Not recorded · Low ·
       Moderate · Intense · Varies*) in both builders; organisation type, location type and the admin decision
       as visible choices.
-- [ ] 3. Guide editor: zones listed on the left (01, 02, + Add zone, move up / down), one zone open on the
-      right, a save bar that stays on screen, a compact photo with alt text.
+- [ ] 3. Guide editor: each step card folds in place to one line (number, name, photo thumbnail, a tick when
+      complete); the sidebar folds to icons. (Replaces the zones-on-the-left list: owner, 2026-10-11.)
+- [ ] 3b. Fields per step: name, description and the sensory profile always stay; photo, useful note, what
+      happens next and "may skip" can be removed and added back; organisations can add their own fields from a
+      few types (short text, yes/no, photo). Needs a database change.
 - [ ] 4. Live preview beside the editor, built from the guide component visitors see.
 - [ ] 5. Dashboard: status badges, a *Needs attention* list from existing data (missing alt text, fewer than
       three zones, not verified on site), the QR and link card.
@@ -64,6 +67,10 @@ Part 3: the administrator side in the same shell.
 - Organisation accounts: owner only for now. Reviewers, editors and invitations wait.
 - The Organisation account page is for applicants and people waiting only; approved owners get *Sign out* in the
   sidebar and never need it.
+- Steps fold in place rather than a list on the left with one open step: simpler, and it works on phones.
+- The sidebar folds to a strip of icons, remembered in this browser. No dragging it wider or to the other side.
+- Fields are chosen per step, not for the whole location. The sensory profile can't be removed, so guides stay
+  comparable between places (visitors first).
 - Mock browsing data is on only under `VIANORAE_FIXTURE_DEMO_DATA=1` (set by `dev:mock`), so the test suites
   start from the plain fixture.
 

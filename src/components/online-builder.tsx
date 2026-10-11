@@ -1,11 +1,13 @@
 'use client';
 
+import Image from 'next/image';
 import Link from 'next/link';
+import { ArrowDown, ArrowUp, ChevronDown, GripVertical } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { getCopy, type Locale } from '@/lib/i18n';
 import { getOrganisationCopy } from '@/lib/organisation-copy';
-import { getWorkspaceCopy, newZone, parsePlaceDraft, placeTypes, sensoryChannels, sensoryLevels, type PlaceDraft, type OnlineZone, type OnlinePhoto } from '@/lib/workspace';
+import { getWorkspaceCopy, newZone, photoUrl, parsePlaceDraft, placeTypes, sensoryChannels, sensoryLevels, type PlaceDraft, type OnlineZone, type OnlinePhoto } from '@/lib/workspace';
 import { savePlaceDraft } from '@/app/workspace/actions';
 import { OnlinePhotoEditor } from './online-photo';
 import { ChoiceGroup } from './choice-group';
@@ -19,6 +21,20 @@ export function OnlineBuilder({locale,org,initial,persistedZoneIds,missingTransl
   const [persisted,setPersisted]=useState(new Set(persistedZoneIds));const [busyPhotos,setBusyPhotos]=useState(new Set<string>());
   const [message,setMessage]=useState(initial.revision>0?t.saved:'');const [error,setError]=useState<'auth'|'conflict'|'other'|null>(null);
   const disabled=pending || busyPhotos.size>0;
+  // Steps fold in place; the first one starts open, and a step you add opens so you can fill it in.
+  const [openZones,setOpenZones]=useState(()=>new Set(initial.zones.slice(0,1).map(z=>z.id)));
+  // Reordering is offered only while every step is folded: short cards are easy to drag, and nothing jumps under the pointer.
+  const allFolded=draft.zones.length>1 && draft.zones.every(z=>!openZones.has(z.id));
+  const [dragIndex,setDragIndex]=useState<number|null>(null);
+  function moveZone(from:number,to:number){if(from===to || to<0) return;change(current=>{const zones=[...current.zones];const [zone]=zones.splice(from,1);zones.splice(Math.min(to,zones.length),0,zone);return {...current,zones};});}
+  function toggleZone(id:string){setOpenZones(current=>{const next=new Set(current);if(next.has(id)) next.delete(id);else next.add(id);return next;});}
+  // A required field inside a folded step can't show its message: open that step, then ask again.
+  function openInvalid(event:React.FormEvent<HTMLFormElement>){
+    const target=event.target as HTMLInputElement;const body=target.closest<HTMLElement>('[data-zone-body]');
+    if(!body?.hidden) return;
+    setOpenZones(current=>new Set(current).add(body.dataset.zoneBody!));
+    requestAnimationFrame(()=>target.reportValidity());
+  }
   useEffect(()=>{
     if(!dirty) return;
     const beforeUnload=(event:BeforeUnloadEvent)=>{event.preventDefault();event.returnValue='';};
@@ -57,7 +73,7 @@ export function OnlineBuilder({locale,org,initial,persistedZoneIds,missingTransl
   </div>;
   return <>
     {missingTranslation && <p className="notice">{t.missing}</p>}
-    <form onSubmit={save} aria-label={t.edit}>
+    <form onSubmit={save} onInvalidCapture={openInvalid} aria-label={t.edit}>
       {actions(false)}
       <fieldset className="online-fields" disabled={disabled}>
         <div className="form-grid">
@@ -68,8 +84,27 @@ export function OnlineBuilder({locale,org,initial,persistedZoneIds,missingTransl
           <div className="form-field wide"><label htmlFor="online-description">{t.summary}</label><textarea id="online-description" rows={2} maxLength={2000} value={draft.description} onChange={e=>field('description',e.target.value)}/></div>
           <div className="form-field wide"><label htmlFor="online-arrivalInfo">{t.arrival}</label><textarea id="online-arrivalInfo" rows={3} maxLength={2000} value={draft.arrivalInfo} onChange={e=>field('arrivalInfo',e.target.value)}/></div>
         </div>
-        {draft.zones.map((zone,index)=><section className="builder-zone" key={zone.id} aria-labelledby={`online-zone-${zone.id}`}>
-          <h2 id={`online-zone-${zone.id}`}>{common.step} {index+1}{zone.title?` · ${zone.title}`:''}</h2>
+        {draft.zones.map((zone,index)=>{
+          const open=openZones.has(zone.id);
+          const complete=Boolean(zone.title.trim() && zone.description.trim() && (!zone.photo || zone.photo.alt.trim()));
+          const name=zone.title || String(index+1);
+          return <section className="builder-zone" key={zone.id} aria-labelledby={`online-zone-${zone.id}`} data-open={open} data-dragging={dragIndex===index}
+            draggable={allFolded && !disabled} onDragStart={event=>{setDragIndex(index);event.dataTransfer.effectAllowed='move';}} onDragEnd={()=>setDragIndex(null)}
+            onDragOver={event=>{if(dragIndex!==null) event.preventDefault();}} onDrop={event=>{event.preventDefault();if(dragIndex!==null) moveZone(dragIndex,index);setDragIndex(null);}}>
+          <div className="zone-head">
+            {allFolded && <span className="zone-grip" title={t.dragStep} aria-hidden="true"><GripVertical size={18}/></span>}
+            <h2 className="zone-heading"><button type="button" id={`online-zone-${zone.id}`} className="zone-toggle" aria-expanded={open} aria-controls={`online-zone-body-${zone.id}`} onClick={()=>toggleZone(zone.id)}>
+              {zone.photo && <Image unoptimized src={photoUrl(zone.photo.storageKey)} alt="" width={40} height={40} className="zone-thumb"/>}
+              <span className="zone-toggle-title">{common.step} {index+1}{zone.title?` · ${zone.title}`:''}</span>
+              {!complete && <span className="zone-needs">{t.stepIncomplete}</span>}
+              <ChevronDown size={20} aria-hidden="true" className="zone-chevron"/>
+            </button></h2>
+            {allFolded && <span className="zone-move">
+              <button type="button" disabled={disabled || index===0} onClick={()=>moveZone(index,index-1)} aria-label={`${t.moveUp}: ${name}`} title={t.moveUp}><ArrowUp size={16} aria-hidden="true"/></button>
+              <button type="button" disabled={disabled || index===draft.zones.length-1} onClick={()=>moveZone(index,index+1)} aria-label={`${t.moveDown}: ${name}`} title={t.moveDown}><ArrowDown size={16} aria-hidden="true"/></button>
+            </span>}
+          </div>
+          <div id={`online-zone-body-${zone.id}`} className="zone-body" data-zone-body={zone.id} hidden={!open}>
           <div className="button-row zone-order"><button type="button" className="text-button" disabled={disabled || draft.zones.length===1} onClick={()=>change(current=>({...current,zones:current.zones.filter(z=>z.id!==zone.id)}))} aria-label={`${t.removeZone}: ${zone.title || index+1}`}>{t.removeZone}</button></div>
           <div className="form-grid">
             <label className="form-field wide">{common.zoneName}<input required maxLength={160} value={zone.title} onChange={e=>zoneField(index,z=>({...z,title:e.target.value}))}/></label>
@@ -82,8 +117,10 @@ export function OnlineBuilder({locale,org,initial,persistedZoneIds,missingTransl
           <div className="form-field"><label htmlFor={`online-note-${zone.id}`}>{common.note}</label><textarea id={`online-note-${zone.id}`} rows={2} maxLength={2000} value={zone.note} onChange={e=>zoneField(index,z=>({...z,note:e.target.value}))}/></div>
           <div className="form-field"><label htmlFor={`online-next-${zone.id}`}>{common.predictability}</label><textarea id={`online-next-${zone.id}`} rows={2} maxLength={2000} value={zone.next} onChange={e=>zoneField(index,z=>({...z,next:e.target.value}))}/></div>
           <label className="checkbox-label commitment"><input type="checkbox" checked={zone.optional} onChange={e=>zoneField(index,z=>({...z,optional:e.target.checked}))}/>{t.optional}</label>
-        </section>)}
-        <div className="editor-add"><button className="button button-outline" type="button" disabled={disabled || draft.zones.length>=8} onClick={()=>change(current=>({...current,zones:[...current.zones,newZone()]}))}>{t.addZone}</button></div>
+          </div>
+        </section>;})}
+        {draft.zones.length>1 && !allFolded && <p className="small-note">{t.reorderHint}</p>}
+        <div className="editor-add"><button className="button button-outline" type="button" disabled={disabled || draft.zones.length>=8} onClick={()=>{const zone=newZone();setOpenZones(current=>new Set(current).add(zone.id));change(current=>({...current,zones:[...current.zones,zone]}));}}>{t.addZone}</button></div>
       </fieldset>
       {actions(true)}
     </form>

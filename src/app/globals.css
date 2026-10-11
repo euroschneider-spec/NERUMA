@@ -292,7 +292,7 @@ legend { padding-inline: var(--space-2); max-width: 100%; font-weight: var(--fon
 /* Visible choices instead of a dropdown (ChoiceGroup): every option on screen, wrapping on narrow screens. */
 .choice-label { font-size: 0.8125rem; color: color-mix(in srgb, var(--color-text) 75%, transparent); }
 .choice-options { display: flex; flex-wrap: wrap; gap: 6px; }
-.choice-field.wide .choice-options { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 170px), 1fr)); }
+.choice-field.wide .choice-options { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 150px), 1fr)); }
 .choice-options .seg-opt { min-height: 36px; justify-content: center; border: 1px solid var(--color-divider); border-radius: var(--radius-md); }
 .choice-options .seg-opt + .seg-opt { border-left: 1px solid var(--color-divider); }
 .choice-options .seg-opt:has(input:checked) { border-color: var(--color-accent); font-weight: 600; }
@@ -950,7 +950,7 @@ p, li, dt, dd, summary, label, figcaption, a, .lbl, .small-label, .small-note { 
 .app-shell { display: grid; grid-template-columns: 260px minmax(0, 1fr); min-height: 100vh; }
 .app-sidebar {
   position: sticky; top: 0; align-self: start; height: 100vh; overflow-y: auto;
-  display: flex; flex-direction: column; gap: 24px; padding: 20px 16px 80px; /* 80px: clears the reading-settings tab in the corner */
+  display: flex; flex-direction: column; gap: 24px; padding: 20px 16px 128px; /* 128px: keeps the controls well clear of the reading-settings tab in the corner */
   background: var(--color-surface); border-right: 1px solid var(--color-divider);
 }
 .app-org { padding-bottom: 16px; border-bottom: 1px solid var(--color-divider); }
@@ -997,3 +997,53 @@ p, li, dt, dd, summary, label, figcaption, a, .lbl, .small-label, .small-note { 
 .file-pick-action { display: inline-flex; align-items: center; gap: 8px; font-weight: 600; }
 .photo-editor > .label-row { justify-content: center; margin-block: 12px 4px; }
 .file-pick-status { color: var(--v-muted); font-size: 0.9375rem; }
+
+/* The sidebar folds to a strip of icons (desktop and laptop; on narrow screens it already stacks above the page). */
+.app-sidebar-top { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.app-collapse { display: inline-flex; align-items: center; justify-content: center; width: 36px; height: 36px; min-width: 36px; padding: 0; border: 1px solid transparent; border-radius: var(--radius-md); background: transparent; color: var(--v-muted); cursor: pointer; }
+.app-collapse:hover { color: var(--color-text); border-color: var(--color-divider); }
+@media (min-width: 900px) {
+  .app-shell:has(.app-sidebar[data-collapsed="true"]) { grid-template-columns: 72px minmax(0, 1fr); }
+  .app-sidebar[data-collapsed="true"] { padding-inline: 12px; align-items: center; overflow: visible; } /* visible: the language menu is wider than the strip */
+  .app-sidebar[data-collapsed="true"] .app-sidebar-top { flex-direction: column; }
+  .app-sidebar[data-collapsed="true"] .brand { gap: 0; font-size: 0; }
+  .app-sidebar[data-collapsed="true"] .app-org,
+  .app-sidebar[data-collapsed="true"] .tone-switch { display: none; }
+  .app-sidebar[data-collapsed="true"] .app-label { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; }
+  .app-sidebar[data-collapsed="true"] .app-nav a,
+  .app-sidebar[data-collapsed="true"] .app-signout,
+  .app-sidebar[data-collapsed="true"] .theme-toggle { width: 44px; min-height: 40px; justify-content: center; padding: 0; }
+  /* Folded, each icon names itself on hover or keyboard focus (the language code needs no tip). */
+  .app-sidebar[data-collapsed="true"] [data-tip] { position: relative; }
+  .app-sidebar[data-collapsed="true"] [data-tip]:hover::after,
+  .app-sidebar[data-collapsed="true"] [data-tip]:focus-visible::after {
+    content: attr(data-tip); position: absolute; z-index: 40; left: calc(100% + 10px); top: 50%; transform: translateY(-50%);
+    padding: 6px 10px; white-space: nowrap; font-size: 0.8125rem; font-weight: 500; color: var(--color-text);
+    background: var(--color-surface); border: 1px solid var(--color-divider); border-radius: var(--radius-md); box-shadow: var(--shadow-lg); pointer-events: none;
+  }
+  .app-sidebar[data-collapsed="true"] .app-sidebar-foot { align-items: center; }
+  .app-sidebar[data-collapsed="true"] .app-sidebar-foot .language-switch summary { width: 44px; min-height: 40px; padding: 0; justify-content: center; white-space: nowrap; }
+  .app-sidebar[data-collapsed="true"] .language-switch summary svg { display: none; }
+  .app-sidebar[data-collapsed="true"] .app-sidebar-foot form { padding-top: 12px; }
+}
+@media (max-width: 899px) { .app-collapse { display: none; } }
+
+/* Step cards fold in place: the heading is the button, with a thumbnail, "Needs details" when something is
+   missing, and the fold arrow on the right. While all are folded they can be dragged or moved with the arrows. */
+.zone-head { display: flex; align-items: center; gap: 8px; }
+.builder-zone .zone-heading { flex: 1; min-width: 0; margin: 0; font-size: 1.25rem; }
+.zone-toggle { display: flex; align-items: center; gap: 12px; width: 100%; min-height: 44px; padding: 0; border: 0; background: transparent; color: var(--color-text); font: inherit; font-weight: var(--font-heading-weight); text-align: left; cursor: pointer; }
+.zone-toggle-title { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+.zone-chevron { flex: none; color: var(--v-muted); transition: transform .15s; }
+.builder-zone[data-open="true"] .zone-chevron { transform: rotate(180deg); }
+.zone-thumb { flex: none; width: 40px; height: 40px; object-fit: cover; border-radius: var(--radius-md); }
+.zone-needs { flex: none; padding: 2px 10px; border: 1px solid var(--color-divider); border-radius: 999px; font-family: var(--font-body, inherit); font-size: 0.75rem; font-weight: 600; color: var(--v-muted); }
+.zone-grip { flex: none; display: inline-flex; color: var(--v-muted); cursor: grab; }
+.zone-move { flex: none; display: inline-flex; gap: 4px; }
+.zone-move button { display: inline-flex; align-items: center; justify-content: center; width: 36px; height: 36px; min-width: 36px; padding: 0; border: 1px solid var(--color-divider); border-radius: var(--radius-md); background: transparent; color: var(--color-text); cursor: pointer; }
+.zone-move button:hover:not(:disabled) { border-color: var(--color-accent); }
+.zone-move button:disabled { opacity: 0.4; cursor: not-allowed; }
+.builder-zone[draggable="true"] { cursor: grab; }
+.builder-zone[data-dragging="true"] { opacity: 0.5; }
+.builder-zone[data-open="false"] { padding-block: 12px; }
+.zone-body { margin-top: 16px; }

@@ -58,7 +58,7 @@ export function parsePlaceDraft(value: unknown, org: string): PlaceDraft | null 
 
 const en = {
   dashboard: 'Dashboard', locationsHeading: 'Locations', roleOwner: 'Owner', roleAdmin: 'Admin',
-  statusDraft: 'Draft', statusPublished: 'Published', addressMissing: 'No address yet', sidebarLabel: 'Organisation',
+  statusDraft: 'Draft', statusPublished: 'Published', addressMissing: 'No address yet', sidebarLabel: 'Organisation', collapseSidebar: 'Collapse sidebar', expandSidebar: 'Expand sidebar', stepComplete: 'Complete', stepIncomplete: 'Needs details',
   workspace: 'Organisation workspace', newPlace: 'Create a location', edit: 'Edit draft', empty: 'No locations yet. Create your first location.',
   location: 'Location name', city: 'City', address: 'Address', country: 'Country code (optional)', countryHint: 'Two letters, for example RO or DE.',
   kind: 'Location type', summary: 'Short description', arrival: 'Arrival information', addZone: 'Add a zone', removeZone: 'Remove this step',
@@ -76,7 +76,7 @@ const en = {
   forbidden: 'You need an owner or admin role to edit locations.',
   photoHint: `JPEG, PNG or WebP · up to ${MAX_ONLINE_PHOTO / 1024 / 1024} MB. Images are resized.`,
   photoPrivacy: 'Images are saved privately for your organisation. Original location metadata is removed.',
-  saveFirst: 'Save this location and zone before uploading a photograph.',
+  saveFirst: 'Save the step first, then add a photo.', moveUp: 'Move up', moveDown: 'Move down', dragStep: 'Drag to reorder', reorderHint: 'Fold all steps to drag them into a new order.',
   photoAdded: 'Photograph uploaded privately. Complete its details and save the draft to attach it.',
   photoError: 'The photograph could not be uploaded. The previous saved photograph is unchanged.',
   photoPreview: 'Zone photograph', removePhoto: 'Detach photograph from draft',
@@ -87,7 +87,7 @@ const en = {
 type WorkspaceCopy = { [K in keyof typeof en]: string };
 const ro: WorkspaceCopy = {
   dashboard:'Panou', locationsHeading:'Locații', roleOwner:'Proprietar', roleAdmin:'Administrator',
-  statusDraft:'Ciornă', statusPublished:'Publicat', addressMissing:'Fără adresă încă', sidebarLabel:'Organizație',
+  statusDraft:'Ciornă', statusPublished:'Publicat', addressMissing:'Fără adresă încă', sidebarLabel:'Organizație', collapseSidebar:'Restrânge bara laterală', expandSidebar:'Extinde bara laterală', stepComplete:'Complet', stepIncomplete:'Necesită detalii',
   workspace:'Spațiul organizației', newPlace:'Creează o locație', edit:'Editează draftul', empty:'Nu ai încă locații. Creează prima locație.',
   location:'Numele locației', city:'Oraș', address:'Adresă', country:'Codul țării (opțional)', countryHint:'Două litere, de exemplu RO sau DE.',
   kind:'Tipul locației', summary:'Descriere scurtă', arrival:'Informații despre sosire', addZone:'Adaugă o zonă', removeZone:'Scoate acest pas',
@@ -103,7 +103,7 @@ const ro: WorkspaceCopy = {
   readyLater:'Spațiul online este în pregătire. Contul organizației este disponibil.', forbidden:'Ai nevoie de rolul de proprietar sau administrator pentru a edita locații.',
   photoHint: `JPEG, PNG sau WebP · maximum ${MAX_ONLINE_PHOTO / 1024 / 1024} MB. Imaginile sunt redimensionate.`,
   photoPrivacy:'Imaginile sunt salvate privat pentru organizație. Metadatele originale de localizare sunt eliminate.',
-  saveFirst:'Salvează locația și zona înainte să încarci fotografia.', photoAdded:'Fotografie încărcată privat. Completează detaliile și salvează draftul pentru a o asocia.',
+  saveFirst:'Salvează mai întâi pasul, apoi adaugă o fotografie.', moveUp:'Mută mai sus', moveDown:'Mută mai jos', dragStep:'Trage pentru a reordona', reorderHint:'Pliază toți pașii ca să-i poți trage într-o altă ordine.', photoAdded:'Fotografie încărcată privat. Completează detaliile și salvează draftul pentru a o asocia.',
   photoError:'Fotografia nu a putut fi încărcată. Fotografia salvată anterior nu a fost modificată.', photoPreview:'Fotografia zonei', removePhoto:'Detașează fotografia din draft',
   noPhoto:'Nu este asociată nicio fotografie.', choosePhoto:'Încarcă imaginea', photoAttached:'Fotografie asociată.', login:'Autentifică-te din nou', draft:'Draft salvat al organizației',
   retained:'Detașarea sau înlocuirea unei fotografii o scoate din draft; fișierul privat este păstrat.',
@@ -111,7 +111,7 @@ const ro: WorkspaceCopy = {
 };
 const de: WorkspaceCopy = {
   dashboard:'Übersicht', locationsHeading:'Standorte', roleOwner:'Eigentümer', roleAdmin:'Admin',
-  statusDraft:'Entwurf', statusPublished:'Veröffentlicht', addressMissing:'Noch keine Adresse', sidebarLabel:'Organisation',
+  statusDraft:'Entwurf', statusPublished:'Veröffentlicht', addressMissing:'Noch keine Adresse', sidebarLabel:'Organisation', collapseSidebar:'Seitenleiste einklappen', expandSidebar:'Seitenleiste ausklappen', stepComplete:'Vollständig', stepIncomplete:'Details fehlen',
   workspace:'Arbeitsbereich der Organisation', newPlace:'Ort erstellen', edit:'Entwurf bearbeiten', empty:'Noch keine Orte. Erstellen Sie Ihren ersten Ort.',
   location:'Name des Ortes', city:'Stadt', address:'Adresse', country:'Ländercode (optional)', countryHint:'Zwei Buchstaben, zum Beispiel RO oder DE.',
   kind:'Art des Ortes', summary:'Kurzbeschreibung', arrival:'Informationen zur Ankunft', addZone:'Bereich hinzufügen', removeZone:'Diesen Schritt entfernen',
@@ -126,7 +126,7 @@ const de: WorkspaceCopy = {
   forbidden:'Zum Bearbeiten benötigen Sie die Rolle Eigentümer oder Administrator.',
   photoHint: `JPEG, PNG oder WebP · bis ${MAX_ONLINE_PHOTO / 1024 / 1024} MB. Bilder werden verkleinert.`,
   photoPrivacy:'Bilder werden privat für Ihre Organisation gespeichert. Ursprüngliche Standort-Metadaten werden entfernt.',
-  saveFirst:'Speichern Sie Ort und Bereich, bevor Sie ein Foto hochladen.', photoAdded:'Foto privat hochgeladen. Ergänzen Sie die Angaben und speichern Sie den Entwurf, um es zuzuordnen.',
+  saveFirst:'Speichern Sie zuerst den Schritt, dann fügen Sie ein Foto hinzu.', moveUp:'Nach oben', moveDown:'Nach unten', dragStep:'Zum Sortieren ziehen', reorderHint:'Klappen Sie alle Schritte ein, um sie per Ziehen neu zu ordnen.', photoAdded:'Foto privat hochgeladen. Ergänzen Sie die Angaben und speichern Sie den Entwurf, um es zuzuordnen.',
   photoError:'Das Foto konnte nicht hochgeladen werden. Das zuvor gespeicherte Foto bleibt unverändert.', photoPreview:'Foto des Bereichs', removePhoto:'Foto vom Entwurf lösen',
   noPhoto:'Kein Foto zugeordnet.', choosePhoto:'Bild hochladen', photoAttached:'Foto zugeordnet.', login:'Erneut anmelden', draft:'Gespeicherter Organisationsentwurf', retained:'Lösen oder Ersetzen entfernt das Foto aus dem Entwurf; die private Datei bleibt gespeichert.',
   discard:'Es gibt ungespeicherte Änderungen. Möchten Sie diese Seite verlassen und die Änderungen verwerfen?',

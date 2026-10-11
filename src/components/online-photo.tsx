@@ -36,12 +36,11 @@ export function OnlinePhotoEditor({zone,placeId,locale,persisted,disabled,onChan
   }
   return <fieldset className="photo-editor" disabled={disabled || busy}>
     <legend>{o.photo}</legend>
-    {!persisted && <p className="notice">{t.saveFirst}</p>}
     <label className="file-pick">
       <input className="sr-only" type="file" accept="image/jpeg,image/png,image/webp" disabled={!persisted || disabled || busy}
         aria-describedby={`online-photo-hint-${zone.id}`} onChange={event=>{const file=event.target.files?.[0];event.target.value='';if(file) void upload(file);}}/>
       <span className="file-pick-action"><Upload size={18} aria-hidden="true" />{t.choosePhoto}</span>
-      <span className="file-pick-status">{zone.photo ? t.photoAttached : t.noPhoto}</span>
+      <span className="file-pick-status">{!persisted ? t.saveFirst : zone.photo ? t.photoAttached : t.noPhoto}</span>
     </label>
     <p id={`online-photo-hint-${zone.id}`} className="label-row">{t.photoHint}<InfoTip text={t.photoPrivacy} label={t.moreInfo} /></p>
     {zone.photo ? <>

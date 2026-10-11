@@ -27,6 +27,8 @@ export default async function WorkspaceLayout({ children, params }: { children: 
           dashboard: t.dashboard,
           signOut: getOrganisationCopy(locale).signOut,
           sidebarLabel: t.sidebarLabel,
+          collapse: t.collapseSidebar,
+          expand: t.expandSidebar,
         }}
         signOutAction={signOut.bind(null, locale)}
       />
