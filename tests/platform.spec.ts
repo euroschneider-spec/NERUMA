@@ -110,6 +110,19 @@ test('the menu jumps to the home sections from other pages and the old how-it-wo
  await expect(page).toHaveURL(/\/en\/methodology$/);
 });
 
+test('the header stays in view while the page scrolls, on desktop and on a phone',async({page})=>{
+ for(const size of [{width:1280,height:800},{width:390,height:844}]) {
+  await page.setViewportSize(size);await page.goto('/en');
+  await page.evaluate(()=>window.scrollTo({top:document.body.scrollHeight,behavior:'instant'}));
+  const header=page.locator('.site-header');
+  await expect(header).toBeInViewport();
+  expect((await header.boundingBox())!.y).toBe(0);
+  await page.goto('/en#who');
+  await expect(page.locator('#who h2')).toBeInViewport();
+  expect((await page.locator('#who h2').boundingBox())!.y).toBeGreaterThan(60);
+ }
+});
+
 // One door for organisations: the menu and the footer each carry a single For organisations link,
 // and registering, signing in and the demo workspace sit behind that page. One sign-in serves every
 // tier (landingPath() routes administrators, members and everyone else after authentication).
