@@ -146,6 +146,23 @@ test('the controls above the menu are all the same height',async({page})=>{
  }
 });
 
+// The Register page reads as one balanced column: shared edges, one rhythm, one label style.
+test('Register blocks share both edges, one 24px rhythm and one label size',async({page})=>{
+ for(const size of [{width:1280,height:800},{width:390,height:844}]) {
+  await page.setViewportSize(size);await page.goto('/en/register');
+  const m=await page.evaluate(()=>{
+   const box=(sel:string)=>{const r=document.querySelector(sel)!.getBoundingClientRect();return {left:Math.round(r.left),right:Math.round(r.right),top:Math.round(r.top),bottom:Math.round(r.bottom)};};
+   const labels=[...document.querySelectorAll('.organisation-form label.form-field, .organisation-form .form-field > label')].map(el=>getComputedStyle(el).fontSize);
+   return {notice:box('.responsibility-notice'),gate:box('.organisation-form .notice'),form:box('.organisation-form fieldset'),labels,innerGaps:[...document.querySelectorAll('.responsibility-notice > * + *')].map(el=>Math.round(el.getBoundingClientRect().top-el.previousElementSibling!.getBoundingClientRect().bottom))};
+  });
+  expect(m.gate.left,JSON.stringify(m)).toBe(m.notice.left);expect(m.form.left).toBe(m.notice.left);
+  expect(m.gate.right).toBe(m.notice.right);expect(m.form.right).toBe(m.notice.right);
+  expect(m.gate.top-m.notice.bottom).toBe(24);expect(m.form.top-m.gate.bottom).toBe(24);
+  expect(new Set(m.labels).size,JSON.stringify(m.labels)).toBe(1);
+  expect(new Set(m.innerGaps).size,JSON.stringify(m.innerGaps)).toBe(1);
+ }
+});
+
 // One door for organisations: the menu and the footer each carry a single For organisations link,
 // and registering, signing in and the demo workspace sit behind that page. One sign-in serves every
 // tier (landingPath() routes administrators, members and everyone else after authentication).

@@ -259,7 +259,7 @@ main { min-height: 65vh; }
 
 /* ── Forms ────────────────────────────────────────────────────────────── */
 .field, .form-field { display: flex; flex-direction: column; gap: 5px; min-width: 0; }
-.field > label, .label, .form-field > label { font-size: 0.8125rem; color: color-mix(in srgb, var(--color-text) 75%, transparent); }
+.field > label, .label, .form-field > label, label.form-field { font-size: 0.8125rem; color: color-mix(in srgb, var(--color-text) 75%, transparent); }
 .input, input, select, textarea {
   width: 100%; min-width: 0; min-height: 36px; padding: 6px 10px; font: inherit;
   font-size: 0.9375rem; color: var(--color-text); caret-color: var(--color-accent);
@@ -704,9 +704,16 @@ html[data-density="summary"] .density-switch button[data-value="summary"] { back
 .draft-photo { width: 100%; max-width: 600px; max-height: 320px; object-fit: contain; margin-block: 16px; background: var(--color-neutral-100); border-radius: var(--radius-md); }
 .organisation-form, .verification-page { max-width: 900px; margin-bottom: 28px; overflow-wrap: anywhere; }
 .organisation-form .form-grid { align-items: start; }
-.organisation-form fieldset { padding: 24px; }
+.organisation-form fieldset { margin: 0; padding: 24px; }
 .organisation-form fieldset:disabled { opacity: 0.6; }
 .organisation-form button { margin-top: 20px; }
+/* Register: one column, so the responsibility box, the notice and the form share both edges and one rhythm
+   (24px between blocks, 12px inside the box). */
+.form-column { max-width: 900px; display: flex; flex-direction: column; gap: 24px; }
+.form-column > * { margin: 0; }
+.responsibility-notice > * { margin: 0; }
+.responsibility-notice > * + * { margin-top: 12px; }
+.responsibility-notice li:last-child { margin-bottom: 0; }
 .organisation-form input:not([type="checkbox"]):not([type="hidden"]), .organisation-form select, .organisation-form textarea { min-width: 0; max-width: 100%; }
 .verification-request { margin: 32px 0; padding: 24px; border: 1px solid var(--color-divider); border-radius: var(--radius-lg); background: var(--color-surface); }
 .verification-details { display: grid; grid-template-columns: minmax(130px, 1fr) minmax(0, 2fr); gap: 10px 24px; }
