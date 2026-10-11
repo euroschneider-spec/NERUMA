@@ -4,7 +4,7 @@ import { redirect } from 'next/navigation';
 import type { Locale } from './i18n';
 import { confirmedUser, createClient, type SupabaseClient } from './supabase/server';
 import { authConfigured } from './supabase/config';
-import { newZone, uuidPattern, type OwnField, type PlaceDraft, type PlaceSummary, type RemovableField } from './workspace';
+import { newZone, placeAttention, uuidPattern, type OwnField, type PlaceDraft, type PlaceSummary, type RemovableField } from './workspace';
 import type { SensoryProfile } from './demo';
 import { stepFieldsReady, verificationReady } from './verification-server';
 import { getViewer } from './viewer-server';
@@ -24,15 +24,21 @@ export const workspaceSession = cache(async (locale: Locale) => {
   return { supabase, user, organisations, memberships: viewer.memberships };
 });
 export async function listPlaces(supabase: SupabaseClient, org: string, locale: Locale): Promise<PlaceSummary[]> {
-  const { data, error } = await supabase.from('places').select('id,city,address,status,revision,updated_at,place_translations(name,locale)')
+  const { data, error } = await supabase.from('places').select('id,city,address,status,revision,updated_at,place_translations(name,locale),zones(id,status,sort_order),zone_translations(zone_id,title,description,locale),media_assets(zone_id,storage_key,alt_text,active)')
     .eq('organization_id',org).neq('status','archived').order('updated_at',{ascending:false}).limit(100);
   if (error) throw new Error('workspace-unavailable');
   return (data || []).map(row => {
     const translations = row.place_translations as {name:string;locale:string}[];
     const current = translations.find(t=>t.locale===locale);
     const fallback = translations[0];
+    const steps = (row.zones as {id:string;status:string;sort_order:number}[]).filter(z=>z.status!=='archived').sort((a,b)=>a.sort_order-b.sort_order);
+    const texts = (row.zone_translations as {zone_id:string;title:string;description:string;locale:string}[]).filter(t=>t.locale===locale);
+    const photos = (row.media_assets as {zone_id:string|null;storage_key:string;alt_text:Record<string,string>;active:boolean}[]).filter(p=>p.active);
+    const firstPhoto = steps.map(s=>photos.find(p=>p.zone_id===s.id)).find(Boolean);
     return {id:row.id,city:row.city,address:row.address || '',status:row.status,revision:Number(row.revision),updatedAt:row.updated_at,
-      name:current?.name || (fallback ? `${fallback.name} (${fallback.locale.toUpperCase()})` : row.city)};
+      name:current?.name || (fallback ? `${fallback.name} (${fallback.locale.toUpperCase()})` : row.city),
+      photoKey:firstPhoto?.storage_key,
+      attention:placeAttention(steps.map(s=>({id:s.id,hasText:texts.some(t=>t.zone_id===s.id && t.title.trim()!=='' && t.description.trim()!=='')})),photos.map(p=>({zoneId:p.zone_id,alt:p.alt_text[locale] || ''})))};
   });
 }
 type Translation = {zone_id:string;title:string;description:string;useful_note:string;next_step:string};

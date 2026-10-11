@@ -91,6 +91,16 @@ Mobile first: the floating edge tab is easy to miss, has no label, and covers co
 Covers: `DESIGN-TASKS.md` section 6. Sections 5 and 7 follow from the three principles above and have not
 been discussed one by one.
 
+### The theme follows the visitor's device until they choose
+Owner, 2026-10-11. Replaces "dark is the default" (the design still treats dark as the fallback when a device
+can't say). A visitor who has not chosen gets light or dark from their device and follows it live; picking a
+theme in the reading panel (first choice there: *Match my device*) or with the header button keeps it from then on.
+Storing a setting such as text size does not count as choosing a theme. The old code saved a theme with every
+setting, which can't be told from a choice, so themes saved before this change are reset once to follow the device
+(a `themeV` marker in the stored settings; fine while there are no real visitors, and every later choice is kept).
+High contrast stays a deliberate choice: following `prefers-contrast` was considered and left out for now.
+The language still comes from the browser later (`TECH-TASKS.md`, section 2).
+
 ### Organisations shape their own steps, within limits
 More flexibility in the editor (owner, 2026-10-11). Each step card folds in place to one line; the sidebar folds
 to icons. Fields are chosen per step: name, description and the sensory profile always stay, so visitors can
@@ -106,6 +116,27 @@ Owner's question, 2026-10-11. Only for what can't be undone with one click: **re
 (Cancel has focus, Escape cancels), and **publishing** will ask when it exists (it goes public and carries the
 responsibility text). Removing a *field* (the ×) does not ask: its text is kept and *Add a field* brings it back.
 Save stays on screen in a bar at the bottom of the editor, so a small change deep in a step never means scrolling.
+
+### QR codes: one per location, made at publishing, never reused
+Owner, 2026-10-11. A printed code can never change, so these rules are fixed before anything is printed.
+- **Only after publishing.** A location gets its code the first time a guide of it is published, in the same
+  step. Before that the dashboard card shows no code, so no printed code ever leads to an unfinished guide.
+  Not chosen: a code from the start that "works once published" (it would have let signs be printed earlier).
+- **A short random code** (`/q/k7f3qz2m`), not one made from the name: it can't clash between places with the
+  same name and still fits after a rename. The link shown on the card is the same short link.
+- **One code per location, not per language.** One sign for everyone; the guide opens in the visitor's phone
+  language when it is published, otherwise in a published one, with the language switch. The `qr_redirects`
+  table points at one guide (one language) today, so this needs a database change with publishing.
+- **Kept forever.** The code stays with its location for good and is never given to another. If the location
+  is unpublished or removed, scanning shows "This guide isn't available right now", not a bare 404;
+  publishing again makes it work. Visitors can't read unpublished rows, so the notice needs a server check that
+  says only "exists, not available", never the location's name.
+
+### Organisations can report a problem to NERUMA
+Owner, 2026-10-11. A button in the organisation sidebar, *Report a problem or ask for help*. Chosen: the report
+is saved in the database and the platform administrator reads it in the admin area. Not chosen: a link that opens
+the person's email program (nothing tracked, and email isn't set up for real use yet, `TECH-TASKS.md` section 4).
+Visitors reporting a wrong guide to the organisation is a separate feature that waits for publishing.
 
 ## Not yet discussed
 

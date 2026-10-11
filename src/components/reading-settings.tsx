@@ -5,7 +5,7 @@ import { SlidersHorizontal, X, GripHorizontal, ArrowLeft, ArrowRight, ArrowUp, A
 import { getCopy, type Locale } from '@/lib/i18n';
 import { getAccessCopy } from '@/lib/accessibility-copy';
 import { ReadAloud } from './read-aloud';
-import { applyPreferences, defaults, fromStored, savePreferences, storageKey, useTheme, type Preferences } from '@/lib/reading-prefs';
+import { applyPreferences, defaults, fromStored, followSystemTheme, savePreferences, storageKey, useThemeChoice, type Preferences } from '@/lib/reading-prefs';
 
 /** Inside the organisation app the panel opens from a labelled button in the sidebar instead of the floating tab. */
 type ReadingTrigger={register:(element:HTMLButtonElement|null)=>void;open:()=>void;isOpen:boolean};
@@ -46,7 +46,7 @@ function placePanel(panel:HTMLDialogElement,button:HTMLButtonElement) {
 
 export function ReadingSettingsProvider({locale,children}:{locale:Locale;children:React.ReactNode}) {
   const t=getCopy(locale);const a=getAccessCopy(locale);const path=usePathname();
-  const [stored,setPrefs]=useState(defaults);const theme=useTheme();const prefs:Preferences={...stored,theme};const [isOpen,setOpen]=useState(false);const [moveControls,setMoveControls]=useState(false);const [audioOpen,setAudioOpen]=useState(false);
+  const [stored,setPrefs]=useState(defaults);const theme=useThemeChoice();const prefs:Preferences={...stored,theme};const [isOpen,setOpen]=useState(false);const [moveControls,setMoveControls]=useState(false);const [audioOpen,setAudioOpen]=useState(false);
   const dialog=useRef<HTMLDialogElement>(null);const trigger=useRef<HTMLButtonElement>(null);
   const moved=useRef(false);const restoreFocus=useRef(true);const dragged=useRef(false);
   const drag=useRef<{x:number;y:number;left:number;top:number}|null>(null);
@@ -58,6 +58,7 @@ export function ReadingSettingsProvider({locale,children}:{locale:Locale;childre
     } catch { /* Defaults work when storage is unavailable. */ }
     return()=>{if(frame!==undefined) cancelAnimationFrame(frame);};
   },[]);
+  useEffect(()=>followSystemTheme(),[]);
   useEffect(()=>{
     restoreFocus.current=false;dialog.current?.close();
     // Only the floating tab is docked to the corner; a button inside the sidebar stays where the page puts it.
@@ -117,7 +118,7 @@ export function ReadingSettingsProvider({locale,children}:{locale:Locale;childre
       <p id="reading-popup-hint" className="small-note">{a.popupHint}</p>
       <p id="reading-intro">{a.readingIntro}</p>
       <div className="form-field"><label htmlFor="reading-size">{t.fontSize}</label><select id="reading-size" autoFocus value={prefs.size} onChange={e=>update({...prefs,size:e.target.value as Preferences['size']})}><option value="normal">{t.normal}</option><option value="large">{t.large}</option><option value="larger">{t.larger}</option></select></div>
-      <div className="form-field"><label htmlFor="reading-theme">{t.theme}</label><select id="reading-theme" value={prefs.theme} onChange={e=>update({...prefs,theme:e.target.value as Preferences['theme']})}><option value="light">{t.lightMode}</option><option value="dark">{t.darkMode}</option><option value="contrast">{t.contrast}</option></select></div>
+      <div className="form-field"><label htmlFor="reading-theme">{t.theme}</label><select id="reading-theme" value={prefs.theme} onChange={e=>update({...prefs,theme:e.target.value as Preferences['theme']})}><option value="system">{t.systemTheme}</option><option value="light">{t.lightMode}</option><option value="dark">{t.darkMode}</option><option value="contrast">{t.contrast}</option></select></div>
       <div className="form-field"><label htmlFor="reading-width">{a.lineWidth}</label><select id="reading-width" value={prefs.width} onChange={e=>update({...prefs,width:e.target.value as Preferences['width']})}><option value="default">{a.lineDefault}</option><option value="narrow">{a.lineNarrow}</option></select></div>
       <div className="form-field"><label htmlFor="reading-font">{a.typeface}</label><select id="reading-font" value={prefs.font} onChange={e=>update({...prefs,font:e.target.value as Preferences['font']})}><option value="default">{a.typeDefault}</option><option value="hyperlegible">{a.typeHyperlegible}</option></select></div>
       <label className="checkbox-label"><input type="checkbox" checked={prefs.spacing} onChange={e=>update({...prefs,spacing:e.target.checked})}/>{t.spacing}</label>

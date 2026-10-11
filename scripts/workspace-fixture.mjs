@@ -116,7 +116,8 @@ createServer(async(req,res)=>{
           const offset=Math.max(0,Number(url.searchParams.get('offset')||0));
           const query=`select * from public.${table}${filters.length?' where '+filters.join(' and '):''}${ordering?' order by '+ordering:''} limit ${limit} offset ${offset}`;
           const rows=(await db.query(query,values)).rows;
-          if(table==='places' && url.searchParams.get('select')?.includes('place_translations(')) for(const row of rows) row.place_translations=(await db.query('select name,locale from public.place_translations where place_id=$1',[row.id])).rows;
+          // Embedded child rows of a place, as PostgREST returns them: the columns named inside each name(...).
+          if(table==='places') for(const [child,columns] of [...(url.searchParams.get('select')||'').matchAll(/\b(place_translations|zones|zone_translations|media_assets)\(([^)]*)\)/g)].map(m=>[m[1],m[2]])) for(const row of rows) row[child]=(await db.query(`select ${columns.split(',').map(safe).join(',')} from public.${child} where place_id=$1`,[row.id])).rows;
           for(const row of rows) if(row.photographed_on instanceof Date) row.photographed_on=row.photographed_on.toISOString().slice(0,10);
           await db.exec('commit');
           if(req.headers.accept?.includes('vnd.pgrst.object')) return rows.length===1?send(res,200,rows[0]):send(res,406,{code:'PGRST116',details:`The result contains ${rows.length} rows`,message:'JSON object requested, multiple (or no) rows returned'});

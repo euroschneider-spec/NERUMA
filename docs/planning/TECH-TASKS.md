@@ -29,6 +29,8 @@ workspace saves to the browser, not to the database.
 
 ## 2. Follow system settings
 
+**Chosen as the next task (owner, 2026-10-11):** the theme follows the visitor's device. The language part follows after.
+
 **Today:** the theme defaults to dark and ignores the device setting (`defaults` in
 `src/lib/reading-prefs.ts` and the pre-paint script in `src/app/[locale]/layout.tsx`). Reduced motion
 is already respected. The root URL always redirects to English (`src/app/(entry)/page.tsx`).
@@ -279,3 +281,79 @@ locally is in `docs/guides/TESTING.md`.
   baselines when the design changes on purpose.
 - [ ] No test runs against the deployed Vercel preview. After the first real organisation pilot, add a
   small smoke test (home loads, example guide opens, sign-in page loads) that runs after each deployment.
+
+## 12. Organisation app: what the dashboard work left open
+
+Added on 2026-10-11, after the dashboard cards (PR #29). Decisions are in `DECISIONS.md`; the brief is
+`docs/briefs/2026-10-11-organisation-app.md`.
+
+**To do with publishing (needs Opus; the choices are already made, see "QR codes" in `DECISIONS.md`):**
+
+- [ ] **QR registry migration.** Today `qr_redirects` has a text `public_code` that points at one guide, which
+  is one language, and the only working code is the hard-coded `willow-museum` in `src/lib/qr.ts`. Change it to
+  one short random code per place, created in the same transaction as the first publish, never deleted or
+  reused. Add database tests for the "can't" cases: another organisation can't read or change a code, and a
+  code that exists is never handed to a second place.
+- [ ] **Which language opens.** `/q/[code]` picks the visitor's language when it is published, otherwise a
+  published one, with the language switch available.
+- [ ] **The "isn't available right now" page.** Visitors can't read unpublished rows, so a narrow database
+  function answers only "exists, not available" without returning the name. Replace the bare 404 in
+  `src/app/q/[code]/route.ts`.
+- [ ] **QR and link on the dashboard card.** A "QR & link" button opens a pop-up with the code (view and
+  download) and a copy-link button. Shown only once the place has a code. The pop-up is Sonnet work once the
+  migration exists.
+- [ ] **Needs attention, the missing items.** "Unpublished changes" and "not verified on site" need publishing
+  first. Add them to `placeAttention()` in `src/lib/workspace.ts` then.
+
+**Waiting on the owner or a decision:**
+
+- [ ] **Visit counts (brief 1e).** Nothing is counted today. Decide first what may be counted (for example a
+  total per location, with no IP address and no cookie), then check section 3 and update the privacy page.
+- [ ] **Plan & billing page (brief 1d).** A placeholder for owners only, until payments exist (section 8).
+- [ ] **Apply `supabase/migrations/20261011120000_step_fields.sql`** to the real Supabase project. The app works
+  without it but hides the × and "Add a field" controls.
+
+**Test fixture limits found while building:**
+
+- [ ] `scripts/workspace-fixture.mjs` fakes the database's REST layer by hand. It now serves embedded
+  `place_translations`, `zones`, `zone_translations` and `media_assets` on `places`, and nothing else. A new
+  nested `select(...)` elsewhere fails with a 500 in `dev:mock` and `test:workspace`, not on the real database.
+  Say so in the fixture's header comment, or replace the hand-written layer with PostgREST.
+- [ ] The fixture's port 3012 is written into four scripts, so a second copy can't run beside a running
+  `dev:mock`. Read it from one `FIXTURE_PORT` setting. A copy has to sed it today.
+- [ ] Editing code that talks to the database while `dev:mock` runs breaks the page until the mock is restarted,
+  because the fake database loads once at start. Mention it in `docs/guides/TESTING.md`.
+
+**Report a problem (organisations to NERUMA; `DECISIONS.md`, "Organisations can report a problem"):**
+
+- [ ] **Table and policies (needs Opus).** A `problem_reports` table: organisation, place (optional), the sender,
+  a message with a length limit, status, created time. An organisation member can add a report for their own
+  organisation and read only their own; the platform administrator reads and closes all. Database tests need the
+  "can't" cases: a member of another organisation, a signed-out user, and a suspended organisation can't add or read.
+- [ ] **The form.** A sidebar button opens a short form (message, optional location), EN/RO/DE, with a rate limit
+  so it can't be used to flood the table. Show a confirmation that says plainly it was saved, not emailed.
+- [ ] **The admin list.** A page in the admin area with open reports, newest first, and a "closed" button.
+- [ ] **Later, with email (section 4):** a notification to the administrator when a report arrives.
+- [ ] **Visitor reports** ("something here is wrong" in the public guide, shown to the organisation) wait for
+  publishing.
+
+**Order of work after the dashboard (owner, 2026-10-11):**
+
+1. [ ] Merge #29 (cards), #30 (sample QR and visits), #31 (report a problem), in that order, each after its checks are green.
+2. [ ] **Theme follows the device** (section 2). Next, by the owner's choice.
+3. [ ] **Contrast bug, issue #32.** The accent blue pair is 4.48:1 in the light theme (limit 4.5). Fix the palette, run
+   the full suite, and add axe scans of the signed-in workspace and admin pages in all three themes. Best done
+   together with the theme task, since both touch the same tokens and tests.
+4. [ ] **Live preview in a second tab** (brief, Task 2): the preview beside the editor, from unsaved changes, with
+   the guide component visitors see. Narrow screens get a *Preview* button only.
+5. [ ] **Plan & billing placeholder** (brief 1d): owners only, until payments exist (section 8).
+6. [ ] **Visit counts privacy decision.** Suggested: one number per location per day, no IP address, no cookie,
+   counting each time the guide opens. Needs the owner's yes, then section 3 and the privacy page.
+7. [ ] **Publishing** (needs Opus): the QR registry above, the "isn't available" page, language choice, the real QR
+   pop-up and visit counts on the card.
+
+**Migrations the owner's friend still has to apply to the real Supabase project:**
+`20261011120000_step_fields.sql` and `20261012090000_problem_reports.sql` (the app hides the matching controls until then).
+
+**Report a problem** (#31) is built; what is left of it: the email to the administrator when a report arrives
+(section 4) and visitor reports (with publishing).

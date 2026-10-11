@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { newOwnField, newPlace, parsePlaceDraft, parseReportMessage, visibleZone } from '@/lib/workspace';
+import { newOwnField, newPlace, parsePlaceDraft, parseReportMessage, placeAttention, visibleZone } from '@/lib/workspace';
 
 const org = crypto.randomUUID();
 const filled = () => {
@@ -126,6 +126,22 @@ describe('visibleZone', () => {
   });
 });
 
+describe('placeAttention', () => {
+  const steps = (n: number, hasText = true) => Array.from({ length: n }, (_, i) => ({ id: `z${i}`, hasText }));
+  it('is empty for three complete steps', () => {
+    expect(placeAttention(steps(3), [{ zoneId: 'z0', alt: 'A door' }])).toEqual([]);
+  });
+  it('flags fewer than three steps', () => {
+    expect(placeAttention(steps(2), [])).toEqual(['fewSteps']);
+  });
+  it('flags steps without text in this language', () => {
+    expect(placeAttention(steps(3, false), [])).toEqual(['missingText']);
+  });
+  it('flags a photo with blank alt text, but not one on a removed step', () => {
+    expect(placeAttention(steps(3), [{ zoneId: 'z1', alt: '  ' }])).toEqual(['missingAlt']);
+    expect(placeAttention(steps(3), [{ zoneId: 'gone', alt: '' }])).toEqual([]);
+  });
+});
 
 describe('parseReportMessage', () => {
   it('trims and accepts 10 to 2000 characters', () => {
