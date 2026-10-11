@@ -1,11 +1,28 @@
 'use client';
-import { useState, useEffect, useRef } from 'react';
+import { createContext, useContext, useState, useEffect, useRef } from 'react';
 import { usePathname } from 'next/navigation';
 import { SlidersHorizontal, X, GripHorizontal, ArrowLeft, ArrowRight, ArrowUp, ArrowDown, RotateCcw } from 'lucide-react';
 import { getCopy, type Locale } from '@/lib/i18n';
 import { getAccessCopy } from '@/lib/accessibility-copy';
 import { ReadAloud } from './read-aloud';
 import { applyPreferences, defaults, fromStored, savePreferences, storageKey, useTheme, type Preferences } from '@/lib/reading-prefs';
+
+/** Inside the organisation app the panel opens from a labelled button in the sidebar instead of the floating tab. */
+type ReadingTrigger={register:(element:HTMLButtonElement|null)=>void;open:()=>void;isOpen:boolean};
+const ReadingTriggerContext=createContext<ReadingTrigger|null>(null);
+export const useReadingTrigger=()=>useContext(ReadingTriggerContext);
+/* The provider hands out a callback ref (not a ref value); the lint rule can't tell the difference. */
+/* eslint-disable react-hooks/refs */
+export function ReadingSidebarButton({label,children}:{label:string;children:React.ReactNode}) {
+  const reading=useReadingTrigger();
+  if(!reading) return null;
+  return <button ref={reading.register} type="button" className="button button-small button-outline app-reading" aria-haspopup="dialog" aria-controls="reading-panel" aria-expanded={reading.isOpen} onClick={reading.open} data-tip={label}>
+    {children}
+    <span className="app-label">{label}</span>
+  </button>;
+}
+/* eslint-enable react-hooks/refs */
+export const inWorkspace=(path:string)=>/^\/(en|ro|de)\/workspace(\/|$)/.test(path);
 
 export const clamp=(value:number,min:number,max:number)=>Math.max(min,Math.min(value,Math.max(min,max)));
 // Dock to the bottom-left corner, clear of body copy that runs mid-page.
@@ -43,7 +60,8 @@ export function ReadingSettingsProvider({locale,children}:{locale:Locale;childre
   },[]);
   useEffect(()=>{
     restoreFocus.current=false;dialog.current?.close();
-    const position=()=>{if(trigger.current)placeLauncher(trigger.current);};
+    // Only the floating tab is docked to the corner; a button inside the sidebar stays where the page puts it.
+    const position=()=>{if(trigger.current?.classList.contains('floating-reading'))placeLauncher(trigger.current);};
     const frame=requestAnimationFrame(position);window.addEventListener('resize',position);
     return()=>{cancelAnimationFrame(frame);window.removeEventListener('resize',position);};
   },[path]);
@@ -78,8 +96,8 @@ export function ReadingSettingsProvider({locale,children}:{locale:Locale;childre
     if(!dialog.current) return;const bounds=dialog.current.getBoundingClientRect();moved.current=true;movePanel(dialog.current,bounds.left+x,bounds.top+y);
   }
   function resetPosition() {moved.current=false;if(dialog.current && trigger.current)placePanel(dialog.current,trigger.current);}
-  return <>{children}
-    <button ref={trigger} type="button" className="reading-trigger floating-reading" aria-label={t.settings} title={t.settings} aria-haspopup="dialog" aria-controls="reading-panel" aria-expanded={isOpen} onClick={open}><SlidersHorizontal size={20} aria-hidden="true"/><span aria-hidden="true">{a.tools}</span></button>
+  return <ReadingTriggerContext.Provider value={{register:element=>{trigger.current=element;},open,isOpen}}>{children}
+    {!inWorkspace(path) && <button ref={trigger} type="button" className="reading-trigger floating-reading" aria-label={t.settings} title={t.settings} aria-haspopup="dialog" aria-controls="reading-panel" aria-expanded={isOpen} onClick={open}><SlidersHorizontal size={20} aria-hidden="true"/><span aria-hidden="true">{a.tools}</span></button>}
     <dialog ref={dialog} id="reading-panel" className="reading-dialog" aria-labelledby="reading-title" aria-describedby="reading-intro reading-popup-hint" onClose={closed} onKeyDown={event=>{if(event.key==='Escape'){event.preventDefault();close();}}}>
       <div className="reading-dialog-heading"><h2 id="reading-title">{t.settings}</h2>
         <button type="button" className="icon-button panel-drag-handle" aria-label={a.movePanel} title={a.movePanel} aria-expanded={moveControls} aria-controls="reading-move-controls" onClick={()=>{if(dragged.current){dragged.current=false;return;}setMoveControls(value=>!value);}}
@@ -107,5 +125,5 @@ export function ReadingSettingsProvider({locale,children}:{locale:Locale;childre
       <button type="button" className="text-button" onClick={()=>update(defaults)}>{t.reset}</button>
       <details className="reading-audio-details" open={audioOpen} onToggle={event=>setAudioOpen(event.currentTarget.open)}><summary>{a.listenPage}</summary><ReadAloud locale={locale} label={a.listenPage} enabled={isOpen && audioOpen}/></details>
     </dialog>
-  </>;
+  </ReadingTriggerContext.Provider>;
 }

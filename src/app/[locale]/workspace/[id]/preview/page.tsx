@@ -24,9 +24,10 @@ export default async function DraftPreview({params}:{params:Promise<{locale:stri
       ...sensoryChannels.map(channel=>`${common[channel]}: ${common[zone.sensory[channel]]}`),
       v.note?`${common.support}. ${v.note}`:'',v.next?`${common.predictability}. ${v.next}`:'',
       ...v.fields.map(f=>`${f.label}: ${fieldValue(f)}`),v.optional?t.optional:''].filter(Boolean).join('\n');})].filter(Boolean).join('\n');
-  return <main id="main-content" className="container"><div className="page-heading"><p className="eyebrow">{t.draft}</p><h1>{draft.name || t.missing}</h1><p className="lead">{draft.city}</p></div>
+  return <main id="main-content" className="app-main"><div className="app-heading"><div><h1>{draft.name || t.missing}</h1>{draft.city && <p className="lead">{draft.city}</p>}</div>
+      <Link className="button" href={`/${locale}/workspace/${id}`}>{t.edit}</Link></div>
     <div className="content-body"><p className="notice">{t.boundary}</p><ReadAloud locale={locale} text={narration} label={a.listenGuide}/>{result.missingTranslation && <p>{t.missing}</p>}
-      {draft.description && <p>{draft.description}</p>}{draft.arrivalInfo && <section><h2>{t.arrival}</h2><p className="preserve-lines">{draft.arrivalInfo}</p></section>}
+      {draft.description && <p className="lead">{draft.description}</p>}{draft.arrivalInfo && <section><h2>{t.arrival}</h2><p className="preserve-lines">{draft.arrivalInfo}</p></section>}
       {draft.zones.map((zone,index)=>{const v=shown[index];return <section key={zone.id} className="builder-zone"><p className="eyebrow">{common.step} {index+1}</p><h2>{zone.title || t.missing}</h2>
         {v.photo && <><div className="guide-media"><Image unoptimized src={photoUrl(v.photo.storageKey)} alt={v.photo.alt || t.photoPreview} width={600} height={400} className="draft-photo"/></div><p className="muted">{v.photo.rights} · {v.photo.photographedOn}</p></>}
         <p className="preserve-lines">{zone.description}</p><dl className="draft-sensory">{sensoryChannels.map(channel=><div key={channel}><dt>{common[channel]}</dt><dd>{common[zone.sensory[channel]]}</dd></div>)}</dl>

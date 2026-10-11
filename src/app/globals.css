@@ -258,8 +258,13 @@ main { min-height: 65vh; }
 }
 
 /* ── Forms ────────────────────────────────────────────────────────────── */
-.field, .form-field { display: flex; flex-direction: column; gap: 5px; min-width: 0; }
+.field, .form-field { display: flex; flex-direction: column; gap: 8px; min-width: 0; } /* label to box: 8px, so the label doesn't sit on the border */
 .field > label, .label, .form-field > label, .form-field .label-row > label, label.form-field { font-size: 0.8125rem; color: color-mix(in srgb, var(--color-text) 75%, transparent); }
+/* A label starts where the text inside its box starts (box padding 10px + 1px border), not on the box's edge. The box
+   itself must not inherit the indent, so it is reset. */
+.field > label, .label, .form-field > label, label.form-field, .choice-label { text-indent: 11px; }
+.form-field .label-row > label { padding-left: 11px; }
+.form-field input, .form-field textarea, .form-field select, .field input, .field textarea, .field select { text-indent: 0; }
 .input, input, select, textarea {
   width: 100%; min-width: 0; min-height: 36px; padding: 6px 10px; font: inherit;
   font-size: 0.9375rem; color: var(--color-text); caret-color: var(--color-accent);
@@ -950,7 +955,7 @@ p, li, dt, dd, summary, label, figcaption, a, .lbl, .small-label, .small-note { 
 .app-shell { display: grid; grid-template-columns: 260px minmax(0, 1fr); min-height: 100vh; }
 .app-sidebar {
   position: sticky; top: 0; align-self: start; height: 100vh; overflow-y: auto;
-  display: flex; flex-direction: column; gap: 24px; padding: 20px 16px 128px; /* 128px: keeps the controls well clear of the reading-settings tab in the corner */
+  display: flex; flex-direction: column; gap: 24px; padding: 20px 16px 24px;
   background: var(--color-surface); border-right: 1px solid var(--color-divider);
 }
 .app-org { padding-bottom: 16px; border-bottom: 1px solid var(--color-divider); }
@@ -961,7 +966,7 @@ p, li, dt, dd, summary, label, figcaption, a, .lbl, .small-label, .small-note { 
 .app-nav a:hover { background: color-mix(in srgb, var(--color-text) 7%, transparent); }
 .app-nav a[data-active="true"] { background: var(--color-accent); color: var(--color-bg); }
 .app-sidebar-foot { margin-top: auto; display: flex; flex-direction: column; gap: 8px; align-items: stretch; }
-.app-sidebar-foot .language-switch summary, .app-sidebar-foot .theme-toggle, .app-signout { width: 100%; min-height: 36px; justify-content: flex-start; }
+.app-sidebar-foot .language-switch summary, .app-sidebar-foot .theme-toggle, .app-reading, .app-signout { width: 100%; min-height: 36px; justify-content: flex-start; }
 .app-sidebar-foot .tone-switch { display: flex; }
 .app-sidebar-foot .tone-switch button { flex: 1; min-height: 36px; }
 .app-sidebar-foot form { margin-top: 8px; padding-top: 16px; border-top: 1px solid var(--color-divider); }
@@ -1013,6 +1018,7 @@ p, li, dt, dd, summary, label, figcaption, a, .lbl, .small-label, .small-note { 
   .app-sidebar[data-collapsed="true"] .app-label { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; }
   .app-sidebar[data-collapsed="true"] .app-nav a,
   .app-sidebar[data-collapsed="true"] .app-signout,
+  .app-sidebar[data-collapsed="true"] .app-reading,
   .app-sidebar[data-collapsed="true"] .theme-toggle { width: 44px; min-height: 40px; justify-content: center; padding: 0; }
   /* Folded, each icon names itself on hover or keyboard focus (the language code needs no tip). */
   .app-sidebar[data-collapsed="true"] [data-tip] { position: relative; }
@@ -1067,7 +1073,7 @@ p, li, dt, dd, summary, label, figcaption, a, .lbl, .small-label, .small-note { 
 
 /* Inside the organisation app, buttons and sidebar controls use regular weight: the filled colour already marks
    the main action, and bold everywhere made every control shout. */
-.app-shell .button, .app-shell .theme-toggle, .app-shell .app-signout { font-weight: 500; }
+.app-shell .button, .app-shell .theme-toggle, .app-shell .app-reading, .app-shell .app-signout { font-weight: 500; }
 
 /* Save stays on screen: the bottom bar sticks to the bottom of the window while the editor is in view, so a
    small change deep in a step never means scrolling back to find Save. Its hint opens upwards. */
