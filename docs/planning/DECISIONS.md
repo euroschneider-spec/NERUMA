@@ -52,6 +52,15 @@ do and the jump buttons are a shortcut. *Explore* and the guide stay separate pa
 same pattern. This only works if each section is short; the home page is already 4709px tall on a phone.
 Covers: `DESIGN-TASKS.md` section 2.
 
+### The menu: jump links, then two buttons
+Modelled on a reference site the owner likes (testylify.netlify.app). *How it works · Who it's for ·
+Sources* jump to sections of the home page, *Explore* is its own page, then an outlined *Example guide*
+button and a filled *For organisations* button. The filled button replaces the earlier "quiet link":
+organisations should find it at once. *Explore* stays in the menu. The separate *How it works* page is
+gone; `/how-it-works` redirects to the section. Its older long text (four numbered points) was removed with
+it and is in git history if wanted. RO and DE wording of the new sections is a draft for native review.
+Covers: `DESIGN-TASKS.md` sections 1 and 2.
+
 ### The guide keeps one label: "Museum pre-visit guide"
 There are no customers yet, so the example guide is a stand-in. The "fictional" wording is scaffolding for
 that stage, not a permanent part of the design.

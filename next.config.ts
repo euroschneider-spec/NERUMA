@@ -22,6 +22,10 @@ const config: NextConfig = {
   // Use the compiler API; this also works in containers that restrict detached CLI subprocesses.
   experimental: { useTypeScriptCli: false },
   poweredByHeader: false, // Avoid advertising the framework version to probing clients.
+  // How it works is a section of the home page now; the old address keeps working for links and QR codes.
+  async redirects() {
+    return [{ source: '/:locale(en|ro|de)/how-it-works', destination: '/:locale#how-it-works', permanent: true }];
+  },
   async headers() {
     return [{ source: '/(.*)', headers: [
       { key: 'X-Content-Type-Options', value: 'nosniff' },
