@@ -269,7 +269,13 @@ main { min-height: 65vh; }
 .input:hover, input:hover, select:hover, textarea:hover { border-color: color-mix(in srgb, var(--color-text) 45%, transparent); }
 .input:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible { border-color: var(--color-accent); outline-offset: 0; }
 textarea, textarea.input { min-height: 90px; resize: vertical; }
-select.input, select { appearance: auto; }
+/* Every dropdown draws the same arrow, 16px in from its edge, instead of the browser's own (which sits
+   against the border and can't be moved). currentColor keeps it right in every theme and in high contrast. */
+select.input, select {
+  appearance: none; padding-right: 40px; background-repeat: no-repeat; background-size: 5px 5px, 5px 5px;
+  background-image: linear-gradient(45deg, transparent 50%, currentColor 50%), linear-gradient(135deg, currentColor 50%, transparent 50%);
+  background-position: calc(100% - 21px) 55%, calc(100% - 16px) 55%;
+}
 input[type="checkbox"], .check {
   width: 18px; height: 18px; min-height: 18px; min-width: 18px;
   accent-color: var(--color-accent); margin: 0; flex: none; padding: 0;
@@ -713,13 +719,7 @@ html[data-density="summary"] .density-switch button[data-value="summary"] { back
   .organisation-form .form-field.third { grid-column: span 2; }
   .organisation-form .form-grid > .wide { grid-column: 1 / -1; }
 }
-/* The dropdown takes the same box as the text fields instead of the browser's own look. */
 .organisation-form .form-grid > .notice { margin-bottom: 0; }
-.organisation-form select {
-  appearance: none; padding-right: 36px; background-repeat: no-repeat; background-size: 5px 5px, 5px 5px;
-  background-image: linear-gradient(45deg, transparent 50%, var(--color-text) 50%), linear-gradient(135deg, var(--color-text) 50%, transparent 50%);
-  background-position: calc(100% - 18px) 55%, calc(100% - 13px) 55%;
-}
 .organisation-form fieldset { margin: 0; padding: 24px; }
 .organisation-form fieldset:disabled { opacity: 0.6; }
 .organisation-form button { margin-top: 20px; }
@@ -738,7 +738,7 @@ html[data-density="summary"] .density-switch button[data-value="summary"] { back
 .auth-feedback { margin: 24px 0; padding: 24px; border: 1px solid var(--color-accent); border-radius: var(--radius-lg); background: var(--color-accent-100); color: var(--color-accent-800); }
 .auth-feedback h2 { margin-top: 0; font-size: 1.375rem; }
 /* Fields sit on a tinted panel, so they take the page background and a firmer edge to stay visible. */
-.auth-feedback input, .auth-feedback select, .auth-feedback textarea { background: var(--color-bg); border-color: color-mix(in srgb, var(--color-text) 45%, transparent); }
+.auth-feedback input, .auth-feedback select, .auth-feedback textarea { background-color: var(--color-bg); border-color: color-mix(in srgb, var(--color-text) 45%, transparent); }
 /* In the warm tone only the heading carries the green; running text stays neutral. */
 :root[data-tone="warm"] .auth-feedback { color: var(--color-text); }
 :root[data-tone="warm"] .auth-feedback h2 { color: var(--color-accent-800); }
