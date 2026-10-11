@@ -24,7 +24,19 @@ export type PlaceDraft = {
   id: string; revision: number; name: string; city: string; address: string; countryCode: string;
   placeType: typeof placeTypes[number]; description: string; arrivalInfo: string; zones: OnlineZone[];
 };
-export type PlaceSummary = { id: string; name: string; city: string; address: string; status: string; updatedAt: string; revision: number };
+export const attentionKinds = ['fewSteps', 'missingText', 'missingAlt'] as const;
+export type AttentionKind = typeof attentionKinds[number];
+export type PlaceSummary = { id: string; name: string; city: string; address: string; status: string; updatedAt: string; revision: number; photoKey?: string; attention: AttentionKind[] };
+export const MIN_STEPS = 3;
+/** What a location still needs, from saved data only. A step without text in this language counts as missing text. */
+export function placeAttention(steps: { id: string; hasText: boolean }[], photos: { zoneId: string | null; alt: string }[]): AttentionKind[] {
+  const live = new Set(steps.map(s => s.id));
+  const found: AttentionKind[] = [];
+  if (steps.length < MIN_STEPS) found.push('fewSteps');
+  if (steps.some(s => !s.hasText)) found.push('missingText');
+  if (photos.some(p => p.zoneId && live.has(p.zoneId) && !p.alt.trim())) found.push('missingAlt');
+  return found;
+}
 export function newZone(): OnlineZone {
   return { id: crypto.randomUUID(), title: '', description: '', note: '', next: '', type: 'visit-space', optional: false, hidden: [], fields: [],
     sensory: { sound: 'unknown', light: 'unknown', crowding: 'unknown', smell: 'unknown', temperature: 'unknown', visual: 'unknown' } };
@@ -97,6 +109,7 @@ export function parsePlaceDraft(value: unknown, org: string): PlaceDraft | null 
 const en = {
   dashboard: 'Dashboard', locationsHeading: 'Locations', roleOwner: 'Owner', roleAdmin: 'Admin',
   statusDraft: 'Draft', statusPublished: 'Published', addressMissing: 'No address yet', sidebarLabel: 'Organisation', collapseSidebar: 'Collapse sidebar', expandSidebar: 'Expand sidebar', stepComplete: 'Complete', stepIncomplete: 'Needs details',
+  attentionHeading: 'Needs attention', attentionClear: 'Nothing needs attention.', attentionFewSteps: 'Add at least 3 steps', attentionMissingText: 'Some steps have no name or description in this language', attentionMissingAlt: 'Some photos have no description for screen readers', cardPhotoAlt: 'Photo from', cardNoPhoto: 'No photo yet',
   workspace: 'Organisation workspace', newPlace: 'Create a location', edit: 'Edit draft', empty: 'No locations yet. Create your first location.',
   location: 'Location name', city: 'City', address: 'Address', country: 'Country code (optional)', countryHint: 'Two letters, for example RO or DE.',
   kind: 'Location type', summary: 'Short description', arrival: 'Arrival information', addZone: 'Add a step', collapseAll: 'Collapse all', expandAll: 'Expand all', cancel: 'Cancel', removeConfirm: 'Remove step', removeConfirmTitle: 'Remove this step?', removeConfirmBody: 'The step, with its text, photo and fields, leaves your draft when you save. Until then, leaving this page without saving brings it back.', stepName: 'Step name', removeZone: 'Remove this step',
@@ -126,6 +139,7 @@ type WorkspaceCopy = { [K in keyof typeof en]: string };
 const ro: WorkspaceCopy = {
   dashboard:'Panou', locationsHeading:'Locații', roleOwner:'Proprietar', roleAdmin:'Administrator',
   statusDraft:'Ciornă', statusPublished:'Publicat', addressMissing:'Fără adresă încă', sidebarLabel:'Organizație', collapseSidebar:'Restrânge bara laterală', expandSidebar:'Extinde bara laterală', stepComplete:'Complet', stepIncomplete:'Necesită detalii',
+  attentionHeading:'Necesită atenție', attentionClear:'Nimic nu necesită atenție.', attentionFewSteps:'Adăugați cel puțin 3 pași', attentionMissingText:'Unii pași nu au nume sau descriere în această limbă', attentionMissingAlt:'Unele fotografii nu au descriere pentru cititoarele de ecran', cardPhotoAlt:'Fotografie de la', cardNoPhoto:'Încă fără fotografie',
   workspace:'Spațiul organizației', newPlace:'Creează o locație', edit:'Editează draftul', empty:'Nu ai încă locații. Creează prima locație.',
   location:'Numele locației', city:'Oraș', address:'Adresă', country:'Codul țării (opțional)', countryHint:'Două litere, de exemplu RO sau DE.',
   kind:'Tipul locației', summary:'Descriere scurtă', arrival:'Informații despre sosire', addZone:'Adaugă un pas', collapseAll:'Restrânge tot', expandAll:'Extinde tot', cancel:'Anulează', removeConfirm:'Elimină pasul', removeConfirmTitle:'Elimini acest pas?', removeConfirmBody:'Pasul, cu textul, fotografia și câmpurile lui, iese din draft când salvezi. Până atunci, dacă părăsești pagina fără să salvezi, pasul revine.', stepName:'Numele pasului', removeZone:'Scoate acest pas',
@@ -150,6 +164,7 @@ const ro: WorkspaceCopy = {
 const de: WorkspaceCopy = {
   dashboard:'Übersicht', locationsHeading:'Orte', roleOwner:'Eigentümer', roleAdmin:'Admin',
   statusDraft:'Entwurf', statusPublished:'Veröffentlicht', addressMissing:'Noch keine Adresse', sidebarLabel:'Organisation', collapseSidebar:'Seitenleiste einklappen', expandSidebar:'Seitenleiste ausklappen', stepComplete:'Vollständig', stepIncomplete:'Details fehlen',
+  attentionHeading:'Braucht Aufmerksamkeit', attentionClear:'Nichts braucht Aufmerksamkeit.', attentionFewSteps:'Mindestens 3 Schritte hinzufügen', attentionMissingText:'Manchen Schritten fehlen Name oder Beschreibung in dieser Sprache', attentionMissingAlt:'Manchen Fotos fehlt eine Beschreibung für Screenreader', cardPhotoAlt:'Foto von', cardNoPhoto:'Noch kein Foto',
   workspace:'Arbeitsbereich der Organisation', newPlace:'Ort erstellen', edit:'Entwurf bearbeiten', empty:'Noch keine Orte. Erstellen Sie Ihren ersten Ort.',
   location:'Name des Ortes', city:'Stadt', address:'Adresse', country:'Ländercode (optional)', countryHint:'Zwei Buchstaben, zum Beispiel RO oder DE.',
   kind:'Art des Ortes', summary:'Kurzbeschreibung', arrival:'Informationen zur Ankunft', addZone:'Schritt hinzufügen', collapseAll:'Alle einklappen', expandAll:'Alle ausklappen', cancel:'Abbrechen', removeConfirm:'Schritt entfernen', removeConfirmTitle:'Diesen Schritt entfernen?', removeConfirmBody:'Der Schritt mit Text, Foto und Feldern verlässt Ihren Entwurf, wenn Sie speichern. Bis dahin kommt er zurück, wenn Sie die Seite ohne Speichern verlassen.', stepName:'Name des Schritts', removeZone:'Diesen Schritt entfernen',
