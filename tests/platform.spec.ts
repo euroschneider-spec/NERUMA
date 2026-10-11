@@ -243,7 +243,7 @@ for(const theme of ['dark','light']) {
   const tone=page.getByRole('group',{name:'Colour tone',exact:true});
   await tone.getByRole('button',{name:'Warm',exact:true}).click();
   await expect(page.locator('html')).toHaveAttribute('data-tone','warm');
-  await page.evaluate(t=>{const k='vianorae:reading:v1';localStorage.setItem(k,JSON.stringify({...JSON.parse(localStorage.getItem(k)||'{}'),theme:t}));},theme);
+  await page.evaluate(t=>{const k='vianorae:reading:v1';localStorage.setItem(k,JSON.stringify({...JSON.parse(localStorage.getItem(k)||'{}'),theme:t,themeV:2}));},theme);
   for(const path of ['/en','/en/example-guide','/en/for-organisations']) {
    await page.goto(path);
    await expect(page.locator('html')).toHaveAttribute('data-tone','warm');
@@ -263,7 +263,7 @@ test('the saved tone is highlighted before hydration, so a refresh does not flas
   expect(Number(accent)).toBeGreaterThan(Number(cool));
 });
 test('the tone control steps aside in high contrast and Cool restores the default',async({page})=>{
- const store=(theme:string)=>page.evaluate(t=>localStorage.setItem('vianorae:reading:v1',JSON.stringify({theme:t,tone:'warm'})),theme);
+ const store=(theme:string)=>page.evaluate(t=>localStorage.setItem('vianorae:reading:v1',JSON.stringify({theme:t,themeV:2,tone:'warm'})),theme);
  await page.goto('/en');
  await store('contrast');await page.reload();
  await expect(page.getByRole('group',{name:'Colour tone',exact:true})).toHaveCount(0);
