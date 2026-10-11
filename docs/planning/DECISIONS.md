@@ -61,6 +61,11 @@ gone; `/how-it-works` redirects to the section. Its older long text (four number
 it and is in git history if wanted. RO and DE wording of the new sections is a draft for native review.
 Covers: `DESIGN-TASKS.md` sections 1 and 2.
 
+### Sign in is on screen the moment the organisations page opens
+Returning organisations should not scroll to sign in. *Request access* and *Sign in* sit right under the
+title of the organisations page, and the menu keeps its single *For organisations* button. *Demo workspace*
+is a quiet link lower down. Checked at 1280px, 390px and 320px in EN, RO and DE.
+
 ### The guide keeps one label: "Museum pre-visit guide"
 There are no customers yet, so the example guide is a stand-in. The "fictional" wording is scaffolding for
 that stage, not a permanent part of the design.
