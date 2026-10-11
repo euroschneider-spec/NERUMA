@@ -122,6 +122,12 @@ Owner, 2026-10-11. A printed code can never change, so these rules are fixed bef
   publishing again makes it work. Visitors can't read unpublished rows, so the notice needs a server check that
   says only "exists, not available", never the location's name.
 
+### Organisations can report a problem to NERUMA
+Owner, 2026-10-11. A button in the organisation sidebar, *Report a problem or ask for help*. Chosen: the report
+is saved in the database and the platform administrator reads it in the admin area. Not chosen: a link that opens
+the person's email program (nothing tracked, and email isn't set up for real use yet, `TECH-TASKS.md` section 4).
+Visitors reporting a wrong guide to the organisation is a separate feature that waits for publishing.
+
 ## Not yet discussed
 
 - `DESIGN-TASKS.md` sections 5, 6 (other items) and 7.

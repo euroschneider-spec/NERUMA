@@ -321,3 +321,16 @@ Added on 2026-10-11, after the dashboard cards (PR #29). Decisions are in `DECIS
   `dev:mock`. Read it from one `FIXTURE_PORT` setting. A copy has to sed it today.
 - [ ] Editing code that talks to the database while `dev:mock` runs breaks the page until the mock is restarted,
   because the fake database loads once at start. Mention it in `docs/guides/TESTING.md`.
+
+**Report a problem (organisations to NERUMA; `DECISIONS.md`, "Organisations can report a problem"):**
+
+- [ ] **Table and policies (needs Opus).** A `problem_reports` table: organisation, place (optional), the sender,
+  a message with a length limit, status, created time. An organisation member can add a report for their own
+  organisation and read only their own; the platform administrator reads and closes all. Database tests need the
+  "can't" cases: a member of another organisation, a signed-out user, and a suspended organisation can't add or read.
+- [ ] **The form.** A sidebar button opens a short form (message, optional location), EN/RO/DE, with a rate limit
+  so it can't be used to flood the table. Show a confirmation that says plainly it was saved, not emailed.
+- [ ] **The admin list.** A page in the admin area with open reports, newest first, and a "closed" button.
+- [ ] **Later, with email (section 4):** a notification to the administrator when a report arrives.
+- [ ] **Visitor reports** ("something here is wrong" in the public guide, shown to the organisation) wait for
+  publishing.
