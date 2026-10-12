@@ -21,7 +21,7 @@ for(const locale of ['en','ro','de'] as const) {
     await dialog.getByRole('button',{name:t.close,exact:true}).click();await expect(page.locator('.floating-reading')).toBeFocused();
   });
   test(`${locale}: complete text guide contains all steps and remains usable without audio or images`,async({page})=>{
-    await page.goto(`/${locale}/example-guide`);await expect(page.locator('main').getByText(t.sound,{exact:false})).toBeVisible();
+    await page.goto(`/${locale}/places/willow-museum/guide`);await expect(page.locator('main').getByText(t.sound,{exact:false})).toBeVisible();
     const description=await page.locator('.gg-desc').first().innerText();
     await page.getByRole('button',{name:t.options,exact:true}).click();
     await page.getByRole('button',{name:t.full,exact:true}).focus();await page.keyboard.press('Enter');
@@ -55,7 +55,7 @@ test('text guide uses the saved local draft and retains the current step when sw
 test('reading controls are visible before the footer and screenshots document the new views',async({page})=>{
   await page.setViewportSize({width:1440,height:1000});await page.goto('/ro');await page.locator('.floating-reading').click();
   await page.screenshot({path:'docs/verification/screenshots/reading-panel-preview.png'});await page.keyboard.press('Escape');
-  await page.goto('/ro/example-guide');await page.getByRole('button',{name:copy.ro.options,exact:true}).click();await page.getByRole('button',{name:copy.ro.full,exact:true}).click();
+  await page.goto('/ro/places/willow-museum/guide');await page.getByRole('button',{name:copy.ro.options,exact:true}).click();await page.getByRole('button',{name:copy.ro.full,exact:true}).click();
   await page.setViewportSize({width:390,height:844});expect(await page.evaluate(()=>document.documentElement.scrollWidth<=window.innerWidth)).toBe(true);
   await page.screenshot({path:'docs/verification/screenshots/text-guide-preview.png',fullPage:true});
 });
