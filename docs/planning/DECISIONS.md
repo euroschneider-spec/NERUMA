@@ -138,6 +138,13 @@ is saved in the database and the platform administrator reads it in the admin ar
 the person's email program (nothing tracked, and email isn't set up for real use yet, `TECH-TASKS.md` section 4).
 Visitors reporting a wrong guide to the organisation is a separate feature that waits for publishing.
 
+### A dev database and a production database
+Owner, 2026-10-12. Two hosted Supabase projects, both to be in Central EU (Frankfurt): `neruma-dev` for trying
+migrations and features, `neruma-prod` for the live site. Chosen: a second hosted project over local Supabase,
+because it needs no Docker and behaves like the real thing, and the owner wants a stable dev. The in-memory fixture
+and the isolated PostgreSQL stay for automatic tests. Production is still in Ireland, with test data only, and moves
+to Frankfurt as a new project when the owner decides (a region can't be changed). Steps: `docs/guides/DATABASE-ENVIRONMENTS.md`.
+
 ## Not yet discussed
 
 - `DESIGN-TASKS.md` sections 5, 6 (other items) and 7.

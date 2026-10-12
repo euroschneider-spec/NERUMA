@@ -55,7 +55,7 @@ Work is confined to the dedicated VIANORAE directory, `euroschneider-spec/Vianor
 
 Branch `foundation-v0.1` contains the complete application; remote `main` preserves the owner's initial README until review. The dedicated Supabase URL/ref/publishable key and workspace flag are configured for Production and this branch's Preview. The owner installed the first four migrations manually; the fifth verification migration and initial platform-admin bootstrap require the supplied additive SQL in the dedicated VIANORAE SQL Editor because management API access still refuses this project.
 
-Read [the organisation-flow update](docs/architecture/ORGANISATION-FLOW.md), [architecture](docs/architecture/ARCHITECTURE.md), [database security](docs/architecture/DATABASE.md), [verification](docs/verification/VERIFICATION.md), and [next MVP phase](docs/planning/NEXT-STEPS.md).
+Read [the organisation-flow update](docs/architecture/ORGANISATION-FLOW.md), [architecture](docs/architecture/ARCHITECTURE.md), [database security](docs/architecture/DATABASE.md), [database environments](docs/guides/DATABASE-ENVIRONMENTS.md), [verification](docs/verification/VERIFICATION.md), and [next MVP phase](docs/planning/NEXT-STEPS.md).
 
 
 ## Recovery release — 8 October 2026
