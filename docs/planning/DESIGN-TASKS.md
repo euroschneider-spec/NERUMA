@@ -93,7 +93,7 @@ Done on 2026-10-12: the top bar keeps three controls and everything else lives i
 |---|---|---|
 | Language | ✓ | |
 | Light / Dark | ✓ (icon only) | ✓ (with Match my device and High contrast) |
-| Reading settings button | in the sticky header (labelled) | |
+| Reading settings button | ✓ (labelled) | |
 | Accent colour (Blue / Green) | | ✓ (not in High contrast) |
 | How much of the page (Full / Summary) | | ✓ (text pages only) |
 | Text size, line width, typeface, spacing | | ✓ |
@@ -106,12 +106,12 @@ Done on 2026-10-12: the top bar keeps three controls and everything else lives i
   setting and follow it if it changes. Once they pick one, remember it. Add "Match device" to the
   theme list in the panel, and make *Reset* go back to it. The code change is in the technical tasks
   (`docs/planning/TECH-TASKS.md`, section 2).
-- [x] **Top bar keeps language and light/dark.** *Cool / Warm* and *Summary / Full page*
+- [x] **Top bar keeps language, light/dark and the reading button.** *Cool / Warm* and *Summary / Full page*
   moved into the reading panel (and left the organisation sidebar).
 - [x] **Rename "Cool / Warm"** to *Accent colour: Blue / Green* (stored values stay `cool` and `warm`).
-- [x] The reading-settings trigger is a labelled button in the organisation sidebar and, on the public site, in the
-  sticky header row (after the menu on desktop, next to the menu button on phones; an icon with its name below 450px),
-  so it stays on screen while the page scrolls. The floating edge tab is gone.
+- [x] The reading-settings trigger is a labelled button in the organisation sidebar and in the top bar of the public
+  site. The floating edge tab is gone. Trade-off: the top bar scrolls away on long pages, so the button does too.
+  Decided 2026-10-13: it stays there; settings are set once and not needed on screen all the time.
 - [ ] **Slim the panel header.** Moving the panel uses a drag handle plus five nudge buttons. Check
   whether a fixed position (right side on desktop, bottom sheet on phones) removes the need to move it.
 

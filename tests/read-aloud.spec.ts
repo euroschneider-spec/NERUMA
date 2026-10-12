@@ -51,7 +51,7 @@ for(const locale of ['en','ro','de'] as const) {
 test('the reading button sits in the top bar, the panel opens under it and stays put while the page scrolls and reflows at 320px',async({page})=>{
   await mockSpeech(page,'ro');await page.setViewportSize({width:1440,height:1000});
   for(const route of ['/ro','/ro/places/willow-museum/guide']) {
-    await page.goto(route);const trigger=page.locator('.header-reading');
+    await page.goto(route);const trigger=page.locator('.topbar-reading');
     await expect(page.getByRole('button',{name:'Setări de lectură',exact:true})).toHaveCount(1);await expect(page.locator('.floating-reading,.reading-trigger,.media-tools')).toHaveCount(0);
     const tb=await trigger.boundingBox();expect(tb!.y).toBeLessThan(80);
     await trigger.click();const panel=page.getByRole('dialog');const before=await panel.boundingBox();
@@ -82,11 +82,11 @@ test('unsupported speech leaves the complete readable guide and screen-reader gu
 });
 test('page reader excludes controls and form values, stops on panel close and cancels competing narration',async({page})=>{
   await mockSpeech(page);await page.goto('/en/contact');await page.getByLabel('Your name *',{exact:true}).fill('Do not narrate this input value');
-  await page.locator('.header-reading').click();const dialog=page.getByRole('dialog');await dialog.locator('.reading-audio-details summary').click();const pageAudio=dialog.locator('.read-aloud');
+  await page.locator('.topbar-reading').click();const dialog=page.getByRole('dialog');await dialog.locator('.reading-audio-details summary').click();const pageAudio=dialog.locator('.read-aloud');
   await pageAudio.getByRole('button',{name:copy.en.start,exact:true}).click();await page.evaluate(()=>(window as unknown as {__speech:SpeechFixture}).__speech.finish());
   const spoken=(await fixture(page)).texts.join('\n');expect(spoken).toContain('Let’s make visits clearer.');expect(spoken).not.toContain('Do not narrate this input value');
   await page.keyboard.press('Escape');await page.goto('/en/places/willow-museum/guide');await page.getByRole('button',{name:copy.en.options,exact:true}).click();const guideAudio=page.locator('.gg-sheet .read-aloud');
-  await guideAudio.getByRole('button',{name:copy.en.start,exact:true}).click();await page.locator('.header-reading').click();await dialog.locator('.reading-audio-details summary').click();
+  await guideAudio.getByRole('button',{name:copy.en.start,exact:true}).click();await page.locator('.topbar-reading').click();await dialog.locator('.reading-audio-details summary').click();
   await pageAudio.getByRole('button',{name:copy.en.start,exact:true}).click();await expect(guideAudio.getByRole('button',{name:copy.en.stop,exact:true})).toBeDisabled();
   await page.keyboard.press('Escape');expect((await fixture(page)).cancelled).toBeGreaterThan(0);
   await guideAudio.getByRole('button',{name:copy.en.start,exact:true}).click();await page.getByRole('link',{name:'Contact',exact:true}).first().click();

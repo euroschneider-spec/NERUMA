@@ -36,7 +36,7 @@ Checked on a phone first, then at 1280px, in EN, RO and DE.
 - *Report a problem*, *Team*, *Plan & billing* and the administrator pages in the demo (hidden there for now).
 - Showing a visitor's own edits behind the QR code: they exist only in that browser. The QR opens the public example.
 - The live preview in a second tab (brief `2026-10-11-organisation-app.md`, Task 2); it will work in the demo too.
-- Moving the *Reading settings* button into the sticky header: a separate, small pull request (decided the same day).
+- Moving the *Reading settings* button into the sticky header: tried and reverted (`DECISIONS.md`); it stays in the top bar.
 - Removing the dev:mock-only sample QR and visits from the real workspace (#30); revisit once the demo exists.
 
 ## Decisions

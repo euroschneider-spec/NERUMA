@@ -418,9 +418,9 @@ legend { padding-inline: var(--space-2); max-width: 100%; font-weight: var(--fon
 }
 /* Language, light or dark, and the reading button share one height and text size, on every screen. */
 .topbar { --topbar-control: 36px; }
-.topbar .theme-toggle, .site-header .header-reading { gap: 6px; min-height: var(--topbar-control, 36px); padding: 0 12px; font-size: 0.8125rem; }
+.topbar .theme-toggle, .topbar .topbar-reading { gap: 6px; min-height: var(--topbar-control); padding: 0 12px; font-size: 0.8125rem; }
 .topbar .theme-toggle.is-icon { width: var(--topbar-control); padding: 0; justify-content: center; }
-.site-header .header-reading { flex: none; }
+.topbar .topbar-reading .app-label { display: inline; }
 /* Stays at the top while the page scrolls. The language and appearance row above it scrolls away. */
 .site-header { position: sticky; top: 0; z-index: 50; border-bottom: 1px solid var(--color-divider); background: var(--color-bg); }
 .header-inner {
@@ -869,11 +869,9 @@ p, li, dt, dd, summary, label, figcaption, a, .lbl, .small-label, .small-note { 
 }
 @media (max-width: 900px) {
   .site-header { max-height: 100dvh; overflow-y: auto; }
-  .menu-toggle { display: inline-flex; order: 3; }
+  .menu-toggle { display: inline-flex; margin-left: auto; }
   .header-inner { position: relative; flex-wrap: wrap; min-height: 60px; }
-  /* Brand on the left; reading button and menu button together on the right. */
   .header-inner > .brand-link { margin-right: auto; }
-  .header-reading { order: 2; }
   .navigation { display: none; width: 100%; order: 4; margin: 0; padding-bottom: 16px; }
   .navigation.is-open { display: flex; flex-wrap: wrap; gap: 4px 20px; }
   .navigation .nav-button { width: 100%; }
@@ -904,9 +902,6 @@ p, li, dt, dd, summary, label, figcaption, a, .lbl, .small-label, .small-note { 
 }
 @media (max-width: 450px) {
   .header-inner { padding-block: 8px; }
-  /* Narrow phones: the reading button is an icon; its name stays for screen readers. */
-  .site-header .header-reading { width: var(--topbar-control, 36px); padding: 0; justify-content: center; }
-  .header-reading .app-label { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; }
   html[data-spacing="true"] .brand { font-size: 0.8125rem; }
   /* Small screens: tighter controls so the header leaves room for the page. Still above the 24px WCAG 2.2 AA target. */
   .topbar { gap: 6px 8px; }
