@@ -31,7 +31,7 @@ test.describe('a visitor who has not chosen follows the device', () => {
   test('changing another setting does not turn the device default into a stored choice', async ({ page }) => {
     await page.emulateMedia({ colorScheme: 'light' });
     await page.goto('/en');
-    await page.locator('.topbar-reading').click();
+    await page.locator('.header-reading').click();
     await page.getByLabel('Text size', { exact: true }).selectOption('larger');
     const stored = await page.evaluate((k) => JSON.parse(localStorage.getItem(k) || '{}'), key);
     expect(stored.size).toBe('larger');
@@ -45,7 +45,7 @@ test.describe('a visitor who chose keeps the choice', () => {
   test('an explicit theme ignores the device, and Match my device brings it back', async ({ page }) => {
     await page.emulateMedia({ colorScheme: 'light' });
     await page.goto('/en');
-    await page.locator('.topbar-reading').click();
+    await page.locator('.header-reading').click();
     const appearance = page.getByLabel('Appearance', { exact: true });
     await expect(appearance).toHaveValue('system');
     await appearance.selectOption('dark');
@@ -55,7 +55,7 @@ test.describe('a visitor who chose keeps the choice', () => {
     await page.emulateMedia({ colorScheme: 'dark' });
     await page.emulateMedia({ colorScheme: 'light' });
     await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
-    await page.locator('.topbar-reading').click();
+    await page.locator('.header-reading').click();
     await page.getByLabel('Appearance', { exact: true }).selectOption('system');
     await expect(page.locator('html')).toHaveAttribute('data-theme', 'light');
   });
@@ -66,7 +66,7 @@ test.describe('a visitor who chose keeps the choice', () => {
     await page.goto('/en');
     await expect(page.locator('html')).toHaveAttribute('data-theme', 'light');
     await expect(page.locator('html')).toHaveAttribute('data-text-size', 'larger');
-    await page.locator('.topbar-reading').click();
+    await page.locator('.header-reading').click();
     await expect(page.getByLabel('Appearance', { exact: true })).toHaveValue('system');
   });
 

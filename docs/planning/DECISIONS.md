@@ -91,7 +91,8 @@ Mobile first: the floating edge tab is easy to miss, has no label, and covers co
 Done 2026-10-12: the top bar keeps language, an icon-only light/dark button and the labelled *Reading settings*
 button; *Cool / Warm* (now *Accent colour: Blue / Green*) and *Summary / Full page* moved into the panel, and the
 organisation sidebar lost its Cool / Warm switch the same way. The panel opens under the button and scrolls inside
-itself on short screens. Known trade-off: the top bar scrolls away on long pages, so the button does too.
+itself on short screens. The top bar scrolls away on long pages, so the owner chose (2026-10-12) to move the *Reading settings* button into
+the sticky header row, next to the menu button, where it stays on screen.
 Covers: `DESIGN-TASKS.md` section 6. Sections 5 and 7 follow from the three principles above and have not
 been discussed one by one.
 
@@ -148,6 +149,14 @@ migrations and features, `neruma-prod` for the live site. Chosen: a second hoste
 because it needs no Docker and behaves like the real thing, and the owner wants a stable dev. The in-memory fixture
 and the isolated PostgreSQL stay for automatic tests. Production is still in Ireland, with test data only, and moves
 to Frankfurt as a new project when the owner decides (a region can't be changed). Steps: `docs/guides/DATABASE-ENVIRONMENTS.md`.
+
+### The demo is the real organisation app, saved only in the visitor's browser
+Owner, 2026-10-12. The demo at `/demo` uses the same sidebar, dashboard cards, step editor, preview and QR pop-up
+as a signed-in organisation, with fictional but realistic data: a published Willow Museum and an unfinished garden
+pavilion. Changes are kept only in the visitor's browser, so two visitors never overwrite each other and nothing
+reaches the server; *Reset demo* restores the sample. Publishing is switched off. The QR code opens the public
+example guide. Not chosen: a shared demo account (visitors would overwrite each other) and keeping nothing (a reload
+would lose the visitor's work). Plan: brief `2026-10-12-demo-workspace.md`.
 
 ## Not yet discussed
 
