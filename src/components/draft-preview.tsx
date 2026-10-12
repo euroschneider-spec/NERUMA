@@ -21,7 +21,9 @@ export function DraftPreview({ locale, draft, missingTranslation, editHref, mode
       ...v.fields.map(f => `${f.label}: ${fieldValue(f)}`), v.optional ? t.optional : ''].filter(Boolean).join('\n'); })].filter(Boolean).join('\n');
   return <main id="main-content" className="app-main"><div className="app-heading"><div><h1>{draft.name || t.missing}</h1>{draft.city && <p className="lead">{draft.city}</p>}</div>
       <Link className="button" href={editHref}>{t.edit}</Link></div>
-    <div className="content-body"><p className="notice">{t.boundary}</p><ReadAloud locale={locale} text={narration} label={a.listenGuide}/>{missingTranslation && <p>{t.missing}</p>}
+    <p className="notice">{t.boundary}</p>{missingTranslation && <p>{t.missing}</p>}
+    {/* Framed at phone width on larger screens, like the example guide: a visitor reads it on a phone. */}
+    <div className="guide-frame"><div className="guide-device draft-device"><div className="draft-screen content-body"><ReadAloud locale={locale} text={narration} label={a.listenGuide}/>
       {draft.description && <p className="lead">{draft.description}</p>}{draft.arrivalInfo && <section><h2>{t.arrival}</h2><p className="preserve-lines">{draft.arrivalInfo}</p></section>}
       {draft.zones.map((zone, index) => { const v = shown[index]; return <section key={zone.id} className="builder-zone"><p className="eyebrow">{common.step} {index + 1}</p><h2>{zone.title || t.missing}</h2>
         {v.photo && <><div className="guide-media"><StepPhoto mode={mode} storageKey={v.photo.storageKey} alt={v.photo.alt || t.photoPreview} width={600} height={400} className="draft-photo"/></div><p className="muted">{v.photo.rights} · {v.photo.photographedOn}</p></>}
@@ -29,6 +31,7 @@ export function DraftPreview({ locale, draft, missingTranslation, editHref, mode
         {v.note && <p className="notice preserve-lines">{v.note}</p>}{v.next && <p className="preserve-lines">{v.next}</p>}
         {v.fields.length > 0 && <dl className="own-fields">{v.fields.map(f => <div key={f.id}><dt>{f.label}</dt><dd>{fieldValue(f)}</dd></div>)}</dl>}
         {v.optional && <p>{t.optional}</p>}
-      </section>; })}<div className="button-row"><Link className="button" href={editHref}>{t.edit}</Link></div>
-    </div></main>;
+      </section>; })}
+    </div></div></div>
+    <div className="button-row"><Link className="button" href={editHref}>{t.edit}</Link></div></main>;
 }

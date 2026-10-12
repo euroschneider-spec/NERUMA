@@ -181,6 +181,19 @@ test('an address that is not a demo location is not found', async ({ page }) => 
   expect((await page.goto(`/en/demo/${crypto.randomUUID()}`))?.status()).toBe(404);
 });
 
+test('the preview is a phone-shaped screen on a large window and the page itself on a phone', async ({ page }) => {
+  await page.setViewportSize({ width: 1280, height: 900 });
+  await page.goto(`/en/demo/${willow}/preview`);
+  const screen = page.locator('.draft-device');
+  await expect(screen).toBeVisible();
+  const box = (await screen.boundingBox())!;
+  expect(box.width).toBeLessThanOrEqual(440);
+  expect(box.height / box.width).toBeGreaterThan(1.6);
+  await page.setViewportSize({ width: 390, height: 800 });
+  expect((await screen.boundingBox())!.width).toBeGreaterThan(340);
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
+});
+
 test('the demo works at 390px and 320px without sideways scrolling', async ({ page }) => {
   for (const width of [390, 320]) {
     await page.setViewportSize({ width, height: 800 });
