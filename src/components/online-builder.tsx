@@ -1,15 +1,16 @@
 'use client';
 
-import Image from 'next/image';
 import Link from 'next/link';
 import { ArrowDown, ArrowUp, ChevronDown, GripVertical, Plus, X } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { getCopy, type Locale } from '@/lib/i18n';
 import { getOrganisationCopy } from '@/lib/organisation-copy';
-import { getWorkspaceCopy, MAX_OWN_FIELDS, newOwnField, newZone, ownFieldKinds, photoUrl, yesNoAnswers, type OwnField, type RemovableField, parsePlaceDraft, placeTypes, sensoryChannels, sensoryLevels, type PlaceDraft, type OnlineZone, type OnlinePhoto } from '@/lib/workspace';
+import { getWorkspaceCopy, MAX_OWN_FIELDS, newOwnField, newZone, ownFieldKinds, yesNoAnswers, type OwnField, type RemovableField, parsePlaceDraft, placeTypes, sensoryChannels, sensoryLevels, type PlaceDraft, type OnlineZone, type OnlinePhoto } from '@/lib/workspace';
 import { savePlaceDraft } from '@/app/workspace/actions';
+import { DEMO_ORG, saveDemoPlace } from '@/lib/demo-workspace';
 import { OnlinePhotoEditor } from './online-photo';
+import { StepPhoto, type WorkspaceMode } from './step-photo';
 import { ChoiceGroup } from './choice-group';
 import { PublishButton } from './publish-button';
 import { ConfirmDialog } from './confirm-dialog';
@@ -20,13 +21,18 @@ function RemoveField({label,disabled,onClick,enabled=true}:{label:string;disable
   return <button type="button" className="remove-field" aria-label={label} title={label} disabled={disabled} onClick={onClick}><X size={14} aria-hidden="true"/></button>;
 }
 
-export function OnlineBuilder({locale,org,initial,persistedZoneIds,missingTranslation=false,fieldsEnabled=false}: {
-  locale:Locale;org:string;initial:PlaceDraft;persistedZoneIds:string[];missingTranslation?:boolean;fieldsEnabled?:boolean;
+/**
+ * The step editor. In the demo (`mode='demo'`) it is the same editor, but saving and photos stay in the visitor's
+ * browser and publishing is switched off; the live workspace saves to the database.
+ */
+export function OnlineBuilder({locale,org,initial,persistedZoneIds,missingTranslation=false,fieldsEnabled=false,mode='live'}: {
+  locale:Locale;org:string;initial:PlaceDraft;persistedZoneIds:string[];missingTranslation?:boolean;fieldsEnabled?:boolean;mode?:WorkspaceMode;
 }) {
   const t=getWorkspaceCopy(locale);const common=getCopy(locale);const o=getOrganisationCopy(locale);const router=useRouter();
+  const savedText=mode==='demo' ? t.demoSaved : t.saved;
   const [draft,setDraft]=useState(initial);const [dirty,setDirty]=useState(false);const [pending,setPending]=useState(false);
   const [persisted,setPersisted]=useState(new Set(persistedZoneIds));const [busyPhotos,setBusyPhotos]=useState(new Set<string>());
-  const [message,setMessage]=useState(initial.revision>0?t.saved:'');const [error,setError]=useState<'auth'|'conflict'|'other'|null>(null);
+  const [message,setMessage]=useState(initial.revision>0?savedText:'');const [error,setError]=useState<'auth'|'conflict'|'other'|null>(null);
   const disabled=pending || busyPhotos.size>0;
   // Steps fold in place; the first one starts open, and a step you add opens so you can fill it in.
   const [openZones,setOpenZones]=useState(()=>new Set(initial.zones.slice(0,1).map(z=>z.id)));
@@ -73,12 +79,12 @@ export function OnlineBuilder({locale,org,initial,persistedZoneIds,missingTransl
   function photoBusy(id:string,busy:boolean){setBusyPhotos(current=>{const next=new Set(current);if(busy) next.add(id);else next.delete(id);return next;});}
   async function save(event:React.FormEvent<HTMLFormElement>){
     event.preventDefault();if(disabled) return;
-    if(!parsePlaceDraft(draft,org)){setMessage(t.invalid);setError('other');return;}
+    if(!parsePlaceDraft(draft,mode==='demo' ? DEMO_ORG : org)){setMessage(t.invalid);setError('other');return;}
     setPending(true);setMessage(t.saving);setError(null);
     try {
-      const result=await savePlaceDraft(org,locale,draft);
+      const result=mode==='demo' ? saveDemoPlace(draft,locale) : await savePlaceDraft(org,locale,draft);
       if(!result.ok){setError(result.error==='conflict'?'conflict':result.error==='auth'?'auth':'other');setMessage(result.error==='conflict'?t.conflict:result.error==='invalid'?t.invalid:t.error);return;}
-      setDraft(current=>({...current,revision:result.revision}));setPersisted(new Set(draft.zones.map(z=>z.id)));setDirty(false);setMessage(t.saved);
+      setDraft(current=>({...current,revision:result.revision}));setPersisted(new Set(draft.zones.map(z=>z.id)));setDirty(false);setMessage(savedText);
       if(initial.revision===0) router.replace(`/${locale}/workspace/${draft.id}`);
     } catch {setError('other');setMessage(t.error);}
     finally {setPending(false);}
@@ -93,10 +99,11 @@ export function OnlineBuilder({locale,org,initial,persistedZoneIds,missingTransl
     {anyFolded && <button type="button" className="text-button" onClick={()=>setOpenZones(new Set(draft.zones.map(z=>z.id)))}>{t.expandAll}</button>}
     {withHint && !allFolded && <span className="small-note">{t.reorderHint}</span>}
   </p>;
+  const previewHref=`/${locale}/${mode==='demo' ? 'demo' : 'workspace'}/${draft.id}/preview`;
   const actions=(announce:boolean)=><div className={announce ? 'editor-actions is-bottom' : 'editor-actions'}>
     <button className="button" type="submit" disabled={disabled}>{pending?t.saving:t.save}</button>
-    {draft.revision>0 ? <Link className="button button-outline" href={`/${locale}/workspace/${draft.id}/preview`}>{t.preview}</Link> : <button className="button button-outline" type="button" disabled>{t.preview}</button>}
-    <PublishButton label={t.publish} hint={t.publishSoon} />
+    {draft.revision>0 ? <Link className="button button-outline" href={previewHref}>{t.preview}</Link> : <button className="button button-outline" type="button" disabled>{t.preview}</button>}
+    <PublishButton label={t.publish} hint={mode==='demo' ? t.publishDemo : t.publishSoon} />
     <p className="status-message" {...(announce ? {role:error?'alert':'status'} : {'aria-hidden':true as const})}>{message || (dirty?t.unsaved:'')}</p>
   </div>;
   return <>
@@ -124,7 +131,7 @@ export function OnlineBuilder({locale,org,initial,persistedZoneIds,missingTransl
           <div className="zone-head">
             {allFolded && <span className="zone-grip" title={t.dragStep} aria-hidden="true"><GripVertical size={18}/></span>}
             <h2 className="zone-heading"><button type="button" id={`online-zone-${zone.id}`} className="zone-toggle" aria-expanded={open} aria-controls={`online-zone-body-${zone.id}`} onClick={()=>toggleZone(zone.id)}>
-              {zone.photo && <Image unoptimized src={photoUrl(zone.photo.storageKey)} alt="" width={40} height={40} className="zone-thumb"/>}
+              {zone.photo && <StepPhoto mode={mode} storageKey={zone.photo.storageKey} alt="" width={40} height={40} className="zone-thumb"/>}
               <span className="zone-toggle-title">{common.step} {index+1}{zone.title?` · ${zone.title}`:''}</span>
               {!complete && <span className="zone-needs">{t.stepIncomplete}</span>}
               <ChevronDown size={20} aria-hidden="true" className="zone-chevron"/>
@@ -139,7 +146,7 @@ export function OnlineBuilder({locale,org,initial,persistedZoneIds,missingTransl
             <label className="form-field wide">{t.stepName}<input required maxLength={160} value={zone.title} onChange={e=>zoneField(index,z=>({...z,title:e.target.value}))}/></label>
             <div className="form-field wide"><label htmlFor={`online-description-${zone.id}`}>{common.description}</label><textarea id={`online-description-${zone.id}`} required rows={3} maxLength={2000} value={zone.description} onChange={e=>zoneField(index,z=>({...z,description:e.target.value}))}/></div>
           </div>
-          {!zone.hidden.includes('photo') && <OnlinePhotoEditor zone={zone} placeId={draft.id} locale={locale} persisted={persisted.has(zone.id)} disabled={disabled} onBusy={busy=>photoBusy(zone.id,busy)} onChange={(photo?:OnlinePhoto)=>zoneField(index,z=>({...z,photo}))}/>}
+          {!zone.hidden.includes('photo') && <OnlinePhotoEditor zone={zone} placeId={draft.id} locale={locale} mode={mode} persisted={mode==='demo' || persisted.has(zone.id)} disabled={disabled} onBusy={busy=>photoBusy(zone.id,busy)} onChange={(photo?:OnlinePhoto)=>zoneField(index,z=>({...z,photo}))}/>}
           <fieldset className="sensory-fields"><legend>{locale==='ro'?'Profil senzorial':locale==='de'?'Sensorisches Profil':'Sensory profile'}</legend>
             {sensoryChannels.map(channel=><ChoiceGroup key={channel} label={common[channel]} value={zone.sensory[channel]} onChange={value=>zoneField(index,z=>({...z,sensory:{...z.sensory,[channel]:value}}))} options={sensoryLevels.map(level=>({value:level,label:common[level]}))}/>)}
           </fieldset>

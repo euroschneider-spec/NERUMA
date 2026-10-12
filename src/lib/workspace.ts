@@ -147,6 +147,10 @@ const en = {
   reportMessage: 'What happened?', reportPlace: 'Which location is it about?', reportNoPlace: 'Not about one location', reportSend: 'Send report', reportSaved: 'Thank you. Your report is saved and the NERUMA team will see it. It is not sent by email; we reply to your account address.',
   reportError: 'Your report was not saved. Your text is still on this page. Try again.', reportInvalid: 'Write at least 10 characters, up to 2000.', reportTooMany: 'You have sent several reports recently. Please wait a while before sending another.', reportBack: 'Back to the dashboard',
   reportsAdmin: 'Problem reports', reportsEmpty: 'No open reports.', reportsClosedEmpty: 'No closed reports.', reportsOpen: 'Open', reportsHistory: 'Closed', reportClose: 'Mark as closed', reportFrom: 'From', reportOrg: 'Organisation', reportAbout: 'Location', reportSent: 'Sent', reportReply: 'Reply by email', reportsUnavailable: 'Problem reports are not available yet. Apply the latest database migration first.',
+  demoSaved: 'Saved in this browser.',
+  demoStrip: 'Demo · your changes stay in this browser', resetDemo: 'Reset demo', resetDemoTitle: 'Reset the demo?', resetDemoBody: 'The changes you made in this browser are removed and the original sample comes back.',
+  publishDemo: 'Publishing is switched off in the demo.', leaveDemo: 'Leave demo', demoOrgName: 'Willow Museum (demo)', demoLoading: 'Loading the demo…',
+  demoPhotoAdded: 'Photo added on this device. Complete its details and save to attach it.', demoPhotoPrivacy: 'In the demo, photos stay on this device. Nothing is uploaded.',
 };
 type WorkspaceCopy = { [K in keyof typeof en]: string };
 const ro: WorkspaceCopy = {
@@ -178,6 +182,10 @@ const ro: WorkspaceCopy = {
   reportMessage:'Ce s-a întâmplat?', reportPlace:'La ce locație se referă?', reportNoPlace:'Nu se referă la o singură locație', reportSend:'Trimite raportul', reportSaved:'Mulțumim. Raportul este salvat și echipa NERUMA îl va vedea. Nu este trimis prin e-mail; vă răspundem la adresa contului.',
   reportError:'Raportul nu a fost salvat. Textul dumneavoastră este încă pe această pagină. Încercați din nou.', reportInvalid:'Scrieți cel puțin 10 caractere, cel mult 2000.', reportTooMany:'Ați trimis mai multe rapoarte recent. Așteptați puțin înainte de a trimite altul.', reportBack:'Înapoi la panou',
   reportsAdmin:'Probleme raportate', reportsEmpty:'Niciun raport deschis.', reportsClosedEmpty:'Niciun raport închis.', reportsOpen:'Deschise', reportsHistory:'Închise', reportClose:'Marchează ca închis', reportFrom:'De la', reportOrg:'Organizație', reportAbout:'Locație', reportSent:'Trimis', reportReply:'Răspunde prin e-mail', reportsUnavailable:'Problemele raportate nu sunt disponibile încă. Aplicați mai întâi ultima migrare a bazei de date.',
+  demoSaved:'Salvat în acest browser.',
+  demoStrip:'Demo · modificările rămân în acest browser', resetDemo:'Resetează demo-ul', resetDemoTitle:'Resetezi demo-ul?', resetDemoBody:'Modificările făcute în acest browser sunt șterse și revine exemplul inițial.',
+  publishDemo:'Publicarea este dezactivată în demo.', leaveDemo:'Părăsește demo-ul', demoOrgName:'Muzeul Willow (demo)', demoLoading:'Se încarcă demo-ul…',
+  demoPhotoAdded:'Fotografie adăugată pe acest dispozitiv. Completează detaliile și salvează pentru a o atașa.', demoPhotoPrivacy:'În demo, fotografiile rămân pe acest dispozitiv. Nu se încarcă nimic.',
 };
 const de: WorkspaceCopy = {
   dashboard:'Übersicht', locationsHeading:'Orte', roleOwner:'Eigentümer', roleAdmin:'Admin',
@@ -206,5 +214,9 @@ const de: WorkspaceCopy = {
   reportMessage:'Was ist passiert?', reportPlace:'Auf welchen Ort bezieht es sich?', reportNoPlace:'Nicht auf einen bestimmten Ort', reportSend:'Meldung senden', reportSaved:'Danke. Ihre Meldung ist gespeichert und das NERUMA-Team sieht sie. Sie wird nicht per E-Mail gesendet; wir antworten an Ihre Kontoadresse.',
   reportError:'Ihre Meldung wurde nicht gespeichert. Ihr Text steht noch auf dieser Seite. Versuchen Sie es erneut.', reportInvalid:'Schreiben Sie mindestens 10 und höchstens 2000 Zeichen.', reportTooMany:'Sie haben kürzlich mehrere Meldungen gesendet. Bitte warten Sie etwas, bevor Sie eine weitere senden.', reportBack:'Zurück zur Übersicht',
   reportsAdmin:'Problemmeldungen', reportsEmpty:'Keine offenen Meldungen.', reportsClosedEmpty:'Keine geschlossenen Meldungen.', reportsOpen:'Offen', reportsHistory:'Geschlossen', reportClose:'Als erledigt markieren', reportFrom:'Von', reportOrg:'Organisation', reportAbout:'Ort', reportSent:'Gesendet', reportReply:'Per E-Mail antworten', reportsUnavailable:'Problemmeldungen sind noch nicht verfügbar. Spielen Sie zuerst die neueste Datenbankmigration ein.',
+  demoSaved:'In diesem Browser gespeichert.',
+  demoStrip:'Demo · Ihre Änderungen bleiben in diesem Browser', resetDemo:'Demo zurücksetzen', resetDemoTitle:'Demo zurücksetzen?', resetDemoBody:'Die Änderungen in diesem Browser werden entfernt und das ursprüngliche Beispiel kehrt zurück.',
+  publishDemo:'Das Veröffentlichen ist in der Demo abgeschaltet.', leaveDemo:'Demo verlassen', demoOrgName:'Willow Museum (Demo)', demoLoading:'Die Demo wird geladen…',
+  demoPhotoAdded:'Foto auf diesem Gerät hinzugefügt. Ergänzen Sie die Angaben und speichern Sie, um es zuzuordnen.', demoPhotoPrivacy:'In der Demo bleiben Fotos auf diesem Gerät. Es wird nichts hochgeladen.',
 };
 export const getWorkspaceCopy = (locale: Locale): WorkspaceCopy => ({ en, ro, de })[locale];

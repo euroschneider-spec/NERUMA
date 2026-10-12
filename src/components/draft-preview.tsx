@@ -1,0 +1,34 @@
+import Link from 'next/link';
+import { ReadAloud } from '@/components/read-aloud';
+import { getAccessCopy } from '@/lib/accessibility-copy';
+import { getCopy, type Locale } from '@/lib/i18n';
+import { getWorkspaceCopy, sensoryChannels, visibleZone, type OwnField, type PlaceDraft } from '@/lib/workspace';
+import { StepPhoto, type WorkspaceMode } from './step-photo';
+
+/** What a saved draft looks like to a reader, for the real workspace and the demo. `editHref` is the editor of this draft. */
+export function DraftPreview({ locale, draft, missingTranslation, editHref, mode = 'live' }: {
+  locale: Locale; draft: PlaceDraft; missingTranslation: boolean; editHref: string; mode?: WorkspaceMode;
+}) {
+  const t = getWorkspaceCopy(locale);
+  const common = getCopy(locale);
+  const a = getAccessCopy(locale);
+  const shown = draft.zones.map(visibleZone);
+  const fieldValue = (f: OwnField) => f.kind === 'text' ? f.value : f.answer === 'yes' ? t.answerYes : t.answerNo;
+  const narration = [t.draft, t.boundary, draft.name, draft.city, draft.description, t.arrival, draft.arrivalInfo,
+    ...draft.zones.map((zone, index) => { const v = shown[index]; return [`${common.step} ${index + 1}. ${zone.title}`, v.photo?.alt, zone.description,
+      ...sensoryChannels.map(channel => `${common[channel]}: ${common[zone.sensory[channel]]}`),
+      v.note ? `${common.support}. ${v.note}` : '', v.next ? `${common.predictability}. ${v.next}` : '',
+      ...v.fields.map(f => `${f.label}: ${fieldValue(f)}`), v.optional ? t.optional : ''].filter(Boolean).join('\n'); })].filter(Boolean).join('\n');
+  return <main id="main-content" className="app-main"><div className="app-heading"><div><h1>{draft.name || t.missing}</h1>{draft.city && <p className="lead">{draft.city}</p>}</div>
+      <Link className="button" href={editHref}>{t.edit}</Link></div>
+    <div className="content-body"><p className="notice">{t.boundary}</p><ReadAloud locale={locale} text={narration} label={a.listenGuide}/>{missingTranslation && <p>{t.missing}</p>}
+      {draft.description && <p className="lead">{draft.description}</p>}{draft.arrivalInfo && <section><h2>{t.arrival}</h2><p className="preserve-lines">{draft.arrivalInfo}</p></section>}
+      {draft.zones.map((zone, index) => { const v = shown[index]; return <section key={zone.id} className="builder-zone"><p className="eyebrow">{common.step} {index + 1}</p><h2>{zone.title || t.missing}</h2>
+        {v.photo && <><div className="guide-media"><StepPhoto mode={mode} storageKey={v.photo.storageKey} alt={v.photo.alt || t.photoPreview} width={600} height={400} className="draft-photo"/></div><p className="muted">{v.photo.rights} · {v.photo.photographedOn}</p></>}
+        <p className="preserve-lines">{zone.description}</p><dl className="draft-sensory">{sensoryChannels.map(channel => <div key={channel}><dt>{common[channel]}</dt><dd>{common[zone.sensory[channel]]}</dd></div>)}</dl>
+        {v.note && <p className="notice preserve-lines">{v.note}</p>}{v.next && <p className="preserve-lines">{v.next}</p>}
+        {v.fields.length > 0 && <dl className="own-fields">{v.fields.map(f => <div key={f.id}><dt>{f.label}</dt><dd>{fieldValue(f)}</dd></div>)}</dl>}
+        {v.optional && <p>{t.optional}</p>}
+      </section>; })}<div className="button-row"><Link className="button" href={editHref}>{t.edit}</Link></div>
+    </div></main>;
+}

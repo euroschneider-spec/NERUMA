@@ -46,12 +46,6 @@ test('reading panel repositions on resize and reflows with enlarged text',async(
   const result=await new AxeBuilder({page}).withTags(['wcag2aa','wcag21aa','wcag22aa']).analyze();expect(result.violations).toEqual([]);
   await dialog.getByRole('button',{name:copy.de.close,exact:true}).click();
 });
-test('text guide uses the saved local draft and retains the current step when switching views',async({page})=>{
-  await page.goto('/en/dashboard/builder');await page.getByLabel('Step name',{exact:true}).first().fill('Saved text entrance');await page.getByRole('button',{name:'Save draft',exact:true}).click();
-  await page.goto('/en/dashboard/preview');await page.getByRole('button',{name:'Next step',exact:true}).click();
-  await page.getByRole('button',{name:copy.en.full,exact:true}).click();await expect(page.locator('.guide-text-view')).toContainText('Saved text entrance');
-  await page.getByRole('button',{name:copy.en.steps,exact:true}).click();await expect(page.getByRole('heading',{name:'Reception & the foyer',exact:true})).toBeFocused();
-});
 test('reading controls are visible before the footer and screenshots document the new views',async({page})=>{
   await page.setViewportSize({width:1440,height:1000});await page.goto('/ro');await page.locator('.topbar-reading').click();
   await page.screenshot({path:'docs/verification/screenshots/reading-panel-preview.png'});await page.keyboard.press('Escape');

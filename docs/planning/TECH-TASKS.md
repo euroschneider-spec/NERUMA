@@ -46,8 +46,8 @@ Not legal advice. Confirm with a lawyer before a public launch.
 
 **Today:** no analytics or tracking. Two things are stored on the device:
 - Supabase sign-in cookies (`src/lib/supabase/server.ts`), only for signed-in organisations.
-- Reading preferences in `localStorage` (`vianorae:reading:v1`). The demo builder also keeps photos
-  in the browser.
+- Reading preferences in `localStorage` (`vianorae:reading:v1`). The demo workspace also keeps its
+  two locations (`neruma:demo:v1:*`) in `localStorage` and the visitor's photos in IndexedDB; *Reset demo* clears both.
 
 Under the EU ePrivacy rules (Romania: Law 506/2004; Germany: TDDDG §25), storage that is strictly
 necessary for something the user asked for needs no consent. Sign-in sessions and settings the visitor

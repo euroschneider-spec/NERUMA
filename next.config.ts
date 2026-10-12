@@ -24,7 +24,11 @@ const config: NextConfig = {
   poweredByHeader: false, // Avoid advertising the framework version to probing clients.
   // How it works is a section of the home page now; the old address keeps working for links and QR codes.
   async redirects() {
-    return [{ source: '/:locale(en|ro|de)/how-it-works', destination: '/:locale#how-it-works', permanent: true }];
+    return [
+      { source: '/:locale(en|ro|de)/how-it-works', destination: '/:locale#how-it-works', permanent: true },
+      // The old demo dashboard and its sub-pages are the demo workspace now.
+      { source: '/:locale(en|ro|de)/dashboard/:path*', destination: '/:locale/demo', permanent: true },
+    ];
   },
   async headers() {
     return [{ source: '/(.*)', headers: [

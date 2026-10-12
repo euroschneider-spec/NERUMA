@@ -57,3 +57,11 @@ export async function preparePhoto(file: File): Promise<Blob> {
     return await new Promise<Blob>((resolve, reject) => canvas.toBlob(blob => blob ? resolve(blob) : reject(new Error('invalid-photo')), 'image/webp', 0.85));
   } finally { image.close(); }
 }
+
+/** Forgets every photo kept in this browser (the demo's reset). */
+export async function clearLocalPhotos(): Promise<void> {
+  await new Promise<void>((resolve) => {
+    const request = indexedDB.deleteDatabase(databaseName);
+    request.onsuccess = request.onerror = request.onblocked = () => resolve();
+  });
+}

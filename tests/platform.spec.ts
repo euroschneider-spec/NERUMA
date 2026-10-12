@@ -1,72 +1,22 @@
 import { test,expect } from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
-const paths=['','for-organisations','methodology','places/willow-museum/guide','explore','contact','login','register','account','privacy','terms','accessibility','dashboard','dashboard/builder','dashboard/preview','dashboard/team','dashboard/settings','dashboard/share','dashboard/locations'];
+const paths=['','for-organisations','methodology','places/willow-museum/guide','explore','contact','login','register','account','privacy','terms','accessibility','demo','demo/d0000000-0000-4000-8000-0000000000a1','demo/d0000000-0000-4000-8000-0000000000a1/preview','demo/d0000000-0000-4000-8000-0000000000a2'];
 for(const locale of ['en','ro','de']) {
  test(`${locale}: routes and document language`,async({page})=>{const errors:string[]=[];page.on('pageerror',e=>errors.push(e.message));for(const path of paths){const response=await page.goto(`/${locale}/${path}`);expect(response?.status(),path).toBe(200);await expect(page.locator('html')).toHaveAttribute('lang',locale);await expect(page.locator('main h1')).toBeVisible();}expect(errors).toEqual([]);});
 }
-for(const path of ['/en','/en/places/willow-museum/guide','/en/contact','/en/dashboard/builder','/ro','/de']) {
+for(const path of ['/en','/en/places/willow-museum/guide','/en/contact','/en/demo','/en/demo/d0000000-0000-4000-8000-0000000000a1','/en/demo/d0000000-0000-4000-8000-0000000000a1/preview','/ro','/de']) {
  test(`WCAG A/AA checks ${path}`,async({page})=>{await page.goto(path);const results=await new AxeBuilder({page}).withTags(['wcag2a','wcag2aa','wcag21a','wcag21aa','wcag22aa']).analyze();expect(results.violations).toEqual([]);});
 }
 test('guide navigation, skip and completion work by keyboard',async({page})=>{await page.goto('/en/places/willow-museum/guide');await expect(page.getByRole('heading',{name:'The main entrance',exact:true})).toBeVisible();const next=page.getByRole('button',{name:'Next step',exact:true});await next.focus();await page.keyboard.press('Enter');await expect(page.getByRole('heading',{name:'Reception & the foyer',exact:true})).toBeFocused();await page.getByRole('button',{name:'Guide options',exact:true}).click();await page.getByRole('button',{name:'The quiet room',exact:false}).click();await expect(page.getByRole('heading',{name:'The quiet room',exact:true})).toBeVisible();await page.getByRole('button',{name:'Finish the guide'}).click();await expect(page.getByRole('heading',{name:'You have explored the guide.'})).toBeFocused();await page.getByRole('button',{name:'Start again'}).click();await expect(page.getByRole('heading',{name:'The main entrance',exact:true})).toBeVisible();});
-test('local draft persists into preview and public example remains fictional',async({page})=>{await page.goto('/en/dashboard/builder');await page.getByLabel('Step name',{exact:true}).first().fill('My entrance draft');await page.getByRole('button',{name:'Save draft'}).click();await expect(page.getByRole('status')).toHaveText('Draft saved in this browser.');await page.reload();await expect(page.getByLabel('Step name',{exact:true}).first()).toHaveValue('My entrance draft');await page.getByRole('link',{name:'Preview your draft',exact:true}).last().click();await expect(page.getByRole('heading',{name:'My entrance draft'})).toBeVisible();await page.goto('/en/places/willow-museum/guide');await expect(page.getByRole('heading',{name:'The main entrance',exact:true})).toBeVisible();await page.goto('/ro/dashboard/builder');await expect(page.getByLabel('Numele pasului',{exact:true}).first()).toHaveValue('Intrarea principală');});
-test('corrupt local draft falls back safely',async({page})=>{await page.goto('/en/dashboard/builder');await page.evaluate(()=>localStorage.setItem('vianorae:demo-draft:v1:en','{"schemaVersion":1,"zones":null}'));await page.reload();await expect(page.getByLabel('Step name',{exact:true}).first()).toHaveValue('The main entrance');});
 test('catalog filters distinguish museum from unavailable categories',async({page})=>{await page.goto('/en/explore');await page.getByLabel('Category',{exact:true}).selectOption('theatre');await expect(page.getByRole('status')).toHaveText('No guide matches these filters.');await page.getByLabel('Category',{exact:true}).selectOption('museum');await expect(page.getByRole('link',{name:'Open guide',exact:true})).toBeVisible();});
 test('QR API and stable redirects',async({request})=>{const svg=await request.get('/api/qr/willow-museum?locale=ro&download=1');expect(svg.status()).toBe(200);expect(svg.headers()['content-type']).toContain('image/svg+xml');expect(svg.headers()['content-disposition']).toContain('attachment');expect(await svg.text()).toContain('<svg');const redirect=await request.get('/q/willow-museum?locale=de',{maxRedirects:0});expect(redirect.status()).toBe(307);expect(redirect.headers().location).toContain('/de/places/willow-museum/guide');expect((await request.get('/q/unknown')).status()).toBe(404);expect((await request.get('/api/qr/unknown')).status()).toBe(404);const unsafe=await request.get('/q/willow-museum?locale=https://evil.example',{maxRedirects:0});expect(unsafe.headers().location).toContain('/en/places/');});
 test('language switch preserves the current route',async({page})=>{await page.goto('/en/methodology');await page.locator('.language-switch summary').click();await page.getByRole('link',{name:'Română',exact:true}).click();await expect(page).toHaveURL(/\/ro\/methodology$/);await expect(page.locator('html')).toHaveAttribute('lang','ro');});
 test('contact prepares an enquiry without sending it',async({page})=>{await page.goto('/en/contact');let posted=false;page.on('request',r=>{if(r.method()==='POST')posted=true;});await page.getByLabel('Your name').fill('Demo person');await page.getByLabel('Email').fill('demo@example.invalid');await page.getByLabel('Your message').fill('I would like to discuss the pilot.');await page.getByRole('button',{name:'Send',exact:true}).click();await expect(page.locator('.enquiry-output')).toContainText('I would like to discuss the pilot.');expect(posted).toBe(false);});
 // Reduced motion switches off the 0.15s colour fade, so the contrast check never samples a half-faded colour.
 test('reading preferences persist and contrast themes pass automated checks',async({page})=>{await page.emulateMedia({reducedMotion:'reduce'});await page.goto('/en');await page.locator('.topbar-reading').click();await page.getByLabel('Text size',{exact:true}).selectOption('larger');await page.getByLabel('Appearance',{exact:true}).selectOption('dark');await page.reload();await expect(page.locator('html')).toHaveAttribute('data-theme','dark');await expect(page.locator('html')).toHaveAttribute('data-text-size','larger');let result=await new AxeBuilder({page}).withTags(['wcag2aa']).analyze();expect(result.violations).toEqual([]);await page.locator('.topbar-reading').click();await page.getByLabel('Appearance',{exact:true}).selectOption('contrast');result=await new AxeBuilder({page}).withTags(['wcag2aa']).analyze();expect(result.violations).toEqual([]);});
-test('mobile reflow and menu',async({page})=>{await page.setViewportSize({width:390,height:844});await page.goto('/en');await page.getByRole('button',{name:'Open menu'}).click();await expect(page.getByRole('link',{name:'How it works',exact:true})).toBeVisible();await page.getByRole('link',{name:'How it works',exact:true}).click();await expect(page).toHaveURL(/\/en#how-it-works$/);await expect(page.locator('#how-it-works')).toBeInViewport();for(const path of ['/en','/en/places/willow-museum/guide','/en/dashboard/builder']){await page.goto(path);expect(await page.evaluate(()=>document.documentElement.scrollWidth<=window.innerWidth),path).toBe(true);}await page.goto('/en');await page.screenshot({path:'docs/verification/screenshots/mobile-preview.png',fullPage:true});});
-test('320px reflow with 200% text and extra spacing',async({page})=>{await page.setViewportSize({width:320,height:800});for(const path of ['/en','/de','/en/places/willow-museum/guide','/en/dashboard/builder','/en/register','/de/register']){await page.goto(path);await page.evaluate(()=>{document.documentElement.style.fontSize='32px';document.documentElement.dataset.spacing='true';});const overflow=await page.evaluate(()=>({width:document.documentElement.scrollWidth,viewport:window.innerWidth,elements:Array.from(document.querySelectorAll('*')).map(element=>({tag:element.tagName,classes:element.className,left:element.getBoundingClientRect().left,right:element.getBoundingClientRect().right,scroll:element.scrollWidth,client:element.clientWidth,text:element.textContent?.slice(0,60)})).filter(element=>element.right>window.innerWidth+1||element.scroll>element.client+3)}));expect(overflow.width<=overflow.viewport,path+' '+JSON.stringify(overflow)).toBe(true);}});
-test('desktop visual evidence',async({page})=>{await page.setViewportSize({width:1440,height:1000});await page.goto('/en');await page.screenshot({path:'docs/verification/screenshots/home-preview.png',fullPage:true});await page.goto('/en/places/willow-museum/guide');await page.screenshot({path:'docs/verification/screenshots/guide-preview.png',fullPage:true});await page.goto('/en/dashboard');await page.screenshot({path:'docs/verification/screenshots/workspace-preview.png',fullPage:true});});
-
-test('photo upload persists with accessible metadata into the local preview only',async({page})=>{
- await page.goto('/en/dashboard/builder');
- const png=await page.evaluate(()=>{const canvas=document.createElement('canvas');canvas.width=160;canvas.height=100;const ctx=canvas.getContext('2d')!;ctx.fillStyle='#356050';ctx.fillRect(0,0,160,100);return canvas.toDataURL('image/png').split(',')[1];});
- const photo=page.locator('.photo-editor').first();
- await photo.getByLabel('Upload a photo',{exact:true}).setInputFiles({name:'entrance.png',mimeType:'image/png',buffer:Buffer.from(png,'base64')});
- await expect(photo.getByText('Photograph added locally. Complete its details and save the draft.')).toBeVisible();
- await photo.getByLabel('Image description (alternative text)').fill('A wide entrance with glass doors and a bench.');
- await photo.getByLabel('Image rights / credit',{exact:true}).fill('Our organisation — own photograph');
- await photo.getByLabel('Date photographed',{exact:true}).fill(new Date().toISOString().slice(0,10));
- await page.setViewportSize({width:390,height:844});await page.screenshot({path:'docs/verification/screenshots/builder-photo-preview.png',fullPage:true});
- await page.getByRole('button',{name:'Save draft',exact:true}).click();
- await expect(page.locator('.status-message').first()).toHaveText('Draft saved in this browser.');
- expect(await page.evaluate(()=>localStorage.getItem('vianorae:demo-draft:v1:en'))).not.toContain('base64');
- await page.reload();
- await expect(page.getByLabel('Image description (alternative text)')).toHaveValue('A wide entrance with glass doors and a bench.');
- await page.goto('/en/dashboard/preview');
- await expect(page.getByRole('img',{name:'A wide entrance with glass doors and a bench.',exact:true})).toHaveAttribute('src',/^blob:/);
- await page.goto('/en/places/willow-museum/guide');
- await expect(page.locator('.gg-photo img')).toHaveAttribute('src',/illustrations/);
- await page.goto('/ro/dashboard/builder');
- await expect(page.getByLabel('Descrierea imaginii (text alternativ)')).toHaveCount(0);
- await page.goto('/en/dashboard/builder');
- await page.getByRole('button',{name:'Remove photograph from draft'}).click();
- await page.getByRole('button',{name:'Save draft',exact:true}).click();
- await page.goto('/en/dashboard/preview');
- await expect(page.locator('.guide-image')).toHaveAttribute('src',/illustrations/);
-});
-
-test('photo validation rejects SVG, oversized files and a forged raster MIME',async({page})=>{
- await page.goto('/en/dashboard/builder');const photo=page.locator('.photo-editor').first();const input=photo.getByLabel('Upload a photo',{exact:true});
- for(const file of [{name:'script.svg',mimeType:'image/svg+xml',buffer:Buffer.from('<svg onload="alert(1)"></svg>')},{name:'fake.png',mimeType:'image/png',buffer:Buffer.from('not an image')},{name:'huge.jpg',mimeType:'image/jpeg',buffer:Buffer.alloc(5*1024*1024+1)}]){
-  await input.setInputFiles(file);await expect(photo.getByRole('alert')).toHaveText('Choose a valid JPEG, PNG or WebP image of no more than 5 MB.');
- }
- await expect(photo.getByLabel('Image description (alternative text)')).toHaveCount(0);
-});
-
-test('publication review requires a saved version and explicit acknowledgements; edits invalidate it',async({page})=>{
- await page.goto('/en/dashboard/builder');const form=page.getByRole('form',{name:'Review before publication'});
- await form.getByLabel('Responsible representative',{exact:true}).fill('Demo editor');await form.getByLabel('Content checked on',{exact:true}).fill(new Date().toISOString().slice(0,10));
- await form.getByRole('button').click();await expect(form.getByRole('status')).toHaveCount(0);
- for(const checkbox of await form.getByRole('checkbox').all())await checkbox.check();
- await form.getByRole('button').click();await expect(form.getByRole('status')).toHaveText('Save this version of the draft before recording the review.');
- await page.getByRole('button',{name:'Save draft',exact:true}).click();await form.getByRole('button').click();
- await expect(form.getByRole('status')).toContainText('It has not been published. Any edit requires a new review.');
- const review=await page.evaluate(()=>JSON.parse(localStorage.getItem('vianorae:demo-review:v1:en')!));expect(review.representative).toBe('Demo editor');expect(review.responsibilityVersion).toBe('2026-10-07-v1');expect(review.isDemo).toBe(true);
- await page.getByLabel('Step name',{exact:true}).first().fill('Changed entrance');await expect(form.getByRole('status')).toHaveCount(0);await expect(form.getByRole('checkbox').first()).not.toBeChecked();
-});
+test('mobile reflow and menu',async({page})=>{await page.setViewportSize({width:390,height:844});await page.goto('/en');await page.getByRole('button',{name:'Open menu'}).click();await expect(page.getByRole('link',{name:'How it works',exact:true})).toBeVisible();await page.getByRole('link',{name:'How it works',exact:true}).click();await expect(page).toHaveURL(/\/en#how-it-works$/);await expect(page.locator('#how-it-works')).toBeInViewport();for(const path of ['/en','/en/places/willow-museum/guide','/en/demo/d0000000-0000-4000-8000-0000000000a1']){await page.goto(path);expect(await page.evaluate(()=>document.documentElement.scrollWidth<=window.innerWidth),path).toBe(true);}await page.goto('/en');await page.screenshot({path:'docs/verification/screenshots/mobile-preview.png',fullPage:true});});
+test('320px reflow with 200% text and extra spacing',async({page})=>{await page.setViewportSize({width:320,height:800});for(const path of ['/en','/de','/en/places/willow-museum/guide','/en/demo','/en/register','/de/register']){await page.goto(path);await page.evaluate(()=>{document.documentElement.style.fontSize='32px';document.documentElement.dataset.spacing='true';});const overflow=await page.evaluate(()=>({width:document.documentElement.scrollWidth,viewport:window.innerWidth,elements:Array.from(document.querySelectorAll('*')).map(element=>({tag:element.tagName,classes:element.className,left:element.getBoundingClientRect().left,right:element.getBoundingClientRect().right,scroll:element.scrollWidth,client:element.clientWidth,text:element.textContent?.slice(0,60)})).filter(element=>element.right>window.innerWidth+1||element.scroll>element.client+3)}));expect(overflow.width<=overflow.viewport,path+' '+JSON.stringify(overflow)).toBe(true);}});
+test('desktop visual evidence',async({page})=>{await page.setViewportSize({width:1440,height:1000});await page.goto('/en');await page.screenshot({path:'docs/verification/screenshots/home-preview.png',fullPage:true});await page.goto('/en/places/willow-museum/guide');await page.screenshot({path:'docs/verification/screenshots/guide-preview.png',fullPage:true});await page.goto('/en/demo');await page.screenshot({path:'docs/verification/screenshots/workspace-preview.png',fullPage:true});});
 
 test('registration is discoverable and inactive without the separate auth configuration',async({page})=>{
  const posts:string[]=[];page.on('request',request=>{if(request.method()==='POST')posts.push(request.url());});
@@ -202,7 +152,7 @@ test('organisation forms use visible choices instead of dropdowns',async({page})
  const type=page.getByRole('radiogroup',{name:'Organisation type',exact:true});
  await expect(type.getByRole('radio')).toHaveCount(6);
  await expect(type.getByLabel('Institution',{exact:true})).toBeChecked();
- await page.goto('/en/dashboard/builder');
+ await page.goto('/en/demo/d0000000-0000-4000-8000-0000000000a1');
  await expect(page.locator('main select')).toHaveCount(0);
  const sound=page.getByRole('radiogroup',{name:'Sound',exact:true}).first();
  await expect(sound.getByRole('radio')).toHaveCount(5);

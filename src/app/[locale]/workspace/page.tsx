@@ -1,11 +1,9 @@
-import Image from 'next/image';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { isLocale } from '@/lib/i18n';
 import { getOrganisationCopy } from '@/lib/organisation-copy';
-import { getWorkspaceCopy, photoUrl } from '@/lib/workspace';
-import { QrDialog } from '@/components/qr-dialog';
-import { PublishButton } from '@/components/publish-button';
+import { getWorkspaceCopy } from '@/lib/workspace';
+import { LocationCards } from '@/components/location-cards';
 import { listPlaces, workspaceConfigured, workspaceSession } from '@/lib/workspace-server';
 
 export const dynamic='force-dynamic';
@@ -34,21 +32,7 @@ export default async function Workspace({params,searchParams}:{params:Promise<{l
     {context.organisations.length>1 && <nav className="button-row" aria-label={getOrganisationCopy(locale).organisation}>{context.organisations.map(o=><Link key={o.id} className="quiet-link" href={`/${locale}/workspace?org=${o.id}`} aria-current={o.id===organisation?.id?'page':undefined}>{o.name}</Link>)}</nav>}
     {!workspaceConfigured() ? <p>{t.readyLater}</p> : !organisation ? <p>{t.forbidden}</p> : <section aria-labelledby="locations-heading">
       <h2 id="locations-heading">{t.locationsHeading}</h2>
-      {!places.length ? <div className="empty-state"><p>{t.empty}</p><Link className="button" href={newPlaceHref}>{t.newPlace}</Link></div> : <ul className="location-cards">{places.map(place=><li key={place.id} className="location-card">
-        {place.photoKey ? <Image unoptimized className="location-photo" src={photoUrl(place.photoKey)} alt={`${t.cardPhotoAlt} ${place.name}`} width={600} height={338} /> : <div className="location-photo location-photo-empty">{t.cardNoPhoto}</div>}
-        <div className="location-card-head"><h3><Link href={`/${locale}/workspace/${place.id}`}>{place.name}</Link></h3><span className={place.status==='published' ? 'status-badge is-published' : 'status-badge'}>{place.status==='published' ? t.statusPublished : t.statusDraft}</span></div>
-        <p className="location-address">{[place.address,place.city].filter(Boolean).join(', ') || t.addressMissing}</p>
-        <div className="location-attention">
-          <h4>{t.attentionHeading}</h4>
-          {place.attention.length ? <ul>{place.attention.map(kind=><li key={kind}>{t[kind==='fewSteps' ? 'attentionFewSteps' : kind==='missingText' ? 'attentionMissingText' : 'attentionMissingAlt']}</li>)}</ul> : <p>{t.attentionClear}</p>}
-        </div>
-        {sampleOnly && <p className="location-visits"><span>{t.visitsLabel}</span> <strong>{sampleVisits}</strong> <em>({t.visitsSample})</em></p>}
-        <div className="location-card-actions">
-          <Link className="button button-outline button-small" href={`/${locale}/workspace/${place.id}`}>{t.edit}</Link>
-          {sampleOnly && <QrDialog code="willow-museum" name={place.name} locale={locale} t={t} />}
-          <PublishButton label={t.publish} hint={t.publishSoon} small />
-        </div>
-      </li>)}</ul>}
+      {!places.length ? <div className="empty-state"><p>{t.empty}</p><Link className="button" href={newPlaceHref}>{t.newPlace}</Link></div> : <LocationCards places={places} locale={locale} base={`/${locale}/workspace`} sample={sampleOnly ? 'all' : 'none'} qrCode="willow-museum" visits={sampleVisits}/>}
     </section>}
   </main>;
 }

@@ -3,10 +3,10 @@
 ## Available in the preview
 
 - `/en/register`, `/ro/register`, `/de/register`: dedicated organisation registration, linked from the header, footer, organisation page and sign-in. Categories include institutions, museums, hotels, cultural venues, public services and other organisations.
-- `/[locale]/dashboard/builder`: one JPEG/PNG/WebP photograph per zone, image preview, required alternative text, rights/credit and photography date. Files are limited to 5 MB, checked for format and decoded as images. Raster re-encoding removes original EXIF/GPS metadata and limits dimensions to 1600 px. Binary images use browser IndexedDB; only references and descriptive metadata enter the saved draft.
+- `/[locale]/demo` (the demo workspace; the old `/dashboard` addresses redirect to it): one JPEG/PNG/WebP photograph per zone, image preview, required alternative text, rights/credit and photography date. Files are limited to 5 MB, checked for format and decoded as images. Raster re-encoding removes original EXIF/GPS metadata and limits dimensions to 1600 px. Binary images use browser IndexedDB; only references and descriptive metadata enter the saved draft.
 - Public fictional guide data remains independent of local drafts. The editor and local preview can show uploaded photos. Removing a photo from the draft restores the illustration; browser site-data clearing removes retained local images.
 - Organisation responsibility appears at registration, on the organisation and terms pages, in the editor and before publication. It covers supplied content, completeness, accuracy, currency, image rights and ongoing updates, with a concrete explanation of the impact on visitors. It is not a blanket legal release of the platform’s own obligations.
-- A separate publication review requires the responsible representative, check date and explicit acknowledgements. The exact saved draft is recorded locally with statement version `2026-10-07-v1`. Editing invalidates the displayed review and requires checking the new version. This neither publishes nor certifies a guide.
+- Publication review was part of the first local demo builder and went with it (12 October 2026); the real workspace will get its own review when publishing exists.
 
 ## Real accounts and manual approval
 
