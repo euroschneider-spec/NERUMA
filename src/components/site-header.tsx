@@ -21,11 +21,10 @@ export function SiteHeader({locale}:{locale:Locale}) {
   const organisationsRoute=`/${locale}/for-organisations`;
   return <>
     <a className="skip-link" href="#main-content">{t.skip}</a>
-    {/* Three controls above the brand row: language, light or dark, and the reading panel with everything else. */}
+    {/* Two settings above the brand row: language, and light or dark. Everything else is in the reading panel. */}
     <div className="topbar">
       <LanguageMenu locale={locale}/>
       <ThemeToggle locale={locale} iconOnly/>
-      <ReadingButton label={t.settings} className="topbar-reading" placement="below"><SlidersHorizontal size={16} aria-hidden="true"/></ReadingButton>
     </div>
     <header className="site-header"><div className="header-inner">
       <Link className="brand-link" href={`/${locale}`} aria-label="NERUMA"><Brand/></Link>
@@ -36,6 +35,8 @@ export function SiteHeader({locale}:{locale:Locale}) {
         {/* The one door for organisations: registering and signing in sit behind this page, not in the menu. */}
         <Link className="nav-button nav-org" href={organisationsRoute} aria-current={path===organisationsRoute?'page':undefined} onClick={()=>setOpen(false)}>{t.nav[1]}</Link>
       </nav>
+      {/* In the sticky row, so the reading panel is one tap away however far the page is scrolled. */}
+      <ReadingButton label={t.settings} className="header-reading" placement="below"><SlidersHorizontal size={16} aria-hidden="true"/></ReadingButton>
     </div></header>
   </>;
 }
