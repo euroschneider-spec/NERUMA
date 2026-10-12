@@ -71,6 +71,7 @@ test('a change is kept in this browser, shows in the preview, and is not seen by
   await page.getByRole('button', { name: 'Reset demo' }).click();
   const confirm = page.getByRole('dialog', { name: 'Reset the demo?' });
   await confirm.getByRole('button', { name: 'Reset demo' }).click();
+  await expect(confirm).toBeHidden();
   await expect(page.locator('.location-card')).toHaveCount(2);
   await page.goto(`/en/demo/${willow}`);
   await expect(stepName(page)).toHaveValue('The main entrance');
@@ -136,7 +137,9 @@ test('a photo added in the demo stays in this browser', async ({ page }) => {
   // Reset removes it again.
   await page.goto('/en/demo');
   await page.getByRole('button', { name: 'Reset demo' }).click();
-  await page.getByRole('dialog', { name: 'Reset the demo?' }).getByRole('button', { name: 'Reset demo' }).click();
+  const confirm = page.getByRole('dialog', { name: 'Reset the demo?' });
+  await confirm.getByRole('button', { name: 'Reset demo' }).click();
+  await expect(confirm).toBeHidden();
   await page.goto(`/en/demo/${pavilion}/preview`);
   await expect(page.getByRole('img', { name: 'A gravel path between willow trees.', exact: true })).toHaveCount(0);
   expect(sent).toEqual([]);

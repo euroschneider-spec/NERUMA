@@ -26,6 +26,18 @@ function useBrowserValue<T>(read: () => T, key: string): T | null {
   return state?.key === key ? state.value : null;
 }
 
+const resetEvent = 'neruma:demo-reset';
+/** Counts the demo resets, so a page that is already open reads what is kept again. */
+function useResets() {
+  const [resets, setResets] = useState(0);
+  useEffect(() => {
+    const again = () => setResets(count => count + 1);
+    window.addEventListener(resetEvent, again);
+    return () => window.removeEventListener(resetEvent, again);
+  }, []);
+  return resets;
+}
+
 function Loading({ locale }: { locale: Locale }) {
   return <main id="main-content" className="app-main"><p role="status">{getWorkspaceCopy(locale).demoLoading}</p></main>;
 }
@@ -37,17 +49,17 @@ export function DemoStrip({ locale }: { locale: Locale }) {
   const router = useRouter();
   const path = usePathname();
   async function reset() {
-    setAsking(false);
     resetDemo();
     try {
       await clearLocalPhotos();
     } catch {
       // Photos that stay behind are never shown again: the originals have no photo of the visitor's.
     }
-    // The dashboard reads what is kept when it opens; from the dashboard itself a reload does the same.
+    // The dashboard reads what is kept when it opens. Opened already, it is told to read again; from any other page we go there.
     const home = `/${locale}/demo`;
-    if (path === home) window.location.reload();
+    if (path === home) window.dispatchEvent(new Event(resetEvent));
     else router.push(home);
+    setAsking(false);
   }
   return <>
     <div className="demo-strip" role="region" aria-label={t.demoStrip}>
@@ -60,7 +72,8 @@ export function DemoStrip({ locale }: { locale: Locale }) {
 
 export function DemoDashboard({ locale }: { locale: Locale }) {
   const t = getWorkspaceCopy(locale);
-  const places = useBrowserValue(() => listDemoPlaces(locale), locale);
+  const resets = useResets();
+  const places = useBrowserValue(() => listDemoPlaces(locale), `${locale}:${resets}`);
   if (!places) return <Loading locale={locale} />;
   return <main id="main-content" className="app-main">
     <div className="app-heading"><h1>{t.dashboard}</h1></div>
