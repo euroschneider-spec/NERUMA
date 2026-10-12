@@ -48,21 +48,22 @@ for(const locale of ['en','ro','de'] as const) {
     await expect(audio.getByRole('button',{name:t.stop,exact:true})).toBeDisabled();await expect(audio.getByRole('status')).not.toHaveText(t.finished);
   });
 }
-test('one control docks to the left screen edge while the page scrolls and reflows at 320px',async({page})=>{
+test('the reading button sits in the top bar, the panel opens under it and stays put while the page scrolls and reflows at 320px',async({page})=>{
   await mockSpeech(page,'ro');await page.setViewportSize({width:1440,height:1000});
   for(const route of ['/ro','/ro/example-guide']) {
-    await page.goto(route);const trigger=page.locator('.floating-reading');const image=page.locator('main img').first();
-    await expect(page.getByRole('button',{name:'Setări de lectură',exact:true})).toHaveCount(1);await expect(page.locator('header .reading-trigger,.media-tools')).toHaveCount(0);
-    const tb=await trigger.boundingBox();const ib=await image.boundingBox();expect(tb!.x).toBe(0);expect(tb!.width).toBe(48);expect(tb!.x+tb!.width).toBeLessThan(ib!.x);
-    await trigger.click();const panel=page.getByRole('dialog');const before=await panel.boundingBox();expect(before!.x).toBe(60);expect(before!.x+before!.width).toBeLessThan(ib!.x);
+    await page.goto(route);const trigger=page.locator('.topbar-reading');
+    await expect(page.getByRole('button',{name:'Setări de lectură',exact:true})).toHaveCount(1);await expect(page.locator('.floating-reading,.reading-trigger,.media-tools')).toHaveCount(0);
+    const tb=await trigger.boundingBox();expect(tb!.y).toBeLessThan(80);
+    await trigger.click();const panel=page.getByRole('dialog');const before=await panel.boundingBox();
+    // The panel hangs under the button with their right edges aligned.
+    expect(before!.y).toBeGreaterThanOrEqual(tb!.y+tb!.height);expect(Math.abs(before!.x+before!.width-(tb!.x+tb!.width))).toBeLessThan(2);
     await page.mouse.move(1400,800);await page.mouse.wheel(0,600);await expect.poll(()=>page.evaluate(()=>window.scrollY)).toBeGreaterThan(200);
-    const after=await panel.boundingBox();expect(after!.x).toBeCloseTo(before!.x,0);expect(after!.y).toBeCloseTo(before!.y,0);
-    const triggerAfter=await trigger.boundingBox();expect(triggerAfter!.x).toBe(0);expect(triggerAfter!.y).toBeCloseTo(tb!.y,0);await expect(panel).toBeVisible();
+    const after=await panel.boundingBox();expect(after!.x).toBeCloseTo(before!.x,0);expect(after!.y).toBeCloseTo(before!.y,0);await expect(panel).toBeVisible();
     await page.evaluate(()=>window.scrollTo({top:0,behavior:'instant'}));
     await page.screenshot({path:route==='/ro'?'docs/verification/screenshots/media-controls-preview.png':'docs/verification/screenshots/audio-guide-preview.png',fullPage:true});
     await page.setViewportSize({width:320,height:900});await page.evaluate(()=>document.documentElement.style.fontSize='32px');
     await expect.poll(async()=>panel.evaluate(node=>{const r=node.getBoundingClientRect();return r.left>=0 && r.right<=window.innerWidth && r.top>=0 && r.bottom<=window.innerHeight && node.scrollWidth<=node.clientWidth;})).toBe(true);
-    await expect.poll(async()=> (await trigger.boundingBox())!.x).toBe(0);
+    await expect.poll(async()=>{const box=(await trigger.boundingBox())!;return box.x>=0 && box.x+box.width<=320;}).toBe(true);
     expect(await page.evaluate(()=>document.documentElement.scrollWidth<=window.innerWidth)).toBe(true);
     const result=await new AxeBuilder({page}).withTags(['wcag2a','wcag2aa','wcag21aa','wcag22aa']).analyze();expect(result.violations).toEqual([]);
     await page.keyboard.press('Escape');await page.setViewportSize({width:1440,height:1000});await page.evaluate(()=>document.documentElement.style.fontSize='');
@@ -81,11 +82,11 @@ test('unsupported speech leaves the complete readable guide and screen-reader gu
 });
 test('page reader excludes controls and form values, stops on panel close and cancels competing narration',async({page})=>{
   await mockSpeech(page);await page.goto('/en/contact');await page.getByLabel('Your name *',{exact:true}).fill('Do not narrate this input value');
-  await page.locator('.floating-reading').click();const dialog=page.getByRole('dialog');await dialog.locator('.reading-audio-details summary').click();const pageAudio=dialog.locator('.read-aloud');
+  await page.locator('.topbar-reading').click();const dialog=page.getByRole('dialog');await dialog.locator('.reading-audio-details summary').click();const pageAudio=dialog.locator('.read-aloud');
   await pageAudio.getByRole('button',{name:copy.en.start,exact:true}).click();await page.evaluate(()=>(window as unknown as {__speech:SpeechFixture}).__speech.finish());
   const spoken=(await fixture(page)).texts.join('\n');expect(spoken).toContain('Let’s make visits clearer.');expect(spoken).not.toContain('Do not narrate this input value');
   await page.keyboard.press('Escape');await page.goto('/en/example-guide');await page.getByRole('button',{name:copy.en.options,exact:true}).click();const guideAudio=page.locator('.gg-sheet .read-aloud');
-  await guideAudio.getByRole('button',{name:copy.en.start,exact:true}).click();await page.locator('.floating-reading').click();await dialog.locator('.reading-audio-details summary').click();
+  await guideAudio.getByRole('button',{name:copy.en.start,exact:true}).click();await page.locator('.topbar-reading').click();await dialog.locator('.reading-audio-details summary').click();
   await pageAudio.getByRole('button',{name:copy.en.start,exact:true}).click();await expect(guideAudio.getByRole('button',{name:copy.en.stop,exact:true})).toBeDisabled();
   await page.keyboard.press('Escape');expect((await fixture(page)).cancelled).toBeGreaterThan(0);
   await guideAudio.getByRole('button',{name:copy.en.start,exact:true}).click();await page.getByRole('link',{name:'Contact',exact:true}).first().click();
