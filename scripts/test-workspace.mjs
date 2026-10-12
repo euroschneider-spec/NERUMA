@@ -420,6 +420,23 @@ try {
     await expect(adminPage.getByText(message,{exact:true})).toBeVisible();
     await expect(adminPage.getByRole('button',{name:'Mark as closed'})).toHaveCount(0);
   });
+  await check('signed-in owner and administrator pages pass automated checks in every theme and tone',async()=>{
+    const combos=[['dark','cool'],['dark','warm'],['light','cool'],['light','warm'],['contrast','cool']];
+    for(const [theme,tone] of combos) {
+      for(const [who,paths] of [[1,['/en/workspace','/en/workspace/report']],[3,['/en/admin/organisations','/en/admin/reports']]]) {
+        const context=await browser.newContext({colorScheme:'dark',reducedMotion:'reduce'});
+        await context.addInitScript(([t,o])=>localStorage.setItem('vianorae:reading:v1',JSON.stringify({theme:t,tone:o,themeV:2})),[theme,tone]);
+        const view=await context.newPage();await login(view,who);
+        for(const path of paths) {
+          await view.goto(`${base}${path}`);
+          await expect(view.locator('html')).toHaveAttribute('data-theme',theme);
+          const audit=await new AxeBuilder({page:view}).withTags(['wcag2a','wcag2aa','wcag21a','wcag21aa']).analyze();
+          assert.deepEqual(audit.violations.map(v=>`${v.id}: ${v.nodes.map(n=>n.target).join(' | ')}`),[],`${path} in ${theme}/${tone}`);
+        }
+        await context.close();
+      }
+    }
+  });
   await check('the header offers one organisations door and advertises no tier-specific destination',async()=>{
     for(const page of [adminPage,applicant]) {
       await page.goto(`${base}/en`);

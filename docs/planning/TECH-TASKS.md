@@ -37,8 +37,8 @@ motion is already respected. The root URL always redirects to English (`src/app/
 - [ ] Consider `prefers-contrast: more` → high contrast theme.
 - [ ] Language: the root URL picks EN/RO/DE from the browser's `Accept-Language`, falling back to EN.
   A language chosen in the menu wins.
-- [x] Tests: Playwright now runs as a dark device and `tests/theme-follows-device.spec.ts` emulates both. Still
-  open: the axe contrast sweeps in both themes for the signed-in workspace and admin pages (issue #32).
+- [x] Tests: Playwright now runs as a dark device and `tests/theme-follows-device.spec.ts` emulates both. The signed-in workspace and admin pages
+  are scanned with axe in every theme and tone in `scripts/test-workspace.mjs` (issue #32, fixed).
 
 ## 3. Cookies and the law
 
@@ -334,14 +334,12 @@ Added on 2026-10-11, after the dashboard cards (PR #29). Decisions are in `DECIS
 
 **Order of work after the dashboard (owner, 2026-10-11):**
 
-1. [ ] **Contrast bug, issue #32.** The accent blue pair is 4.48:1 in the light theme (limit 4.5). Fix the palette, run
-   the full suite, and add axe scans of the signed-in workspace and admin pages in all three themes.
-2. [ ] **Live preview in a second tab** (brief, Task 2): the preview beside the editor, from unsaved changes, with
+1. [ ] **Live preview in a second tab** (brief, Task 2): the preview beside the editor, from unsaved changes, with
    the guide component visitors see. Narrow screens get a *Preview* button only.
-3. [ ] **Plan & billing placeholder** (brief 1d): owners only, until payments exist (section 8).
-4. [ ] **Visit counts privacy decision.** Suggested: one number per location per day, no IP address, no cookie,
+2. [ ] **Plan & billing placeholder** (brief 1d): owners only, until payments exist (section 8).
+3. [ ] **Visit counts privacy decision.** Suggested: one number per location per day, no IP address, no cookie,
    counting each time the guide opens. Needs the owner's yes, then section 3 and the privacy page.
-5. [ ] **Publishing** (needs Opus): the QR registry above, the "isn't available" page, language choice, the real QR
+4. [ ] **Publishing** (needs Opus): the QR registry above, the "isn't available" page, language choice, the real QR
    pop-up and visit counts on the card.
 
 **Job for the owner's friend: apply two migrations to the real Supabase project** (the app hides the matching

@@ -33,7 +33,8 @@
   --color-text: #1f2328;
   --v-muted: #59636e;
   --color-divider: #dde1e6;
-  --color-accent: #2f6fd6;
+  /* #2d69cb: 4.9:1 with the page colour on top of it (was #2f6fd6, 4.48:1, just under the 4.5:1 for normal text). */
+  --color-accent: #2d69cb;
   --color-accent-600: #255fbd;
   --color-accent-700: #2457a8;
   --color-accent-100: #e8f0fe;
