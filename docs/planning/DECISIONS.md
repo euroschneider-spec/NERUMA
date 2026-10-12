@@ -88,6 +88,10 @@ accordions, compact home cards, resend section tucked away on Login, trimmed cop
 
 ### Reading settings move into the top bar as a labelled button
 Mobile first: the floating edge tab is easy to miss, has no label, and covers content on phones.
+Done 2026-10-12: the top bar keeps language, an icon-only light/dark button and the labelled *Reading settings*
+button; *Cool / Warm* (now *Accent colour: Blue / Green*) and *Summary / Full page* moved into the panel, and the
+organisation sidebar lost its Cool / Warm switch the same way. The panel opens under the button and scrolls inside
+itself on short screens. Known trade-off: the top bar scrolls away on long pages, so the button does too.
 Covers: `DESIGN-TASKS.md` section 6. Sections 5 and 7 follow from the three principles above and have not
 been discussed one by one.
 

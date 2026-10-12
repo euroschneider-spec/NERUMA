@@ -68,8 +68,8 @@ Decision needed before starting.
   places.
 - [ ] Dashboard: seven tabs wrap into three rows. Use one scrollable row. The three stat cards stack to
   ~330px; put them in one row.
-- [ ] Top bar on content pages wraps to two rows (92px) because of *Summary / Full page*. Fit it on
-  one row, or move that control into the page.
+- [x] Top bar on content pages wraps to two rows (92px) because of *Summary / Full page*: that control moved into
+  the reading panel; the top bar fits one row down to 320px.
 - [ ] Login: the resend-confirmation section is as prominent as sign-in and repeats its heading
   (h2 + legend). Collapse it behind "Didn't get the email?".
 - [ ] Trim copy, e.g. "A NERUMA guide describes a place before you visit it. You read it on your phone
@@ -87,31 +87,31 @@ Decision needed before starting.
 
 ## 6. Settings
 
-Today settings live in two places, and the theme appears in both:
+Done on 2026-10-12: the top bar keeps three controls and everything else lives in the reading panel.
 
-| Setting | Top bar | Reading panel (floating tab) |
+| Setting | Top bar | Reading panel |
 |---|---|---|
 | Language | ✓ | |
-| Summary / Full page | ✓ (content pages only) | |
-| Cool / Warm | ✓ | |
-| Light / Dark | ✓ (icon + word) | ✓ (with High contrast) |
+| Light / Dark | ✓ (icon only) | ✓ (with Match my device and High contrast) |
+| Reading settings button | ✓ (labelled) | |
+| Accent colour (Blue / Green) | | ✓ (not in High contrast) |
+| How much of the page (Full / Summary) | | ✓ (text pages only) |
 | Text size, line width, typeface, spacing | | ✓ |
 | Read aloud, reset | | ✓ |
 
-- [ ] **Light/dark as an icon-only button.** Show a moon or sun icon, keep the action as the
+- [x] **Light/dark as an icon-only button.** Show a moon or sun icon, keep the action as the
   accessible name ("Switch to dark mode"), plus a tooltip. Same height as the language button.
   This also lets the top bar fit on one row on phones (section 4).
 - [x] **Follow the device by default** (PR #33; *Reset* going back to it still to check). When the visitor has not chosen, use the device's light/dark
   setting and follow it if it changes. Once they pick one, remember it. Add "Match device" to the
   theme list in the panel, and make *Reset* go back to it. The code change is in the technical tasks
   (`docs/planning/TECH-TASKS.md`, section 2).
-- [ ] **Top bar keeps only language and light/dark.** Move *Cool / Warm* and *Summary / Full page*
-  into the reading panel.
-- [ ] **Rename "Cool / Warm".** It switches the accent between blue and green, which the names don't
-  say. Try "Accent colour: Blue / Green".
-- [x] (workspace only, PR for 2026-10-11) The reading-settings button is a labelled button in the organisation sidebar; the floating tab
-  is gone there. The public site still has the floating tab: **Move the reading-settings trigger into the top bar** as a labelled button ("Aa Reading" or
-  similar). The floating edge tab is easy to miss, has no visible label, and covers content on phones.
+- [x] **Top bar keeps language, light/dark and the reading button.** *Cool / Warm* and *Summary / Full page*
+  moved into the reading panel (and left the organisation sidebar).
+- [x] **Rename "Cool / Warm"** to *Accent colour: Blue / Green* (stored values stay `cool` and `warm`).
+- [x] The reading-settings trigger is a labelled button in the organisation sidebar and in the top bar of the public
+  site. The floating edge tab is gone. Trade-off: the top bar scrolls away on long pages, so the button does too.
+  Open: keep the top bar on screen, or repeat the button in the footer.
 - [ ] **Slim the panel header.** Moving the panel uses a drag handle plus five nudge buttons. Check
   whether a fixed position (right side on desktop, bottom sheet on phones) removes the need to move it.
 
@@ -131,7 +131,7 @@ Today settings live in two places, and the theme appears in both:
 - [ ] Inputs (36–37px) sit next to 48px buttons. Match the heights.
 - [x] (PR #16) Top bar on phones: language 32px, Cool/Warm 34px, Light 40px. The Light button picks up the
   phone `.button` override. Make all three the same height.
-- [ ] The reading-settings tab (36px wide) covers content on phones, where the side margin is 16px.
+- [x] The reading-settings tab (36px wide) covers content on phones: the tab is gone.
 - [ ] Unused CSS: `.pilot` and `.principle` aren't referenced by any page. Delete them.
 - [ ] Account and admin pages: `.verification-page` centres a 900px column, while other pages align
   left to the header. Check while signed in.

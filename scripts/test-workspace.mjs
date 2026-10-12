@@ -52,10 +52,11 @@ try {
     await expect(sidebar.getByRole('link',{name:'Public site'})).toHaveCount(0);
     await expect(sidebar.getByRole('link',{name:'NERUMA'})).toHaveAttribute('href','/en');
     await expect(sidebar.locator('.language-switch summary')).toBeVisible();
-    await expect(sidebar.getByRole('group',{name:'Colour tone'}).getByRole('button',{name:'Warm'})).toBeVisible();
-    await expect(page.locator('.floating-reading')).toHaveCount(0);
+    await expect(sidebar.getByRole('group',{name:'Colour tone'})).toHaveCount(0);
+    await expect(page.locator('.topbar-reading')).toHaveCount(0);
     const reading=sidebar.getByRole('button',{name:'Reading settings',exact:true});await expect(reading).toBeVisible();
     await reading.click();const panel=page.getByRole('dialog',{name:'Reading settings'});await expect(panel).toBeVisible();
+    await expect(panel.getByLabel('Accent colour',{exact:true})).toBeVisible();
     await page.keyboard.press('Escape');await expect(panel).toBeHidden();await expect(reading).toBeFocused();
     await sidebar.getByRole('button',{name:'Collapse sidebar',exact:true}).click();
     await expect(sidebar.getByText('Fixture museum 1',{exact:true})).toBeHidden();

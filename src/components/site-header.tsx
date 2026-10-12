@@ -2,13 +2,11 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useState } from 'react';
-import { Menu, X } from 'lucide-react';
+import { Menu, SlidersHorizontal, X } from 'lucide-react';
 import { getCopy, type Locale } from '@/lib/i18n';
-import { contentPages } from '@/lib/content';
-import { PageDensity } from './page-density';
 import { ThemeToggle } from './theme-toggle';
-import { ToneSwitch } from './tone-switch';
 import { LanguageMenu } from './language-menu';
+import { ReadingButton } from './reading-settings';
 export function Brand() { return <span className="brand"><span className="brand-mark" aria-hidden="true"><span/><span/><span/></span>NERUMA</span>; }
 export function SiteHeader({locale}:{locale:Locale}) {
   const t=getCopy(locale); const path=usePathname(); const [open,setOpen]=useState(false);
@@ -21,15 +19,13 @@ export function SiteHeader({locale}:{locale:Locale}) {
   ];
   const guideRoute=`/${locale}/places/willow-museum/guide`;
   const organisationsRoute=`/${locale}/for-organisations`;
-  const readable=contentPages.some(page=>path===`/${locale}/${page}`);
   return <>
     <a className="skip-link" href="#main-content">{t.skip}</a>
-    {/* Language and appearance sit above the brand row: settings for the whole site, not navigation. */}
+    {/* Three controls above the brand row: language, light or dark, and the reading panel with everything else. */}
     <div className="topbar">
       <LanguageMenu locale={locale}/>
-      {readable ? <PageDensity locale={locale}/> : null}
-      <ToneSwitch locale={locale}/>
-      <ThemeToggle locale={locale}/>
+      <ThemeToggle locale={locale} iconOnly/>
+      <ReadingButton label={t.settings} className="topbar-reading" placement="below"><SlidersHorizontal size={16} aria-hidden="true"/></ReadingButton>
     </div>
     <header className="site-header"><div className="header-inner">
       <Link className="brand-link" href={`/${locale}`} aria-label="NERUMA"><Brand/></Link>

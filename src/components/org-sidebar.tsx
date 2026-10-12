@@ -5,10 +5,9 @@ import { useEffect, useState } from 'react';
 import { LayoutDashboard, LifeBuoy, LogOut, PanelLeftClose, PanelLeftOpen, SlidersHorizontal } from 'lucide-react';
 import type { Locale } from '@/lib/i18n';
 import { ThemeToggle } from './theme-toggle';
-import { ToneSwitch } from './tone-switch';
 import { LanguageMenu } from './language-menu';
 import { Brand } from './site-header';
-import { ReadingSidebarButton } from './reading-settings';
+import { ReadingButton } from './reading-settings';
 
 export type SidebarMembership = { organisation: string; name: string; roleLabel: string };
 export type SidebarCopy = { dashboard: string; signOut: string; sidebarLabel: string; collapse: string; expand: string; reading: string; report?: string };
@@ -74,9 +73,8 @@ export function OrgSidebar({ locale, memberships, copy, signOutAction }: {
       </nav>
       <div className="app-sidebar-foot">
         <LanguageMenu locale={locale} />
-        <ToneSwitch locale={locale} />
         <ThemeToggle locale={locale} />
-        <ReadingSidebarButton label={copy.reading}><SlidersHorizontal size={16} aria-hidden="true" /></ReadingSidebarButton>
+        <ReadingButton label={copy.reading} className="app-reading"><SlidersHorizontal size={16} aria-hidden="true" /></ReadingButton>
         <form action={signOutAction}>
           <button type="submit" className="button button-small button-outline app-signout" data-tip={copy.signOut}>
             <LogOut size={16} aria-hidden="true" />

@@ -18,7 +18,7 @@ const en={
   guideOptions:'Guide options',closeOptions:'Close guide options',
   lineWidth:'Line width',lineDefault:'Default',lineNarrow:'Narrow',
   typeface:'Typeface',typeDefault:'Standard',typeHyperlegible:'Hyperlegible',
-  toneLabel:'Colour tone',toneCool:'Cool',toneWarm:'Warm',howMuch:'How much to show',summary:'Summary',fullPage:'Full page',
+  accentLabel:'Accent colour',accentBlue:'Blue',accentGreen:'Green',howMuch:'How much of the page to show',summary:'Summary',fullPage:'Full page',
   summaryNote:'Summary shows the headings and the first line of each section.',
 };
 type AccessCopy={ [K in keyof typeof en]:string };
@@ -41,7 +41,7 @@ const ro:AccessCopy={
   guideOptions:'Opțiuni pentru ghid',closeOptions:'Închide opțiunile ghidului',
   lineWidth:'Lățimea rândului',lineDefault:'Implicită',lineNarrow:'Îngustă',
   typeface:'Font',typeDefault:'Standard',typeHyperlegible:'Hyperlegible',
-  toneLabel:'Tonul culorilor',toneCool:'Rece',toneWarm:'Cald',howMuch:'Cât să afișăm',summary:'Rezumat',fullPage:'Pagina întreagă',
+  accentLabel:'Culoare de accent',accentBlue:'Albastru',accentGreen:'Verde',howMuch:'Cât din pagină să afișăm',summary:'Rezumat',fullPage:'Pagina întreagă',
   summaryNote:'Rezumatul arată titlurile și primul rând al fiecărei secțiuni.',
 };
 const de:AccessCopy={
@@ -63,7 +63,7 @@ const de:AccessCopy={
   guideOptions:'Guide-Optionen',closeOptions:'Guide-Optionen schließen',
   lineWidth:'Zeilenbreite',lineDefault:'Standard',lineNarrow:'Schmal',
   typeface:'Schriftart',typeDefault:'Standard',typeHyperlegible:'Hyperlegible',
-  toneLabel:'Farbton',toneCool:'Kühl',toneWarm:'Warm',howMuch:'Wie viel anzeigen',summary:'Zusammenfassung',fullPage:'Ganze Seite',
+  accentLabel:'Akzentfarbe',accentBlue:'Blau',accentGreen:'Grün',howMuch:'Wie viel der Seite anzeigen',summary:'Zusammenfassung',fullPage:'Ganze Seite',
   summaryNote:'Die Zusammenfassung zeigt die Überschriften und die erste Zeile jedes Abschnitts.',
 };
 export const getAccessCopy=(locale:Locale):AccessCopy=>({en,ro,de})[locale];

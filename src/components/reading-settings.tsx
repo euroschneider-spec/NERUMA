@@ -1,37 +1,30 @@
 'use client';
 import { createContext, useContext, useState, useEffect, useRef } from 'react';
 import { usePathname } from 'next/navigation';
-import { SlidersHorizontal, X, GripHorizontal, ArrowLeft, ArrowRight, ArrowUp, ArrowDown, RotateCcw } from 'lucide-react';
+import { X, GripHorizontal, ArrowLeft, ArrowRight, ArrowUp, ArrowDown, RotateCcw } from 'lucide-react';
 import { getCopy, type Locale } from '@/lib/i18n';
 import { getAccessCopy } from '@/lib/accessibility-copy';
+import { contentPages } from '@/lib/content';
 import { ReadAloud } from './read-aloud';
-import { applyPreferences, defaults, fromStored, followSystemTheme, savePreferences, storageKey, useThemeChoice, type Preferences } from '@/lib/reading-prefs';
+import { applyPreferences, defaults, fromStored, followSystemTheme, savePreferences, storageKey, useTheme, useThemeChoice, type Preferences } from '@/lib/reading-prefs';
 
-/** Inside the organisation app the panel opens from a labelled button in the sidebar instead of the floating tab. */
+/** The panel opens from a labelled button: in the top bar on the public site, in the sidebar in the organisation app. */
 type ReadingTrigger={register:(element:HTMLButtonElement|null)=>void;open:()=>void;isOpen:boolean};
 const ReadingTriggerContext=createContext<ReadingTrigger|null>(null);
 export const useReadingTrigger=()=>useContext(ReadingTriggerContext);
 /* The provider hands out a callback ref (not a ref value); the lint rule can't tell the difference. */
 /* eslint-disable react-hooks/refs */
-export function ReadingSidebarButton({label,children}:{label:string;children:React.ReactNode}) {
+export function ReadingButton({label,className,placement,children}:{label:string;className:string;placement?:'below';children:React.ReactNode}) {
   const reading=useReadingTrigger();
   if(!reading) return null;
-  return <button ref={reading.register} type="button" className="button button-small button-outline app-reading" aria-haspopup="dialog" aria-controls="reading-panel" aria-expanded={reading.isOpen} onClick={reading.open} data-tip={label}>
+  return <button ref={reading.register} type="button" className={`button button-small button-outline ${className}`} aria-haspopup="dialog" aria-controls="reading-panel" aria-expanded={reading.isOpen} onClick={reading.open} data-tip={label} data-placement={placement}>
     {children}
     <span className="app-label">{label}</span>
   </button>;
 }
 /* eslint-enable react-hooks/refs */
-export const inWorkspace=(path:string)=>/^\/(en|ro|de)\/workspace(\/|$)/.test(path);
 
 export const clamp=(value:number,min:number,max:number)=>Math.max(min,Math.min(value,Math.max(min,max)));
-// Dock to the bottom-left corner, clear of body copy that runs mid-page.
-export const launcherTop=(viewportHeight:number,buttonHeight:number)=>clamp(viewportHeight-buttonHeight-24,8,viewportHeight-buttonHeight-8);
-function placeLauncher(button:HTMLButtonElement) {
-  const bounds=button.getBoundingClientRect();
-  button.style.left='0px';
-  button.style.top=`${launcherTop(window.innerHeight,bounds.height)}px`;
-}
 
 function movePanel(panel:HTMLDialogElement,left:number,top:number) {
   const bounds=panel.getBoundingClientRect();
@@ -40,13 +33,22 @@ function movePanel(panel:HTMLDialogElement,left:number,top:number) {
 }
 function placePanel(panel:HTMLDialogElement,button:HTMLButtonElement) {
   const bounds=button.getBoundingClientRect();
-  // Open beside the left-edge tab; retain these coordinates during page scroll.
-  movePanel(panel,bounds.right+12,bounds.top);
+  panel.style.maxHeight='';
+  // From the top bar the panel hangs under the button, right edges aligned, and scrolls inside itself when the
+  // screen is too short for all of it, so it never covers the controls it opened from. From the sidebar it opens beside.
+  if(button.dataset.placement==='below') {
+    const top=bounds.bottom+8;
+    // The smaller of the room under the button and the screen height, so the panel still shrinks with the window.
+    panel.style.maxHeight=`min(${Math.max(240,window.innerHeight-top-16)}px, calc(100dvh - 32px))`;
+    movePanel(panel,bounds.right-panel.getBoundingClientRect().width,top);
+  } else movePanel(panel,bounds.right+12,bounds.top);
 }
 
 export function ReadingSettingsProvider({locale,children}:{locale:Locale;children:React.ReactNode}) {
   const t=getCopy(locale);const a=getAccessCopy(locale);const path=usePathname();
-  const [stored,setPrefs]=useState(defaults);const theme=useThemeChoice();const prefs:Preferences={...stored,theme};const [isOpen,setOpen]=useState(false);const [moveControls,setMoveControls]=useState(false);const [audioOpen,setAudioOpen]=useState(false);
+  const [stored,setPrefs]=useState(defaults);const theme=useThemeChoice();const shownTheme=useTheme();const prefs:Preferences={...stored,theme};
+  // Page length only changes the text pages (how it works, methodology, …), so it is offered only there.
+  const textPage=contentPages.some(page=>path===`/${locale}/${page}`);const [isOpen,setOpen]=useState(false);const [moveControls,setMoveControls]=useState(false);const [audioOpen,setAudioOpen]=useState(false);
   const dialog=useRef<HTMLDialogElement>(null);const trigger=useRef<HTMLButtonElement>(null);
   const moved=useRef(false);const restoreFocus=useRef(true);const dragged=useRef(false);
   const drag=useRef<{x:number;y:number;left:number;top:number}|null>(null);
@@ -61,10 +63,6 @@ export function ReadingSettingsProvider({locale,children}:{locale:Locale;childre
   useEffect(()=>followSystemTheme(),[]);
   useEffect(()=>{
     restoreFocus.current=false;dialog.current?.close();
-    // Only the floating tab is docked to the corner; a button inside the sidebar stays where the page puts it.
-    const position=()=>{if(trigger.current?.classList.contains('floating-reading'))placeLauncher(trigger.current);};
-    const frame=requestAnimationFrame(position);window.addEventListener('resize',position);
-    return()=>{cancelAnimationFrame(frame);window.removeEventListener('resize',position);};
   },[path]);
   useEffect(()=>{
     if(!isOpen) return;
@@ -98,7 +96,6 @@ export function ReadingSettingsProvider({locale,children}:{locale:Locale;childre
   }
   function resetPosition() {moved.current=false;if(dialog.current && trigger.current)placePanel(dialog.current,trigger.current);}
   return <ReadingTriggerContext.Provider value={{register:element=>{trigger.current=element;},open,isOpen}}>{children}
-    {!inWorkspace(path) && <button ref={trigger} type="button" className="reading-trigger floating-reading" aria-label={t.settings} title={t.settings} aria-haspopup="dialog" aria-controls="reading-panel" aria-expanded={isOpen} onClick={open}><SlidersHorizontal size={20} aria-hidden="true"/><span aria-hidden="true">{a.tools}</span></button>}
     <dialog ref={dialog} id="reading-panel" className="reading-dialog" aria-labelledby="reading-title" aria-describedby="reading-intro reading-popup-hint" onClose={closed} onKeyDown={event=>{if(event.key==='Escape'){event.preventDefault();close();}}}>
       <div className="reading-dialog-heading"><h2 id="reading-title">{t.settings}</h2>
         <button type="button" className="icon-button panel-drag-handle" aria-label={a.movePanel} title={a.movePanel} aria-expanded={moveControls} aria-controls="reading-move-controls" onClick={()=>{if(dragged.current){dragged.current=false;return;}setMoveControls(value=>!value);}}
@@ -119,6 +116,9 @@ export function ReadingSettingsProvider({locale,children}:{locale:Locale;childre
       <p id="reading-intro">{a.readingIntro}</p>
       <div className="form-field"><label htmlFor="reading-size">{t.fontSize}</label><select id="reading-size" autoFocus value={prefs.size} onChange={e=>update({...prefs,size:e.target.value as Preferences['size']})}><option value="normal">{t.normal}</option><option value="large">{t.large}</option><option value="larger">{t.larger}</option></select></div>
       <div className="form-field"><label htmlFor="reading-theme">{t.theme}</label><select id="reading-theme" value={prefs.theme} onChange={e=>update({...prefs,theme:e.target.value as Preferences['theme']})}><option value="system">{t.systemTheme}</option><option value="light">{t.lightMode}</option><option value="dark">{t.darkMode}</option><option value="contrast">{t.contrast}</option></select></div>
+      {/* High contrast has one fixed palette, so the accent choice steps aside there instead of doing nothing. */}
+      {shownTheme!=='contrast' && <div className="form-field"><label htmlFor="reading-accent">{a.accentLabel}</label><select id="reading-accent" value={prefs.tone} onChange={e=>update({...prefs,tone:e.target.value as Preferences['tone']})}><option value="cool">{a.accentBlue}</option><option value="warm">{a.accentGreen}</option></select></div>}
+      {textPage && <div className="form-field"><label htmlFor="reading-density">{a.howMuch}</label><select id="reading-density" value={prefs.density} onChange={e=>update({...prefs,density:e.target.value as Preferences['density']})}><option value="full">{a.fullPage}</option><option value="summary">{a.summary}</option></select></div>}
       <div className="form-field"><label htmlFor="reading-width">{a.lineWidth}</label><select id="reading-width" value={prefs.width} onChange={e=>update({...prefs,width:e.target.value as Preferences['width']})}><option value="default">{a.lineDefault}</option><option value="narrow">{a.lineNarrow}</option></select></div>
       <div className="form-field"><label htmlFor="reading-font">{a.typeface}</label><select id="reading-font" value={prefs.font} onChange={e=>update({...prefs,font:e.target.value as Preferences['font']})}><option value="default">{a.typeDefault}</option><option value="hyperlegible">{a.typeHyperlegible}</option></select></div>
       <label className="checkbox-label"><input type="checkbox" checked={prefs.spacing} onChange={e=>update({...prefs,spacing:e.target.checked})}/>{t.spacing}</label>

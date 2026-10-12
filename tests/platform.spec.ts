@@ -15,7 +15,7 @@ test('QR API and stable redirects',async({request})=>{const svg=await request.ge
 test('language switch preserves the current route',async({page})=>{await page.goto('/en/methodology');await page.locator('.language-switch summary').click();await page.getByRole('link',{name:'Română',exact:true}).click();await expect(page).toHaveURL(/\/ro\/methodology$/);await expect(page.locator('html')).toHaveAttribute('lang','ro');});
 test('contact prepares an enquiry without sending it',async({page})=>{await page.goto('/en/contact');let posted=false;page.on('request',r=>{if(r.method()==='POST')posted=true;});await page.getByLabel('Your name').fill('Demo person');await page.getByLabel('Email').fill('demo@example.invalid');await page.getByLabel('Your message').fill('I would like to discuss the pilot.');await page.getByRole('button',{name:'Send',exact:true}).click();await expect(page.locator('.enquiry-output')).toContainText('I would like to discuss the pilot.');expect(posted).toBe(false);});
 // Reduced motion switches off the 0.15s colour fade, so the contrast check never samples a half-faded colour.
-test('reading preferences persist and contrast themes pass automated checks',async({page})=>{await page.emulateMedia({reducedMotion:'reduce'});await page.goto('/en');await page.locator('.floating-reading').click();await page.getByLabel('Text size',{exact:true}).selectOption('larger');await page.getByLabel('Appearance',{exact:true}).selectOption('dark');await page.reload();await expect(page.locator('html')).toHaveAttribute('data-theme','dark');await expect(page.locator('html')).toHaveAttribute('data-text-size','larger');let result=await new AxeBuilder({page}).withTags(['wcag2aa']).analyze();expect(result.violations).toEqual([]);await page.locator('.floating-reading').click();await page.getByLabel('Appearance',{exact:true}).selectOption('contrast');result=await new AxeBuilder({page}).withTags(['wcag2aa']).analyze();expect(result.violations).toEqual([]);});
+test('reading preferences persist and contrast themes pass automated checks',async({page})=>{await page.emulateMedia({reducedMotion:'reduce'});await page.goto('/en');await page.locator('.topbar-reading').click();await page.getByLabel('Text size',{exact:true}).selectOption('larger');await page.getByLabel('Appearance',{exact:true}).selectOption('dark');await page.reload();await expect(page.locator('html')).toHaveAttribute('data-theme','dark');await expect(page.locator('html')).toHaveAttribute('data-text-size','larger');let result=await new AxeBuilder({page}).withTags(['wcag2aa']).analyze();expect(result.violations).toEqual([]);await page.locator('.topbar-reading').click();await page.getByLabel('Appearance',{exact:true}).selectOption('contrast');result=await new AxeBuilder({page}).withTags(['wcag2aa']).analyze();expect(result.violations).toEqual([]);});
 test('mobile reflow and menu',async({page})=>{await page.setViewportSize({width:390,height:844});await page.goto('/en');await page.getByRole('button',{name:'Open menu'}).click();await expect(page.getByRole('link',{name:'How it works',exact:true})).toBeVisible();await page.getByRole('link',{name:'How it works',exact:true}).click();await expect(page).toHaveURL(/\/en#how-it-works$/);await expect(page.locator('#how-it-works')).toBeInViewport();for(const path of ['/en','/en/places/willow-museum/guide','/en/dashboard/builder']){await page.goto(path);expect(await page.evaluate(()=>document.documentElement.scrollWidth<=window.innerWidth),path).toBe(true);}await page.goto('/en');await page.screenshot({path:'docs/verification/screenshots/mobile-preview.png',fullPage:true});});
 test('320px reflow with 200% text and extra spacing',async({page})=>{await page.setViewportSize({width:320,height:800});for(const path of ['/en','/de','/en/places/willow-museum/guide','/en/dashboard/builder','/en/register','/de/register']){await page.goto(path);await page.evaluate(()=>{document.documentElement.style.fontSize='32px';document.documentElement.dataset.spacing='true';});const overflow=await page.evaluate(()=>({width:document.documentElement.scrollWidth,viewport:window.innerWidth,elements:Array.from(document.querySelectorAll('*')).map(element=>({tag:element.tagName,classes:element.className,left:element.getBoundingClientRect().left,right:element.getBoundingClientRect().right,scroll:element.scrollWidth,client:element.clientWidth,text:element.textContent?.slice(0,60)})).filter(element=>element.right>window.innerWidth+1||element.scroll>element.client+3)}));expect(overflow.width<=overflow.viewport,path+' '+JSON.stringify(overflow)).toBe(true);}});
 test('desktop visual evidence',async({page})=>{await page.setViewportSize({width:1440,height:1000});await page.goto('/en');await page.screenshot({path:'docs/verification/screenshots/home-preview.png',fullPage:true});await page.goto('/en/places/willow-museum/guide');await page.screenshot({path:'docs/verification/screenshots/guide-preview.png',fullPage:true});await page.goto('/en/dashboard');await page.screenshot({path:'docs/verification/screenshots/workspace-preview.png',fullPage:true});});
@@ -136,12 +136,12 @@ test('Sign in and Request access are on screen when the organisations page opens
  }
 });
 
-// Language, tone, reading width and appearance share one height, however the page is sized.
+// Language, light or dark, and the reading button share one height, however the page is sized.
 test('the controls above the menu are all the same height',async({page})=>{
  for(const size of [{width:1280,height:800},{width:390,height:844},{width:320,height:700}]) {
   await page.setViewportSize(size);await page.goto('/en/methodology');
-  const heights=await page.evaluate(()=>[...document.querySelectorAll('.topbar .language-switch summary, .topbar .density-switch button, .topbar .tone-switch button, .topbar .theme-toggle')].map(el=>Math.round(el.getBoundingClientRect().height)));
-  expect(heights.length).toBe(6);
+  const heights=await page.evaluate(()=>[...document.querySelectorAll('.topbar .language-switch summary, .topbar .theme-toggle, .topbar .topbar-reading')].map(el=>Math.round(el.getBoundingClientRect().height)));
+  expect(heights.length).toBe(3);
   expect(new Set(heights).size,JSON.stringify(heights)).toBe(1);
  }
 });
@@ -192,7 +192,7 @@ test('every dropdown keeps its arrow 16px in from the edge',async({page})=>{
   }
  };
  await page.goto('/en/explore');await check('/en/explore');
- await page.goto('/en');await page.locator('.floating-reading').click();await check('reading panel');
+ await page.goto('/en');await page.locator('.topbar-reading').click();await check('reading panel');
 });
 
 // Organisation and admin forms use visible choices, never dropdowns.
@@ -237,11 +237,12 @@ test('the menu has one organisations link on a narrow viewport and sign-in sits 
 });
 
 // Warm is a reader's alternative palette, so it has to clear the same contrast sweep as the default.
+const openPanel=async(page:import('@playwright/test').Page)=>{await page.locator('.topbar-reading').click();return page.getByRole('dialog');};
 for(const theme of ['dark','light']) {
- test(`warm tone in ${theme} persists and passes automated checks`,async({page})=>{
+ test(`green accent in ${theme} persists and passes automated checks`,async({page})=>{
   await page.goto('/en');
-  const tone=page.getByRole('group',{name:'Colour tone',exact:true});
-  await tone.getByRole('button',{name:'Warm',exact:true}).click();
+  const panel=await openPanel(page);
+  await panel.getByLabel('Accent colour',{exact:true}).selectOption('warm');
   await expect(page.locator('html')).toHaveAttribute('data-tone','warm');
   await page.evaluate(t=>{const k='vianorae:reading:v1';localStorage.setItem(k,JSON.stringify({...JSON.parse(localStorage.getItem(k)||'{}'),theme:t,themeV:2}));},theme);
   for(const path of ['/en','/en/places/willow-museum/guide','/en/for-organisations']) {
@@ -253,22 +254,20 @@ for(const theme of ['dark','light']) {
   }
  });
 }
-test('the saved tone is highlighted before hydration, so a refresh does not flash Cool',async({page})=>{
+test('the saved accent colour is applied before the page scripts load, so a refresh does not flash blue',async({page})=>{
   await page.addInitScript(()=>localStorage.setItem('vianorae:reading:v1',JSON.stringify({tone:'warm'})));
   await page.route('**/_next/static/**/*.js',route=>route.abort());
   await page.goto('/en');
-  const tone=page.getByRole('group',{name:'Colour tone',exact:true});
-  const accent=await tone.getByRole('button',{name:'Warm',exact:true}).evaluate(el=>getComputedStyle(el).fontWeight);
-  const cool=await tone.getByRole('button',{name:'Cool',exact:true}).evaluate(el=>getComputedStyle(el).fontWeight);
-  expect(Number(accent)).toBeGreaterThan(Number(cool));
+  await expect(page.locator('html')).toHaveAttribute('data-tone','warm');
 });
-test('the tone control steps aside in high contrast and Cool restores the default',async({page})=>{
+test('the accent colour steps aside in high contrast and Blue restores the default',async({page})=>{
  const store=(theme:string)=>page.evaluate(t=>localStorage.setItem('vianorae:reading:v1',JSON.stringify({theme:t,themeV:2,tone:'warm'})),theme);
  await page.goto('/en');
  await store('contrast');await page.reload();
- await expect(page.getByRole('group',{name:'Colour tone',exact:true})).toHaveCount(0);
+ let panel=await openPanel(page);
+ await expect(panel.getByLabel('Accent colour',{exact:true})).toHaveCount(0);
  await store('dark');await page.reload();
- const tone=page.getByRole('group',{name:'Colour tone',exact:true});
- await tone.getByRole('button',{name:'Cool',exact:true}).click();
+ panel=await openPanel(page);
+ await panel.getByLabel('Accent colour',{exact:true}).selectOption('cool');
  await expect(page.locator('html')).toHaveAttribute('data-tone','cool');
 });
