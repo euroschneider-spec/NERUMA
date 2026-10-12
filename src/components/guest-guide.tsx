@@ -4,15 +4,13 @@ import { useMemo, useRef, useState } from 'react';
 import { ArrowLeft, ArrowRight, CheckCircle2, ShieldCheck, SlidersHorizontal, X } from 'lucide-react';
 import { getCopy, type Locale } from '@/lib/i18n';
 import { getAccessCopy } from '@/lib/accessibility-copy';
-import { getDemoGuide, type SensoryLevel, type SensoryProfile } from '@/lib/demo';
+import { getDemoGuide, type SensoryProfile } from '@/lib/demo';
 import { spokenGuide, spokenZone } from '@/lib/speech';
 import { ReadAloud } from './read-aloud';
 import { GuideText } from './guide-text';
+import { LevelSquares } from './level-squares';
 
 const channels = ['sound','light','crowding','smell','temperature','visual'] as const;
-// Filled squares per level. Variable and unknown stay empty: no single level describes them,
-// and a partly filled bar would read as a measurement the venue never made.
-const filled: Record<SensoryLevel, number> = { low:1, moderate:2, high:3, variable:0, unknown:0 };
 
 /**
  * The guest guide as a visitor meets it after scanning a QR code: one mobile surface, no account,
@@ -51,10 +49,10 @@ export function GuestGuide({locale}:{locale:Locale}) {
             <div className="gg-photo"><Image src={zone.illustration} alt={t.illustration+': '+zone.title} width={600} height={400} priority/></div>
             <p className="gg-desc">{zone.description}</p>
             <div>{channels.map(channel=>{
-              const level=zone.sensory[channel as keyof SensoryProfile];const on=filled[level];
+              const level=zone.sensory[channel as keyof SensoryProfile];
               return <div className="gg-chrow" key={channel}>
                 <span className="lbl">{t[channel]}</span>
-                <span className="gg-sq" aria-hidden="true">{[1,2,3].map(step=><span key={step} className={step>on?undefined:on===3?'hot':'on'}/>)}</span>
+                <LevelSquares level={level}/>
                 <span className="gg-lv"><b>{t[level]}</b></span>
               </div>;
             })}</div>

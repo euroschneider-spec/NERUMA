@@ -46,15 +46,14 @@ Decision needed before starting.
 
 ## 3. Guide examples
 
-- [ ] `/example-guide` and `/places/willow-museum/guide` render the same page. The home button and the
-  Explore card link to different URLs. Keep one.
-- [ ] On phones the guide sits inside a phone frame with a fixed height and its own scrolling. The
-  Sound/Light rows end up behind the step buttons. On phones, drop the frame and show the guide at
-  full width.
-- [ ] Three labels stack before the guide starts: "Museum pre-visit guide", "Demonstration · fictional
-  information" and "What a visitor sees". Keep one.
-- [ ] "Sound: Variable" shows three empty squares, which reads as quiet. Give *variable* its own symbol.
-- [ ] The home preview card shows levels as chips; the guide shows them as squares. Use one style.
+- [x] One address: the example guide lives at `/places/willow-museum/guide`, the shape real places will have;
+  `/example-guide` redirects to it.
+- [x] On phones the guide drops the frame and scrolls with the page. The step buttons stay at the bottom and the
+  guide's header with its options stays under the site header.
+- [x] One label above the guide: *Museum pre-visit guide* (`DECISIONS.md`). The "fictional" wording stays in the intro.
+- [x] *Variable* shows filled, empty, filled; *Not recorded* stays empty with a dashed outline.
+- [x] The home preview uses the same squares as the guide (`level-squares.tsx`). Left: the builder's draft preview
+  (`guide-viewer.tsx`) still uses its own dot style.
 
 ## 4. Wording and space on phones
 
@@ -103,7 +102,7 @@ Done on 2026-10-12: the top bar keeps three controls and everything else lives i
 - [x] **Light/dark as an icon-only button.** Show a moon or sun icon, keep the action as the
   accessible name ("Switch to dark mode"), plus a tooltip. Same height as the language button.
   This also lets the top bar fit on one row on phones (section 4).
-- [ ] **Follow the device by default.** When the visitor has not chosen, use the device's light/dark
+- [x] **Follow the device by default** (PR #33; *Reset* going back to it still to check). When the visitor has not chosen, use the device's light/dark
   setting and follow it if it changes. Once they pick one, remember it. Add "Match device" to the
   theme list in the panel, and make *Reset* go back to it. The code change is in the technical tasks
   (`docs/planning/TECH-TASKS.md`, section 2).

@@ -17,7 +17,7 @@ export function SiteHeader({locale}:{locale:Locale}) {
     {href:`/${locale}#sources`,label:t.navSources},
     {href:`/${locale}/explore`,label:t.nav[3]},
   ];
-  const guideRoute=`/${locale}/example-guide`;
+  const guideRoute=`/${locale}/places/willow-museum/guide`;
   const organisationsRoute=`/${locale}/for-organisations`;
   return <>
     <a className="skip-link" href="#main-content">{t.skip}</a>
