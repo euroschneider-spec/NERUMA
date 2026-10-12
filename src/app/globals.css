@@ -546,6 +546,9 @@ html[data-density="summary"] .density-switch button[data-value="summary"] { back
 .sensory-mini { display: flex; flex-wrap: wrap; gap: 8px; min-width: 0; }
 .sensory-mini > span { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 7px; min-width: 0; font-size: 0.75rem; padding: 5px 10px; border-radius: var(--radius-sm); background: var(--color-accent-100); color: var(--color-accent-800); overflow-wrap: anywhere; }
 .sensory-mini strong { font-weight: 600; margin-left: 3px; }
+/* The divider colour vanishes on the tinted chip, so an empty square would read as a gap. */
+.sensory-mini .gg-sq > span { border-color: color-mix(in srgb, currentColor 55%, transparent); }
+.sensory-mini .gg-sq > span.on { background: currentColor; border-color: currentColor; }
 .source-label { display: flex; align-items: center; gap: 6px; font-size: 0.75rem; margin: 16px 0 0; color: var(--v-muted); }
 .demo-stamp { display: block; margin-top: 16px; font-size: 0.75rem; text-align: center; color: var(--v-muted); }
 
@@ -679,7 +682,6 @@ html[data-density="summary"] .density-switch button[data-value="summary"] { back
 /* The example guide is framed at phone width, because that is the device a visitor scans with.
    The frame is decorative: the guide inside stays a normal, reflowing document. */
 .guide-frame { display: flex; flex-direction: column; align-items: center; gap: 10px; padding-bottom: 64px; }
-.guide-frame-label { color: var(--v-muted); }
 .guide-device {
   width: min(420px, 100%); height: min(820px, 80vh); display: flex;
   border: 8px solid var(--color-neutral-100); border-radius: 28px;
@@ -860,6 +862,7 @@ html[data-density="summary"] .density-switch button[data-value="summary"] { back
 .gg-sq > span { width: 12px; height: 12px; border-radius: 3px; border: 1.5px solid var(--color-divider); }
 .gg-sq > span.on { background: var(--color-text); border-color: var(--color-text); }
 .gg-sq > span.hot { background: var(--color-accent); border-color: var(--color-accent); }
+.gg-sq.is-unknown > span { border-style: dashed; }
 .gg-lv { width: auto; min-width: 0; display: flex; flex-direction: column; line-height: 1.2; }
 .gg-lv b { font-size: 0.875rem; font-weight: 600; }
 .gg-lv span { font-size: 0.75rem; color: var(--v-muted); }
@@ -1102,3 +1105,16 @@ p, li, dt, dd, summary, label, figcaption, a, .lbl, .small-label, .small-note { 
 .report-message { margin: 0 0 12px; white-space: pre-wrap; overflow-wrap: anywhere; }
 .report-done { display: flex; flex-direction: column; align-items: flex-start; gap: 16px; }
 .report-done p { margin: 0; }
+
+/* Phones: no device frame and no scrolling box of its own. The guide is part of the page, so nothing sits behind
+   the step buttons, and the buttons stay at the bottom of the screen. */
+@media (max-width: 640px) {
+  .guide-frame { align-items: stretch; padding-bottom: 0; }
+  .guide-device { display: block; width: 100%; height: auto; border: 0; border-radius: 0; box-shadow: none; overflow: visible; }
+  .guide-device .gg { height: auto; border-radius: var(--radius-md); overflow: visible; }
+  .gg-scroll { overflow: visible; }
+  .gg-footer { position: sticky; bottom: 0; z-index: 2; background: var(--color-bg); }
+  /* Just under the sticky site header (about 62px), so the guide options stay one tap away while reading. */
+  .gg-header { position: sticky; top: 64px; z-index: 2; background: var(--color-bg); }
+  .gg-sheet-bg { position: fixed; }
+}
