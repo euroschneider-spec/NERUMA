@@ -43,10 +43,16 @@ test('on a phone the guide has no frame or scroll box, and the step buttons stay
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
 });
 
-test('on a large screen the guide stays in its phone-sized frame', async ({ page }) => {
+test('on a large screen the guide stays in a phone-shaped frame', async ({ page }) => {
   await page.setViewportSize({ width: 1280, height: 900 });
   await page.goto(guide);
-  await expect(page.locator('.guide-device')).toHaveCSS('border-top-width', '8px');
+  const device = page.locator('.guide-device');
+  await expect(device).toHaveCSS('border-top-width', '10px');
+  // A phone's shape: about 390 by 844, shrunk to fit the window.
+  const box = (await device.boundingBox())!;
+  expect(box.height / box.width).toBeGreaterThan(2.05);
+  expect(box.height / box.width).toBeLessThan(2.3);
+  expect(box.y + box.height).toBeLessThanOrEqual(900 + 400);
 });
 
 test('Variable has its own symbol, and the home preview uses the same squares as the guide', async ({ page }) => {

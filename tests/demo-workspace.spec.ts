@@ -188,7 +188,7 @@ test('the preview is a phone-shaped screen on a large window and the page itself
   await expect(screen).toBeVisible();
   const box = (await screen.boundingBox())!;
   expect(box.width).toBeLessThanOrEqual(440);
-  expect(box.height / box.width).toBeGreaterThan(1.6);
+  expect(box.height / box.width).toBeGreaterThan(2.05);
   await page.setViewportSize({ width: 390, height: 800 });
   expect((await screen.boundingBox())!.width).toBeGreaterThan(340);
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);

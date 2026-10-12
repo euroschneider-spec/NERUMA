@@ -671,10 +671,11 @@ legend { padding-inline: var(--space-2); max-width: 100%; font-weight: var(--fon
 /* The example guide is framed at phone width, because that is the device a visitor scans with.
    The frame is decorative: the guide inside stays a normal, reflowing document. */
 .guide-frame { display: flex; flex-direction: column; align-items: center; gap: 10px; padding-bottom: 64px; }
+/* A phone's shape (iPhone 17e: 390 × 844 points). On a short window it shrinks but keeps that shape. */
 .guide-device {
-  width: min(420px, 100%); height: min(820px, 80vh); display: flex;
-  border: 8px solid var(--color-neutral-100); border-radius: 28px;
-  box-shadow: var(--shadow-lg); overflow: hidden;
+  aspect-ratio: 390 / 844; height: min(844px, calc(100dvh - 96px)); width: auto; max-width: 100%; display: flex;
+  border: 10px solid #15171b; border-radius: 46px; outline: 1px solid var(--color-divider);
+  box-shadow: var(--shadow-lg); overflow: hidden; background: var(--color-bg);
 }
 .guide-device .gg { border-radius: var(--radius-md); }
 /* The draft preview is the same frame around a scrolling page of the draft. */
@@ -1091,7 +1092,7 @@ p, li, dt, dd, summary, label, figcaption, a, .lbl, .small-label, .small-note { 
    the step buttons, and the buttons stay at the bottom of the screen. */
 @media (max-width: 640px) {
   .guide-frame { align-items: stretch; padding-bottom: 0; }
-  .guide-device { display: block; width: 100%; height: auto; border: 0; border-radius: 0; box-shadow: none; overflow: visible; }
+  .guide-device { display: block; width: 100%; height: auto; aspect-ratio: auto; border: 0; border-radius: 0; outline: 0; box-shadow: none; overflow: visible; }
   .guide-device .gg { height: auto; border-radius: var(--radius-md); overflow: visible; }
   .draft-screen, .draft-screen.content-body { overflow: visible; padding: 0 0 24px; }
   .gg-scroll { overflow: visible; }
