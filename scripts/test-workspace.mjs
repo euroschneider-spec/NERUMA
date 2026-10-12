@@ -53,7 +53,7 @@ try {
     await expect(sidebar.getByRole('link',{name:'NERUMA'})).toHaveAttribute('href','/en');
     await expect(sidebar.locator('.language-switch summary')).toBeVisible();
     await expect(sidebar.getByRole('group',{name:'Colour tone'})).toHaveCount(0);
-    await expect(page.locator('.header-reading')).toHaveCount(0);
+    await expect(page.locator('.topbar-reading')).toHaveCount(0);
     const reading=sidebar.getByRole('button',{name:'Reading settings',exact:true});await expect(reading).toBeVisible();
     await reading.click();const panel=page.getByRole('dialog',{name:'Reading settings'});await expect(panel).toBeVisible();
     await expect(panel.getByLabel('Accent colour',{exact:true})).toBeVisible();

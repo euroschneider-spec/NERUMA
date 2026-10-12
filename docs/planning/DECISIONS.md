@@ -91,8 +91,9 @@ Mobile first: the floating edge tab is easy to miss, has no label, and covers co
 Done 2026-10-12: the top bar keeps language, an icon-only light/dark button and the labelled *Reading settings*
 button; *Cool / Warm* (now *Accent colour: Blue / Green*) and *Summary / Full page* moved into the panel, and the
 organisation sidebar lost its Cool / Warm switch the same way. The panel opens under the button and scrolls inside
-itself on short screens. The top bar scrolls away on long pages, so the owner chose (2026-10-12) to move the *Reading settings* button into
-the sticky header row, next to the menu button, where it stays on screen.
+itself on short screens. The top bar scrolls away on long pages, and the owner chose (2026-10-13) to keep it that way:
+visitors set their reading preferences once and don't need the button on screen all the time, so it stays next to the
+language button (briefly tried in the sticky header on 2026-10-12, then reverted).
 Covers: `DESIGN-TASKS.md` section 6. Sections 5 and 7 follow from the three principles above and have not
 been discussed one by one.
 
