@@ -677,6 +677,13 @@ legend { padding-inline: var(--space-2); max-width: 100%; font-weight: var(--fon
   box-shadow: var(--shadow-lg); overflow: hidden;
 }
 .guide-device .gg { border-radius: var(--radius-md); }
+/* The draft preview is the same frame around a scrolling page of the draft. */
+.draft-screen { flex: 1; min-width: 0; overflow: auto; padding: 16px; background: var(--color-bg); }
+.draft-screen.content-body { padding: 16px; }
+.draft-screen .builder-zone { padding: 16px; }
+.draft-screen .guide-media { padding: 0; }
+.draft-screen .read-aloud { margin-bottom: 16px; }
+.draft-screen .draft-photo, .draft-screen .guide-media img { width: 100%; height: auto; }
 .gg-step {
   width: 100%; display: flex; align-items: center; gap: 10px;
   padding: 10px 12px; min-height: 48px; text-align: left; font-size: 0.9375rem;
@@ -1086,6 +1093,7 @@ p, li, dt, dd, summary, label, figcaption, a, .lbl, .small-label, .small-note { 
   .guide-frame { align-items: stretch; padding-bottom: 0; }
   .guide-device { display: block; width: 100%; height: auto; border: 0; border-radius: 0; box-shadow: none; overflow: visible; }
   .guide-device .gg { height: auto; border-radius: var(--radius-md); overflow: visible; }
+  .draft-screen, .draft-screen.content-body { overflow: visible; padding: 0 0 24px; }
   .gg-scroll { overflow: visible; }
   .gg-footer { position: sticky; bottom: 0; z-index: 2; background: var(--color-bg); }
   /* Just under the sticky site header (about 62px), so the guide options stay one tap away while reading. */
