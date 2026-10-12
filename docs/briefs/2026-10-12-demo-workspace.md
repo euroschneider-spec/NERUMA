@@ -1,5 +1,5 @@
 ---
-status: building   # idea → building → done
+status: done   # idea → building → done
 date: 2026-10-12
 ---
 
@@ -76,4 +76,19 @@ Checked on a phone first, then at 1280px, in EN, RO and DE.
    `/api/workspace`" (Playwright request listener) and "a second browser context sees the original".
 
 ## Result
-Filled in at the end: the pull request, what changed, what was run, what was not run.
+Built on branch `feat/demo-workspace-build`.
+
+**What changed.** `OnlineBuilder` has a `mode` (`live` or `demo`); the demo store is `src/lib/demo-workspace.ts` (two
+locations built from `src/lib/demo.ts` texts, one key per location, words per language, everything else shared, a damaged
+value falls back to the sample). The cards (`location-cards.tsx`), preview (`draft-preview.tsx`) and photo (`step-photo.tsx`)
+were pulled out of the real pages and are used by both. `OrgSidebar` takes `base` and `exit`. The old `/dashboard` pages,
+`demo-builder`, `guide-viewer`, `publication-review` and `zone-photo` are gone; `/dashboard/*` redirects to `/demo` in `next.config.ts`.
+The public header and footer step aside on `/demo` like on `/workspace`. `ConfirmDialog` ids are no longer fixed (two can share a page).
+
+**Ran.** typecheck, lint, 67 unit tests (15 new), `test:db` 81, `test:workspace` 42, all 90 browser tests (15 new in
+`tests/demo-workspace.spec.ts`, including no request to the server, a second browser seeing the original, axe in dark, light and
+high contrast, 390 and 320px). Screenshots checked at 1280 and 390px.
+
+**Not done / left.** Strings of the old demo (`getCopy().builder`, `publicationReview` and friends) are still in `i18n.ts` and
+`organisation-copy.ts`, unused. RO and DE text of the pavilion is a draft for native review. The demo is not in the sitemap or
+linked from the home page beyond the existing *Demo workspace* link.

@@ -28,8 +28,7 @@ npm run start
 - EN/RO/DE URLs with translated public content, explicit language choice and correct document language.
 - Home, How it works, For organisations, Methodology, Example guide, Explore, Contact, Sign-in and organisation registration, Privacy, Terms and Accessibility draft pages.
 - Fictional Willow Museum with five illustrated visit zones, six sensory bands, factual predictability information, source label, step navigation, skipping and completion.
-- Demo workspace: overview, locations, local Guide Builder, preview, QR/share, role descriptions and settings.
-- Versioned, validated browser-local drafts, separated by language. Public demo data remains fixed.
+- Demo workspace at `/demo`: the real organisation app (sidebar, dashboard cards with QR code and link, step editor, preview) on two fictional locations, saved only in the visitor's own browser, with publishing switched off and a *Reset demo* button. Public demo data remains fixed.
 - Stable `/q/willow-museum` redirect and QR SVG at `/api/qr/willow-museum`.
 - Reading preferences in a single fixed, movable, nonmodal popup opened from a tab docked to the left screen edge, with page scrolling available: text size, light/dark/high contrast, text spacing, reset and reduced-motion support.
 - Optional browser read-aloud for pages, guide steps, complete guides and private online previews, with pause/resume/stop and speed. Matching EN/RO/DE voices depend on the device; no autoplay or paid TTS service.

@@ -15,18 +15,24 @@ export type SidebarCopy = { dashboard: string; signOut: string; sidebarLabel: st
 /** Remembered in this browser only; a convenience, so a missing or blocked storage simply means "open". */
 const collapsedKey = 'neruma:sidebar-collapsed';
 
-/** The organisation's own navigation: who and where you are, the way around, language, theme and sign out. */
-export function OrgSidebar({ locale, memberships, copy, signOutAction }: {
+/**
+ * The organisation's own navigation: who and where you are, the way around, language, theme and sign out.
+ * The demo uses the same sidebar: `base` is where its pages live, and `exit` replaces Sign out with a plain link.
+ */
+export function OrgSidebar({ locale, memberships, copy, signOutAction, base = 'workspace', exit }: {
   locale: Locale;
   memberships: SidebarMembership[];
   copy: SidebarCopy;
-  signOutAction: () => Promise<void>;
+  signOutAction?: () => Promise<void>;
+  base?: string;
+  exit?: { href: string; label: string };
 }) {
   const path = usePathname();
   const chosen = useSearchParams().get('org');
   const current = memberships.find((membership) => membership.organisation === chosen) ?? memberships[0];
-  const dashboard = `/${locale}/workspace${memberships.length > 1 ? `?org=${current.organisation}` : ''}`;
-  const reportPath = `/${locale}/workspace/report`;
+  const home = `/${locale}/${base}`;
+  const dashboard = `${home}${memberships.length > 1 ? `?org=${current.organisation}` : ''}`;
+  const reportPath = `${home}/report`;
   const reportHref = `${reportPath}${memberships.length > 1 ? `?org=${current.organisation}` : ''}`;
   const [collapsed, setCollapsed] = useState(false);
   useEffect(() => {
@@ -60,7 +66,7 @@ export function OrgSidebar({ locale, memberships, copy, signOutAction }: {
         <p className="app-org-role">{current.roleLabel}</p>
       </div>
       <nav className="app-nav" aria-label={copy.sidebarLabel}>
-        <Link href={dashboard} aria-current={path === `/${locale}/workspace` ? 'page' : undefined} data-active={path.startsWith(`/${locale}/workspace`) && path !== reportPath} data-tip={copy.dashboard}>
+        <Link href={dashboard} aria-current={path === home ? 'page' : undefined} data-active={path.startsWith(home) && path !== reportPath} data-tip={copy.dashboard}>
           <LayoutDashboard size={16} aria-hidden="true" />
           <span className="app-label">{copy.dashboard}</span>
         </Link>
@@ -75,12 +81,19 @@ export function OrgSidebar({ locale, memberships, copy, signOutAction }: {
         <LanguageMenu locale={locale} />
         <ThemeToggle locale={locale} />
         <ReadingButton label={copy.reading} className="app-reading"><SlidersHorizontal size={16} aria-hidden="true" /></ReadingButton>
-        <form action={signOutAction}>
-          <button type="submit" className="button button-small button-outline app-signout" data-tip={copy.signOut}>
+        {exit ? (
+          <Link className="button button-small button-outline app-signout" href={exit.href} data-tip={exit.label}>
             <LogOut size={16} aria-hidden="true" />
-            <span className="app-label">{copy.signOut}</span>
-          </button>
-        </form>
+            <span className="app-label">{exit.label}</span>
+          </Link>
+        ) : (
+          <form action={signOutAction}>
+            <button type="submit" className="button button-small button-outline app-signout" data-tip={copy.signOut}>
+              <LogOut size={16} aria-hidden="true" />
+              <span className="app-label">{copy.signOut}</span>
+            </button>
+          </form>
+        )}
       </div>
     </aside>
   );

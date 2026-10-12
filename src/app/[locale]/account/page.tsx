@@ -21,7 +21,7 @@ export const metadata = { title: 'Organisation account', robots: { index: false,
 export default async function Account({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params; if (!isLocale(locale)) notFound();
   const t=getOrganisationCopy(locale);const v=getVerificationCopy(locale);
-  if (!authConfigured()) return <main id="main-content" className="container verification-page"><div className="page-heading"><h1>{t.account}</h1></div><p className="notice">{t.unavailable}</p><div className="content-body"><Link className="button" href={`/${locale}/dashboard`}>{getCopy(locale).openWorkspace}</Link></div></main>;
+  if (!authConfigured()) return <main id="main-content" className="container verification-page"><div className="page-heading"><h1>{t.account}</h1></div><p className="notice">{t.unavailable}</p><div className="content-body"><Link className="button" href={`/${locale}/demo`}>{getCopy(locale).openWorkspace}</Link></div></main>;
   const supabase=await createClient();const user=await confirmedUser(supabase);
   if(!user) redirect(`/${locale}/login`);
   if(!await verificationReady(supabase)) return <main id="main-content" className="container verification-page"><div className="page-heading"><h1>{t.account}</h1></div><p className="notice" role="status">{v.setup}</p><form action={signOut.bind(null,locale)}><button className="text-button">{t.signOut}</button></form></main>;
@@ -54,7 +54,7 @@ export default async function Account({ params }: { params: Promise<{ locale: st
     {!documentsEnabled && !ownOrganizations.length && <p className="notice" role="status">{getEvidenceCopy(locale).setup}</p>}
     {ownOrganizations.length ? <><ul>{ownOrganizations.map(org=><li key={org.id}>{org.name}</li>)}</ul>{workspaceConfigured() ? <><p className="notice">{getWorkspaceCopy(locale).boundary}</p><Link className="button" href={`/${locale}/workspace`}>{getWorkspaceCopy(locale).workspace}</Link></> : <p className="notice">{t.liveBoundary}</p>}</> : null}
     {(!application || ['needs_information','rejected'].includes(application.status)) && !ownOrganizations.length && <OrganisationForm key={application?.revision || 'new'} locale={locale} mode="onboard" enabled={documentsEnabled && !documentsResult?.error} initial={initial} initialDocuments={initialDocuments}/>}
-    <p><Link className="quiet-link" href={`/${locale}/dashboard`}>{getCopy(locale).openWorkspace}</Link></p>
+    <p><Link className="quiet-link" href={`/${locale}/demo`}>{getCopy(locale).openWorkspace}</Link></p>
     <form action={signOut.bind(null,locale)}><button className="text-button" type="submit">{t.signOut}</button></form>
   </div></main>;
 }

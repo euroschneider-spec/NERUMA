@@ -1072,6 +1072,10 @@ p, li, dt, dd, summary, label, figcaption, a, .lbl, .small-label, .small-note { 
 .confirm-dialog p { margin: 0 0 20px; }
 .confirm-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 12px; }
 
+/* The demo's calm strip: where changes are kept, and the way back to the original. */
+.demo-strip { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 16px; padding: 8px clamp(16px, 3vw, 32px); border-bottom: 1px solid var(--color-divider); background: var(--color-surface); font-size: 0.875rem; }
+.demo-strip p { margin: 0; }
+
 .report-message { margin: 0 0 12px; white-space: pre-wrap; overflow-wrap: anywhere; }
 .report-done { display: flex; flex-direction: column; align-items: flex-start; gap: 16px; }
 .report-done p { margin: 0; }

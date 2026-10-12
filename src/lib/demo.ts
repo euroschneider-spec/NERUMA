@@ -38,33 +38,3 @@ export function getDemoGuide(locale: Locale): Guide {
   return { schemaVersion:1, title: locale==='en' ? 'The Willow Museum' : locale==='ro' ? 'Muzeul Willow' : 'Das Willow Museum', locale, sourceLevel:'venue_provided', isDemo:true,
     zones: content[locale].map(([title,description,note,next], i) => ({ id:['entrance','reception','collection','interactive','quiet-room'][i], title,description,note,next, illustration:`/illustrations/${['entrance','reception','collection','interactive','quiet-room'][i]}.svg`, sensory: profiles[i] })) };
 }
-export const draftKey = (locale: Locale) => `vianorae:demo-draft:v1:${locale}`;
-export function parseDraft(raw: string | null, locale: Locale): Guide {
-  const fallback = getDemoGuide(locale);
-  if (!raw) return fallback;
-  try {
-    const candidate = JSON.parse(raw) as Guide;
-    const levels = ['low','moderate','high','variable','unknown'];
-    if(candidate.schemaVersion !== 1 || candidate.locale !== locale || candidate.isDemo !== true || candidate.sourceLevel !== 'venue_provided' || typeof candidate.title !== 'string' || !candidate.title.trim() || candidate.title.length > 160 || !Array.isArray(candidate.zones) || candidate.zones.length !== 5) return fallback;
-    for (let i=0; i<candidate.zones.length; i++) {
-      const zone = candidate.zones[i];
-      if(zone.id !== fallback.zones[i].id || ['title','description','note','next'].some(key => typeof zone[key as keyof Zone] !== 'string' || (zone[key as keyof Zone] as string).length > 2000) || !zone.title.trim() || !zone.description.trim() || !zone.sensory || Object.keys(profiles[i]).some(key => !levels.includes(zone.sensory[key as keyof SensoryProfile]))) return fallback;
-    }
-    return { ...candidate, zones: candidate.zones.map((zone,i)=>({
-      ...zone, illustration:fallback.zones[i].illustration,
-      photo: validPhoto(zone.photo) ? zone.photo : undefined,
-    })) };
-  } catch { return fallback; }
-}
-
-export function validPhoto(photo: unknown): photo is ZonePhoto {
-  if (!photo || typeof photo !== 'object') return false;
-  const value = photo as ZonePhoto;
-  return typeof value.id === 'string' && /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value.id)
-    && typeof value.alt === 'string' && Boolean(value.alt.trim()) && value.alt.length <= 500
-    && typeof value.rights === 'string' && Boolean(value.rights.trim()) && value.rights.length <= 500
-    && typeof value.photographedOn === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(value.photographedOn)
-    && Number.isFinite(Date.parse(value.photographedOn))
-    && new Date(value.photographedOn).toISOString().slice(0,10) === value.photographedOn
-    && value.photographedOn <= new Date().toISOString().slice(0,10);
-}

@@ -21,7 +21,7 @@ export default async function Register({ params }: { params: Promise<{ locale: s
     <div className="content-body form-column"><ResponsibilityNotice locale={locale}/>
       {authConfigured() && !enabled && <p className="notice" role="status">{v.setup}</p>}
       <OrganisationForm locale={locale} mode="register" enabled={enabled}/>
-      <div className="button-row"><Link className="quiet-link" href={`/${locale}/login`}>{t.login}</Link><Link className="quiet-link" href={`/${locale}/dashboard`}>{getCopy(locale).openWorkspace}</Link></div>
+      <div className="button-row"><Link className="quiet-link" href={`/${locale}/login`}>{t.login}</Link><Link className="quiet-link" href={`/${locale}/demo`}>{getCopy(locale).openWorkspace}</Link></div>
     </div>
   </main>;
 }

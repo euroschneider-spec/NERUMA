@@ -19,6 +19,7 @@ npm run typecheck && npm run lint && npm run test:unit
 | `read-aloud`, `lib/speech` | `tests/read-aloud.spec.ts` |
 | `reading-settings`, `lib/reading-prefs` | `tests/reading-accessibility.spec.ts` + `tests/read-aloud.spec.ts` |
 | `auth/actions`, `lib/roles`, `lib/workspace*` | `tests/platform.spec.ts` + `npm run test:unit` |
+| `lib/demo-workspace`, `components/demo-workspace`, `online-builder`, `location-cards`, `draft-preview`, `step-photo`, `org-sidebar` | `tests/demo-workspace.spec.ts` + `npm run test:unit` + `npm run test:workspace` (the same components serve the signed-in workspace) |
 | Design tokens or palette in `globals.css` | **everything** — the axe WCAG contrast sweeps are spread across all three spec files |
 
 ```sh
@@ -31,6 +32,10 @@ let CI run it.
 Always pass `PORT` when a `next dev` server may be running. Playwright's `reuseExistingServer`
 adopts whatever already listens on the port, and a dev server's HMR socket breaks hydration under
 test — every interactive test then fails for reasons unrelated to the change. See GOTCHA.md.
+
+## The demo workspace
+
+`/en/demo` needs no sign-in and no database: any build serves it, and `npm run dev` is enough. It is the real organisation app saved only in the browser (`localStorage`, keys `neruma:demo:v1:<id>`, plus IndexedDB for photos). Open it in a private window to see the original; *Reset demo* brings it back.
 
 ## Browsing locally as a signed-in user
 
