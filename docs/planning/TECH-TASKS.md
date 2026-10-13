@@ -55,11 +55,13 @@ Under the EU ePrivacy rules (Romania: Law 506/2004; Germany: TDDDG §25), storag
 necessary for something the user asked for needs no consent. Sign-in sessions and settings the visitor
 chose fall under that. **So no cookie banner is needed as things stand.**
 
-- [ ] The privacy page doesn't mention device storage at all. Add a short section listing the sign-in
-  cookies and the preference storage: what each is for and how long it lasts. GDPR requires this
-  information even without consent.
-- [ ] Rule for later: adding analytics, embedded maps or videos, or any third-party script means
-  re-checking consent before it ships.
+- [x] The privacy page lists everything stored on the device (sign-in cookies, `neruma_device`, reading settings, sidebar,
+  demo) in EN/RO/DE, with what each is for and how long it lasts. `tests/unit/storage-disclosure.test.ts` fails when code
+  starts storing something that isn't disclosed. Still open: the privacy page's older intro says it describes "the
+  demonstration, before live accounts", and the data-controller, retention and processor details wait for the owner.
+- [x] Rule for later: adding analytics, embedded maps or videos, or any third-party script means
+  re-checking consent before it ships. `storage-disclosure.test.ts` fails on known analytics and embed hosts and on
+  `next/script`; a deliberate addition changes that test in the same pull request.
 
 ## 4. Email
 
@@ -278,8 +280,10 @@ locally is in `docs/guides/TESTING.md`.
 - [ ] No visual regression tests. A few full-page screenshot comparisons (home, guide, login at 390 and
   1280px) would catch the kind of alignment bugs found in the design review, at the cost of updating
   baselines when the design changes on purpose.
-- [ ] No test runs against the deployed Vercel preview. After the first real organisation pilot, add a
-  small smoke test (home loads, example guide opens, sign-in page loads) that runs after each deployment.
+- [x] A smoke test for a deployed site exists (`tests/smoke.spec.ts`, `npm run test:smoke`): the pages open, sign-in and
+  registration are enabled, headers, and with the public key what an anonymous visitor can do to the database. Still open:
+  running it automatically after each Vercel deployment. The full list of manual and open test cases is in
+  `docs/guides/TEST-PLAN.md`.
 
 ## 12. Organisation app: what the dashboard work left open
 

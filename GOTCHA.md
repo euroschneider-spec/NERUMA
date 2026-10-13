@@ -143,3 +143,21 @@ The error came from the database tests, not from reading the SQL.
 
 **Takeaway**: in plpgsql functions, give variables and parameters a prefix (`v_address`, `guide_address`) so they can't
 share a name with any column the function touches, including columns added later.
+
+## 2026-10-13 — the Supabase project reference in the docs didn't exist, and registration was switched off for days
+
+`vianorae.lignorae.com/en/register` showed the form greyed out with no explanation. The site switches the form off when
+`NEXT_PUBLIC_SUPABASE_URL`, `VIANORAE_SUPABASE_PROJECT_REF` and the key don't agree (`src/lib/supabase/config.ts`). They
+didn't: the docs, and Vercel, named `uzl…`, a project reference that has no address on the internet; the real `neruma-prod` is
+`ywbcsvswisorlgajbkev`. I copied the reference from the README into my instructions and told the owner to set the value back
+to it, which undid a correct edit. Two more hours went on a key I had "read" from a screenshot: `I`, `l`, `O` and `0` look alike,
+and the key I typed was rejected.
+
+**Fix:** the three Vercel values now name `ywbcs…`; the reference is corrected in eleven files; `tests/smoke.spec.ts` checks a
+deployed site for exactly this (form enabled, headers, optionally the database as an anonymous visitor).
+
+**Takeaway:** a project reference, address or key in a document is a claim, not a fact. Check it where it lives: open the
+dashboard, or resolve the address (`dig <ref>.supabase.co`). Never retype a key or reference from a screenshot or from memory;
+copy it from the source. When a form is disabled with no message, suspect the settings first, and run `npm run test:smoke`
+after any change to Vercel's environment variables.
+

@@ -22,6 +22,11 @@ npm run typecheck && npm run lint && npm run test:unit
 | `two-factor*`, `login/verify`, `lib/two-factor*` | `npm run test:db` + `npm run test:workspace` + `npm run test:unit` |
 | `publishing`, `publish-dialog`, `published-server`, `/q`, `/api/guide-photos`, Explore, the guide page | `npm run test:db` + `npm run test:workspace` (the whole flow: publish, visitor, QR, edit, unpublish, notice) + `tests/guide-example.spec.ts` + `npm run test:unit` |
 | `lib/demo-workspace`, `components/demo-workspace`, `online-builder`, `location-cards`, `draft-preview`, `step-photo`, `org-sidebar` | `tests/demo-workspace.spec.ts` + `npm run test:unit` + `npm run test:workspace` (the same components serve the signed-in workspace) |
+| `content.ts` (privacy page), anything that stores on the device (`localStorage`, cookies, `indexedDB`) | `npm run test:unit` (`storage-disclosure.test.ts` fails until the privacy page lists it) + `tests/privacy-security.spec.ts` |
+| `next.config.ts` headers, `proxy.ts`, API routes | `tests/privacy-security.spec.ts` |
+| Anything that shows organisation-typed text (guide, demo, preview) | `tests/hostile-text.spec.ts` |
+| `supabase/config.toml`, `supabase/templates/` | `npm run test:unit` (`auth-config`, `email-template`) |
+| `verification.ts`, the registration form | `npm run test:unit` (`verification.test.ts`) + `npm run test:workspace` |
 | Design tokens or palette in `globals.css` | **everything** — the axe WCAG contrast sweeps are spread across all three spec files |
 
 ```sh
@@ -61,3 +66,22 @@ stop it. It reads the migrations only when it starts: after switching to a branc
 start it again. Set `DEV_MOCK_PORT` to use another port. It refuses to start under `NODE_ENV=production` or on Vercel.
 
 A hosted dev database for trying migrations against a real Supabase is described in [DATABASE-ENVIRONMENTS.md](DATABASE-ENVIRONMENTS.md).
+
+## Testing a deployed site
+
+`tests/smoke.spec.ts` checks a real deployment, read-only, with no mocked data and no accounts created:
+
+```sh
+SMOKE_URL=https://vianorae.lignorae.com npm run test:smoke
+```
+
+With the project's public address and publishable key it also asks the database, as an anonymous visitor, what it will
+let anyone do. Run it after every change to Vercel's settings, after installing a migration, and before sharing a link:
+
+```sh
+SMOKE_URL=https://vianorae.lignorae.com SMOKE_SUPABASE_URL=https://<ref>.supabase.co SMOKE_SUPABASE_KEY=sb_publishable_… npm run test:smoke
+```
+
+The full list of what is tested, what only a person can test, and what is still open is in
+[TEST-PLAN.md](TEST-PLAN.md).
+

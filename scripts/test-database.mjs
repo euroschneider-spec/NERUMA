@@ -307,6 +307,54 @@ await check('publishing again brings back the same address and code',async()=>{
  await as(null,'anon');assert.equal((await qr(pubCode)).status,'published');
 });
 
+// Edge cases of the address (slug) and of the public lookups. Visitors can type anything into an address or a QR code.
+const slugOf=async text=>(await db.query('select private.slug_text($1) s',[text])).rows[0].s;
+await as(newOwner);
+await check('addresses are plain lowercase words, in the languages we support, whatever is typed',async()=>{
+ const cases=[['Muzeul Național de Artă','muzeul-national-de-arta'],['ȘTEFAN CEL MARE','stefan-cel-mare'],['Café Müller & Söhne','cafe-mueller-soehne'],['Groß Gerau','gross-gerau'],
+  ['--a--','a'],['a   b','a-b'],["O'Brien; drop table places;--",'o-brien-drop-table-places'],['<script>alert(1)</script>','script-alert-1-script'],['Museum 2026','museum-2026']];
+ for(const [name,expected] of cases)assert.equal(await slugOf(name),expected,name);
+});
+await check('a name with no latin letters or digits still gets a usable address',async()=>{
+ for(const name of ['','   ','🏛️🏛️','ΜΟΥΣΕΙΟ','---',null])assert.equal(await slugOf(name),'guide',String(name));
+});
+await check('an address is never longer than 60 characters and never starts or ends with a hyphen',async()=>{
+ const names=['x'.repeat(100),'a'.repeat(59)+' b','a'.repeat(58)+' b c','muzeul '.repeat(20),'ab-'.repeat(30),'a'.repeat(60)+'-b'];
+ for(const name of names){const slug=await slugOf(name);assert.ok(slug.length<=60,`${name.slice(0,12)}…: ${slug.length}`);assert.match(slug,/^[a-z0-9]+(-[a-z0-9]+)*$/,`${name.slice(0,12)}…: ${slug}`);}
+});
+await check('a published address a visitor cannot open does not exist: any name, even one that begins with "place"',async()=>{
+ const edges=[[id(1303),[id(1317),id(1318),id(1319)],'Place des Arts','Montreal'],[id(1304),[id(1327),id(1328),id(1329)],'a'.repeat(59)+' b','Cluj']];
+ for(const [edgePlace,edgeZones,name,town] of edges){
+  await saveDraft(newOrg,edgePlace,0,'en',{...draft,name,city:town,zones:edgeZones.map((zoneId,i)=>step(zoneId,['One','Two','Three'][i]))});
+  const result=await publish(edgePlace,1);
+  await as(null,'anon');
+  assert.equal((await guideFor(result.slug,'en'))?.status,'published',`${name.slice(0,20)}: ${result.slug}`);
+  assert.equal((await qr(result.code))?.status,'published');
+  assert.ok((await db.query('select public.published_places($1) list',['en'])).rows[0].list.some(entry=>entry.slug===result.slug),`${name.slice(0,20)} is listed in Explore`);
+  await as(newOwner);
+ }
+});
+await as(null,'anon');
+await check('hostile addresses, codes and languages answer "not found" and never an error',async()=>{
+ const hostile=['',' ','A','UPPER-CASE','a b','a--b','-a','a-','../etc/passwd','%00','a'.repeat(10000),"'; drop table public.places;--",'<script>alert(1)</script>','ß','🏛️','a\nb','place-'+pubPlace];
+ for(const value of hostile){
+  assert.equal(await qr(value),null,`qr ${value.slice(0,20)}`);assert.equal(await guideFor(value,'en'),null,`guide ${value.slice(0,20)}`);
+ }
+ assert.equal(await qr(null),null);assert.equal(await guideFor(null,'en'),null);
+ for(const lang of [null,'','xx','<script>','a'.repeat(5000),"en'--"]){
+  assert.equal((await guideFor('a-visitor-s-museum-demo-city-2',lang))?.status,'published',`language ${String(lang).slice(0,10)} falls back to a published one`);
+  assert.ok(Array.isArray((await db.query('select public.published_places($1) list',[lang])).rows[0].list));
+ }
+});
+await as(newOwner);
+await check('photo names with path tricks, capitals or extra parts are never accepted as a workspace or public photo',async()=>{
+ const good=pubKey;
+ const bad=[null,'',good.toUpperCase(),'../'+good,good+'/..',good.replace('.webp','.png'),good.replace('.webp','.webp.exe'),good+'x',`${newOrg}/${pubPlace}/${pubZones[0]}.webp`,
+  `${newOrg}/../${newOrg}/${pubPlace}/${pubZones[0]}/${pubPhoto}.webp`,`${orgB}/${pubPlace}/${pubZones[0]}/${pubPhoto}.webp`,' '+good,good+'\n'];
+ for(const name of bad)assert.equal((await db.query('select private.can_access_workspace_photo($1) ok',[name])).rows[0].ok,false,String(name));
+ assert.equal((await db.query('select private.can_access_workspace_photo($1) ok',[good])).rows[0].ok,true);
+});
+
 // Problem reports: owners and admins of an approved organisation report to NERUMA; only the platform administrator closes.
 const stranger=id(77),reportText='The photo upload stops at 90 percent.';
 await db.exec(`reset role;insert into auth.users(id,email) values('${stranger}','stranger@example.test');`);
