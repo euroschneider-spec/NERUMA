@@ -7,10 +7,11 @@ const owner=id(1),admin=id(2),editor=id(3),outsider=id(4),ownerB=id(5),assessor=
 const orgA=id(101),orgB=id(102),placeA=id(201),placeB=id(202),guideA=id(301),guideB=id(302),zoneA=id(401),zoneB=id(402),profileA=id(501);
 async function check(name,fn){await fn();checks++;console.log(`PASS ${name}`);}
 // Sessions are fully signed in (aal2) unless a check says otherwise, as after a password and an authenticator code.
-async function as(user,role='authenticated',aal='aal2'){await db.exec(`reset role; set role ${role}; select set_config('request.jwt.claim.sub','${user||''}',false); select set_config('request.jwt.claims','${user?JSON.stringify({sub:user,aal}):''}',false);`);}
+// Each user has one default session id unless a check names another (remembered devices trust one session at a time).
+async function as(user,role='authenticated',aal='aal2',session=user){await db.exec(`reset role; set role ${role}; select set_config('request.jwt.claim.sub','${user||''}',false); select set_config('request.jwt.claims','${user?JSON.stringify({sub:user,aal,session_id:session}):''}',false);`);}
 async function count(table){return (await db.query(`select count(*)::int as n from public.${table}`)).rows[0].n;}
 async function denied(sql){await assert.rejects(()=>db.exec(sql));}
-await db.exec(`create role anon;create role authenticated;create role service_role bypassrls;create schema auth;create table auth.users(id uuid primary key,email_confirmed_at timestamptz default now(),is_anonymous boolean not null default false,email text default 'fixture@example.test');
+await db.exec(`create role anon;create role authenticated;create role service_role bypassrls;create schema auth;create table auth.users(id uuid primary key,email_confirmed_at timestamptz default now(),is_anonymous boolean not null default false,email text default 'fixture@example.test',encrypted_password text);
 create function auth.uid() returns uuid language sql stable as $$select nullif(current_setting('request.jwt.claim.sub',true),'')::uuid$$;
 create function auth.jwt() returns jsonb language sql stable as $$select coalesce(nullif(current_setting('request.jwt.claims',true),''),'{}')::jsonb$$;
 create table auth.mfa_factors(id uuid primary key default gen_random_uuid(),user_id uuid not null references auth.users(id),friendly_name text,factor_type text not null default 'totp',status text not null default 'unverified',secret text,created_at timestamptz not null default now(),updated_at timestamptz not null default now());
@@ -389,6 +390,64 @@ await check('a platform administrator needs the second factor from day one',asyn
  assert.equal(await count('problem_reports'),0);
  await assert.rejects(()=>review(applicationId,4,'suspended',false,false,'','','Access suspended while the mandate is investigated.'));
  await assert.rejects(()=>db.query('select public.close_problem_report($1)',[openReport]),/Platform administrator required/);
+});
+
+// Remember this device: a token from an aal2 session lets one later password-only session through, for owners and admins only.
+const sessionA=id(1501),sessionB=id(1502),sessionC=id(1503);
+const rememberDevice=async()=>(await db.query('select public.remember_device() token')).rows[0].token;
+const trust=async token=>(await db.query('select public.trust_this_session($1) ok',[token])).rows[0].ok;
+await db.exec('reset role');await db.query("insert into auth.mfa_factors(user_id,status) values($1,'verified'),($2,'verified')",[newOwner,platformAdmin]);
+await as(newOwner,'authenticated','aal1',sessionA);
+await check('a password-only session cannot remember a device',async()=>{await assert.rejects(()=>rememberDevice(),/needs a session that entered the code/);});
+let deviceToken;
+await as(newOwner,'authenticated','aal2',sessionA);
+await check('after the code, an owner remembers a device; only a hash is stored and nobody signed in can read it',async()=>{
+ deviceToken=await rememberDevice();assert.match(deviceToken,/^[0-9a-f]{64}$/);
+ await denied('select * from private.remembered_devices');await denied('select * from private.trusted_sessions');
+ const listed=(await db.query('select public.remembered_devices() list')).rows[0].list;assert.equal(listed.length,1);assert.equal(JSON.stringify(listed).includes(deviceToken),false);
+ await db.exec('reset role');const stored=(await db.query('select encode(token_hash,\'hex\') hash from private.remembered_devices where user_id=$1',[newOwner])).rows[0].hash;
+ assert.notEqual(stored,deviceToken);await as(newOwner,'authenticated','aal2',sessionA);
+});
+await as(newOwner,'authenticated','aal1',sessionB);
+await check('a later password-only session with the token passes; without it, or with a wrong one, it does not',async()=>{
+ assert.equal(await count('places'),0);assert.equal(await trust('0'.repeat(64)),false);assert.equal(await count('places'),0);
+ assert.equal(await trust(deviceToken),true);assert.ok(await count('places')>0);assert.equal((await twoFactor()).passed,true);
+});
+await as(newOwner,'authenticated','aal1',sessionC);
+await check('trust belongs to one session: another password-only session is still asked for the code',async()=>{assert.equal(await count('places'),0);});
+await as(ownerB,'authenticated','aal1',sessionC);
+await check('another account cannot use someone else\'s device token',async()=>{assert.equal(await trust(deviceToken),false);});
+await as(platformAdmin,'authenticated','aal2');
+await check('a platform administrator cannot remember a device or pass with one',async()=>{
+ assert.equal((await twoFactor()).can_remember,false);await assert.rejects(()=>rememberDevice());
+ await db.exec('reset role');const adminFactor=(await db.query('select id from auth.mfa_factors where user_id=$1',[platformAdmin])).rows[0].id;
+ await db.query("insert into private.remembered_devices(user_id,factor_id,token_hash) values($1,$2,sha256(convert_to('admin-token','UTF8')))",[platformAdmin,adminFactor]);
+ await as(platformAdmin,'authenticated','aal1',sessionA);assert.equal(await trust('admin-token'),false);
+ assert.equal((await db.query('select public.is_platform_admin() ok')).rows[0].ok,false);
+});
+await as(newOwner,'authenticated','aal1',sessionB);
+await check('an expired device no longer lets the session through',async()=>{
+ await db.exec('reset role');await db.query("update private.remembered_devices set expires_at=now()-interval '1 minute' where user_id=$1",[newOwner]);
+ await as(newOwner,'authenticated','aal1',sessionB);assert.equal(await count('places'),0);
+ await db.exec('reset role');await db.query("update private.remembered_devices set expires_at=now()+interval '30 days' where user_id=$1",[newOwner]);
+ await as(newOwner,'authenticated','aal1',sessionB);assert.ok(await count('places')>0);
+});
+await check('forgetting the device ends the trust at once',async()=>{
+ assert.equal((await db.query('select public.forget_devices() n')).rows[0].n,1);assert.equal(await count('places'),0);
+});
+await check('a new password forgets every remembered device',async()=>{
+ await as(newOwner,'authenticated','aal2',sessionA);const token=await rememberDevice();
+ await db.exec('reset role');await db.query("update auth.users set encrypted_password='new-hash' where id=$1",[newOwner]);
+ await as(newOwner,'authenticated','aal1',sessionC);assert.equal(await trust(token),false);
+ assert.equal((await db.query('select public.remembered_devices() list')).rows[0].list.length,0);
+});
+await check('an administrator\'s reset of the authenticator app forgets every remembered device',async()=>{
+ await as(newOwner,'authenticated','aal2',sessionA);const token=await rememberDevice();
+ await db.exec('reset role');await db.query("delete from auth.mfa_factors where user_id=$1",[newOwner]);
+ assert.equal((await db.query('select count(*)::int n from private.remembered_devices where user_id=$1',[newOwner])).rows[0].n,0);
+ await db.query("insert into auth.mfa_factors(user_id,status) values($1,'verified')",[newOwner]);
+ await as(newOwner,'authenticated','aal1',sessionC);assert.equal(await trust(token),false);
+ await db.exec('reset role');await db.query('delete from auth.mfa_factors where user_id=any($1)',[[newOwner,platformAdmin]]);
 });
 
 await as(platformAdmin);

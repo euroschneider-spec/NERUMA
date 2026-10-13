@@ -655,6 +655,28 @@ try {
     await view.getByLabel('Backup code',{exact:true}).fill(fresh[0]);await view.getByRole('button',{name:'Use this backup code',exact:true}).click();await expect(view).toHaveURL(/\/en\/workspace$/);
     await view.context().close();
   });
+  await check('a remembered device skips the code on that browser only, for 30 days, until it is forgotten',async()=>{
+    const view=await (await browser.newContext({colorScheme:'dark'})).newPage();
+    await signInWithPassword(view,2);await expect(view).toHaveURL(/\/en\/login\/verify$/);
+    const remember=view.getByRole('checkbox',{name:'Remember this device for 30 days'});await expect(remember).toBeVisible();
+    const verifyAudit=await new AxeBuilder({page:view}).withTags(['wcag2a','wcag2aa','wcag21a','wcag21aa','wcag22aa']).analyze();assert.deepEqual(verifyAudit.violations.map(v=>v.id),[],'code step with remember');
+    await remember.check();await enterCode(view,totp(authenticators[2]));await expect(view).toHaveURL(/\/en\/workspace$/);
+    const cookie=(await view.context().cookies()).find(c=>c.name==='neruma_device');
+    assert.ok(cookie && cookie.httpOnly && cookie.secure && cookie.sameSite==='Lax' && cookie.expires-Date.now()/1000>29*86400);
+    await view.getByRole('button',{name:'Sign out',exact:true}).click();
+    await signInWithPassword(view,2);await expect(view).toHaveURL(/\/en\/workspace$/);
+    const other=await (await browser.newContext({colorScheme:'dark'})).newPage();
+    await signInWithPassword(other,2);await expect(other).toHaveURL(/\/en\/login\/verify$/);await other.context().close();
+    const admin=await (await browser.newContext({colorScheme:'dark'})).newPage();
+    await signInWithPassword(admin,3);await expect(admin).toHaveURL(/\/en\/login\/verify$/);
+    await expect(admin.getByRole('checkbox',{name:'Remember this device for 30 days'})).toHaveCount(0);await admin.context().close();
+    await view.goto(`${base}/en/account`);await expect(view.getByRole('heading',{name:'Remembered devices',level:3})).toBeVisible();
+    await expect(view.getByText('(this device)',{exact:false})).toBeVisible();
+    await view.getByRole('button',{name:/^Forget: Remembered on /}).click();await expect(view).toHaveURL(/\/en\/login\/verify$/);
+    assert.equal((await view.context().cookies()).some(c=>c.name==='neruma_device'),false);
+    await signInWithPassword(view,2);await expect(view).toHaveURL(/\/en\/login\/verify$/);
+    await view.context().close();
+  });
   await check('after the deadline, an owner without two-factor is sent to setup and the workspace stays closed',async()=>{
     await deadline(new Date(Date.now()-60000).toISOString());
     try {

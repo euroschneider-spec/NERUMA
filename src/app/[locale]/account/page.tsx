@@ -16,7 +16,8 @@ import { evidenceReady, verificationReady } from '@/lib/verification-server';
 import { getVerificationCopy, type OrganizationApplication } from '@/lib/verification';
 import { getViewer } from '@/lib/viewer-server';
 import { twoFactorReady } from '@/lib/verification-server';
-import { getBackupCodes, getTwoFactorStatus } from '@/lib/two-factor-server';
+import { getBackupCodes, getRememberedDevices, getTwoFactorStatus } from '@/lib/two-factor-server';
+import { RememberedDevices } from '@/components/remembered-devices';
 import { twoFactorStep } from '@/lib/two-factor';
 import { TwoFactorSetup } from '@/components/two-factor-setup';
 import { BackupCodesPanel } from '@/components/backup-codes';
@@ -37,6 +38,7 @@ export default async function Account({ params }: { params: Promise<{ locale: st
   if(step==='verify') redirect(`/${locale}/login/verify`);
   if(step==='setup') return <main id="main-content" className="container verification-page"><div className="page-heading"><h1>{t.account}</h1></div><div className="content-body"><TwoFactorSetup locale={locale} enrolled={false} required/><form action={signOut.bind(null,locale)}><button className="text-button" type="submit">{t.signOut}</button></form></div></main>;
   const backup=twoFactor?.enrolled ? await getBackupCodes(supabase) : {state:'off'} as const;
+  const devices=twoFactor?.enrolled && twoFactor.canRemember ? await getRememberedDevices(supabase) : null;
   const [viewer,applicationResult]=await Promise.all([
     getViewer(supabase,user.id),
     supabase.from('organization_applications').select('*').eq('applicant_id',user.id).maybeSingle(),
@@ -66,7 +68,7 @@ export default async function Account({ params }: { params: Promise<{ locale: st
     {!documentsEnabled && !ownOrganizations.length && <p className="notice" role="status">{getEvidenceCopy(locale).setup}</p>}
     {ownOrganizations.length ? <><ul>{ownOrganizations.map(org=><li key={org.id}>{org.name}</li>)}</ul>{workspaceConfigured() ? <><p className="notice">{getWorkspaceCopy(locale).boundary}</p><Link className="button" href={`/${locale}/workspace`}>{getWorkspaceCopy(locale).workspace}</Link></> : <p className="notice">{t.liveBoundary}</p>}</> : null}
     {(!application || ['needs_information','rejected'].includes(application.status)) && !ownOrganizations.length && <OrganisationForm key={application?.revision || 'new'} locale={locale} mode="onboard" enabled={documentsEnabled && !documentsResult?.error} initial={initial} initialDocuments={initialDocuments}/>}
-    {await twoFactorReady(supabase) && <TwoFactorSetup locale={locale} enrolled={twoFactor.enrolled} required={false}>{backup.state!=='off' && <BackupCodesPanel locale={locale} backup={backup}/>}</TwoFactorSetup>}
+    {await twoFactorReady(supabase) && <TwoFactorSetup locale={locale} enrolled={twoFactor.enrolled} required={false}>{backup.state!=='off' && <BackupCodesPanel locale={locale} backup={backup}/>}{devices && <RememberedDevices locale={locale} devices={devices}/>}</TwoFactorSetup>}
     <p><Link className="quiet-link" href={`/${locale}/demo`}>{getCopy(locale).openWorkspace}</Link></p>
     <form action={signOut.bind(null,locale)}><button className="text-button" type="submit">{t.signOut}</button></form>
   </div></main>;

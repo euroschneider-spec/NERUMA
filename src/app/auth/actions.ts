@@ -14,7 +14,7 @@ import { evidenceReady, verificationReady } from '@/lib/verification-server';
 import { landingPath } from '@/lib/roles';
 import { getViewer } from '@/lib/viewer-server';
 import { twoFactorStep } from '@/lib/two-factor';
-import { getTwoFactorStatus, twoFactorPath } from '@/lib/two-factor-server';
+import { getTwoFactorStatus, trustRememberedDevice, twoFactorPath } from '@/lib/two-factor-server';
 
 export type AuthState = { message: string; confirmation?:boolean };
 const text = (form: FormData, key: string) => String(form.get(key) || '').trim();
@@ -61,7 +61,9 @@ export async function authenticate(locale: string, mode: 'register' | 'login', _
     // page behind it re-checks the role itself.
     // An account with an authenticator app, or one that must set it up, goes there first.
     if (signedIn && data.user) {
-      const twoFactor = await getTwoFactorStatus(supabase);
+      let twoFactor = await getTwoFactorStatus(supabase);
+      // A remembered device stands in for the code on this one session.
+      if (twoFactor && twoFactorStep(twoFactor) === 'verify' && await trustRememberedDevice(supabase)) twoFactor = await getTwoFactorStatus(supabase);
       const step = twoFactor && twoFactorStep(twoFactor);
       const viewer = twoFactor && !step ? await getViewer(supabase, data.user.id) : null;
       if (step) destination = twoFactorPath(step, locale);

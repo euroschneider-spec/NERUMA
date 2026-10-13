@@ -1,13 +1,17 @@
 import { describe, it, expect } from 'vitest';
-import { backupCode, getTwoFactorCopy, groupedKey, parseTwoFactorStatus, secondFactorCode, twoFactorStep, upcomingDeadline, type TwoFactorStatus } from '@/lib/two-factor';
+import { backupCode, getTwoFactorCopy, groupedKey, parseRememberedDevices, parseTwoFactorStatus, secondFactorCode, twoFactorStep, upcomingDeadline, type TwoFactorStatus } from '@/lib/two-factor';
 import { locales } from '@/lib/i18n';
 
-const status = (overrides: Partial<TwoFactorStatus> = {}): TwoFactorStatus => ({ enrolled: false, required: false, deadline: null, passed: true, ...overrides });
+const status = (overrides: Partial<TwoFactorStatus> = {}): TwoFactorStatus => ({ enrolled: false, required: false, deadline: null, passed: true, canRemember: false, ...overrides });
 
 describe('parseTwoFactorStatus', () => {
   it('reads what the database answers', () => {
-    expect(parseTwoFactorStatus({ enrolled: true, required: false, deadline: '2026-11-13T09:00:00+00:00', passed: false }))
-      .toEqual({ enrolled: true, required: false, deadline: '2026-11-13T09:00:00+00:00', passed: false });
+    expect(parseTwoFactorStatus({ enrolled: true, required: false, deadline: '2026-11-13T09:00:00+00:00', passed: false, can_remember: true }))
+      .toEqual({ enrolled: true, required: false, deadline: '2026-11-13T09:00:00+00:00', passed: false, canRemember: true });
+  });
+  it('lets nobody remember a device when the database does not say they may', () => {
+    expect(parseTwoFactorStatus({ enrolled: true, required: false, deadline: null, passed: true })?.canRemember).toBe(false);
+    expect(parseTwoFactorStatus({ enrolled: true, required: false, deadline: null, passed: true, can_remember: 'yes' })?.canRemember).toBe(false);
   });
   it('fails closed on anything else', () => {
     expect(parseTwoFactorStatus(null)).toBeNull();
@@ -40,6 +44,17 @@ describe('secondFactorCode', () => {
   });
   it('rejects anything else', () => {
     for (const value of ['', '12345', '1234567', '12345a', '١٢٣٤٥٦', '123-456']) expect(secondFactorCode(value)).toBeNull();
+  });
+});
+
+describe('parseRememberedDevices', () => {
+  it('reads the dates and which device this is, and drops anything malformed', () => {
+    expect(parseRememberedDevices([
+      { id: 'd1', created_at: '2026-10-13T10:00:00Z', expires_at: '2026-11-12T10:00:00Z', current: true },
+      { id: 'd2', created_at: '2026-10-01T10:00:00Z' },
+      'device',
+    ])).toEqual([{ id: 'd1', createdAt: '2026-10-13T10:00:00Z', expiresAt: '2026-11-12T10:00:00Z', current: true }]);
+    expect(parseRememberedDevices(null)).toEqual([]);
   });
 });
 
@@ -82,6 +97,8 @@ describe('two-factor copy', () => {
       expect(t.banner).toContain('{date}');
       expect(t.backupLeft).toContain('{left}');
       expect(t.backupLeft).toContain('{total}');
+      expect(t.deviceLine).toContain('{from}');
+      expect(t.deviceLine).toContain('{until}');
     }
   });
 });

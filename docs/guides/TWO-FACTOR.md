@@ -34,6 +34,8 @@ delete from auth.mfa_factors where user_id = 'PASTE-THE-ID';
 delete from auth.sessions where user_id = 'PASTE-THE-ID';
 ```
 
+   This also forgets every device they asked to be remembered.
+
 3. Tell them to sign in again. If two-factor is required for their account, they are taken straight to setup and scan a
    new QR code.
 

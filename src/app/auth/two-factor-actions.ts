@@ -6,7 +6,8 @@ import { landingPath } from '@/lib/roles';
 import { authConfigured } from '@/lib/supabase/config';
 import { confirmedUser, createClient, type SupabaseClient } from '@/lib/supabase/server';
 import { backupCode, getTwoFactorCopy, secondFactorCode } from '@/lib/two-factor';
-import { newBackupCodes } from '@/lib/two-factor-server';
+import { forgetThisBrowser, getRememberedDevices, newBackupCodes, rememberThisDevice } from '@/lib/two-factor-server';
+import { revalidatePath } from 'next/cache';
 import { getViewer } from '@/lib/viewer-server';
 import { uuidPattern } from '@/lib/workspace';
 
@@ -42,6 +43,8 @@ export async function verifySecondFactor(locale: string, _previous: TwoFactorSta
     if (factors.error || !factor) return { message: t.error };
     const failure = await verifyCode(supabase, factor.id, code);
     if (failure) return { message: failure === 'wrong' ? t.wrong : t.error };
+    // The database refuses platform administrators; the box isn't shown to them either.
+    if (form.get('remember') === 'on') await rememberThisDevice(supabase);
     destination = await startPage(supabase, user.id, locale);
   } catch {
     return { message: t.error };
@@ -125,4 +128,21 @@ export async function setUpTwoFactor(locale: string, previous: TwoFactorState, f
   } catch {
     return { message: t.error };
   }
+}
+
+/** Forgets one remembered device, or all of them. Forgetting the one this browser came through also drops its cookie. */
+export async function forgetRememberedDevices(locale: string, form: FormData): Promise<void> {
+  if (!isLocale(locale) || !authConfigured()) return;
+  const device = String(form.get('device') || '');
+  if (device && !uuidPattern.test(device)) return;
+  try {
+    const supabase = await createClient();
+    if (!await confirmedUser(supabase)) return;
+    const devices = await getRememberedDevices(supabase);
+    const { error } = await supabase.rpc('forget_devices', device ? { device } : {});
+    if (!error && (!device || devices?.some((item) => item.id === device && item.current))) await forgetThisBrowser();
+  } catch {
+    // Nothing to show: the list still shows the device.
+  }
+  revalidatePath(`/${locale}/account`);
 }
