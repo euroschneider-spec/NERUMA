@@ -497,6 +497,19 @@ await as(null,'anon');
 await check('online draft content remains private and never enters public snapshots',async()=>{assert.equal((await db.query('select count(*)::int n from storage.objects')).rows[0].n,0);assert.equal((await db.query('select count(*)::int n from public.guides where place_id=$1',[livePlace])).rows[0].n,0);});
 await db.exec('reset role');
 await db.exec("select set_config('request.jwt.claim.sub','',false)");
+// Personal data is written down (docs/guides/PERSONAL-DATA.md). A column that points at a user, or looks like an email, a name,
+// a note, a file name, a free-text message or a snapshot, can't be added without being listed there; and nothing listed may be stale.
+await check('every column that can hold personal data is listed in docs/guides/PERSONAL-DATA.md, and nothing listed is stale',async()=>{
+ await db.exec('reset role');
+ const doc=await readFile('docs/guides/PERSONAL-DATA.md','utf8');
+ const listed=new Set(doc.split('<!-- personal-data-columns:start -->')[1].split('<!-- personal-data-columns:end -->')[0].split('\n').map(line=>line.trim()).filter(Boolean));
+ const existing=new Set((await db.query("select table_schema||'.'||table_name||'.'||column_name c from information_schema.columns where table_schema in ('public','private')")).rows.map(row=>row.c));
+ const pointsAtUsers=(await db.query("select c.conrelid::regclass::text t, a.attname col from pg_constraint c join pg_attribute a on a.attrelid=c.conrelid and a.attnum=any(c.conkey) where c.contype='f' and c.confrelid='auth.users'::regclass and c.conrelid::regclass::text not like 'auth.%'")).rows.map(row=>`${row.t.includes('.')?row.t:'public.'+row.t}.${row.col}`);
+ const lookPersonal=(await db.query("select table_schema||'.'||table_name||'.'||column_name c from information_schema.columns where table_schema in ('public','private') and column_name ~ '(^|_)(email|display_name|representative_name|representative_role|applicant_note|authorization_description|official_website|registry_reference|filename|message|token_hash|rights|notes|before_json|after_json|application_snapshot|verified_source|evidence_reference|instruments|alt_text|content)$'")).rows.map(row=>row.c);
+ const missing=[...new Set([...pointsAtUsers,...lookPersonal])].filter(column=>!listed.has(column)).sort();
+ assert.deepEqual(missing,[],'add these to docs/guides/PERSONAL-DATA.md (the column list, and section 1)');
+ assert.deepEqual([...listed].filter(column=>!existing.has(column)).sort(),[],'these listed columns no longer exist: remove them from docs/guides/PERSONAL-DATA.md');
+});
 await db.exec(await readFile('supabase/seed.sql','utf8'));
 await check('fictional seed creates five draft zones and fifteen zone translations',async()=>{assert.equal((await db.query("select count(*)::int n from public.zones where place_id='a0000000-0000-4000-8000-000000000002'")).rows[0].n,5);assert.equal((await db.query("select count(*)::int n from public.zone_translations where place_id='a0000000-0000-4000-8000-000000000002'")).rows[0].n,15);});
 console.log(`\n${checks} database security checks passed. All migrations executed in isolated PostgreSQL (PGlite). No live database touched.`);

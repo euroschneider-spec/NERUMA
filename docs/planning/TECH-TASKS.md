@@ -411,7 +411,9 @@ Each step is its own small pull request. When it is merged, remove its task from
 1. [ ] **Password rules in the hosted projects** (the owner's steps, no code; also section 7). Minimum 12 characters and, if
    the plan offers it, *Prevent use of leaked passwords*, on `neruma-dev` first, then production (the friend's project
    access). Also set the minimum in `supabase/config.toml` so local matches.
-3. [ ] **Delete my account and export my data.** A documented path (GDPR). Start as an administrator action with the steps
+3. [ ] **Delete my account and export my data.** *Start from `docs/guides/PERSONAL-DATA.md`: a user can't be deleted today (15 foreign
+   keys with "no action"), the same data is copied in several tables, and some records are immutable by design. Each blocking row needs
+   a decision: delete, anonymise or keep (owner and lawyer, D4).* A documented path (GDPR). Start as an administrator action with the steps
    written down; decide what happens to an organisation's published guides when its only owner is deleted (they go down;
    the QR codes stay and show the "isn't available" notice).
 4. [ ] **A preferred language saved on the account**, for the emails the app sends later (section 4). Optional; defaults to

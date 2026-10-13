@@ -24,6 +24,7 @@ npm run typecheck && npm run lint && npm run test:unit
 | `lib/demo-workspace`, `components/demo-workspace`, `online-builder`, `location-cards`, `draft-preview`, `step-photo`, `org-sidebar` | `tests/demo-workspace.spec.ts` + `npm run test:unit` + `npm run test:workspace` (the same components serve the signed-in workspace) |
 | `content.ts` (privacy page), anything that stores on the device (`localStorage`, cookies, `indexedDB`) | `npm run test:unit` (`storage-disclosure.test.ts` fails until the privacy page lists it) + `tests/privacy-security.spec.ts` |
 | `next.config.ts` headers, `proxy.ts`, API routes | `tests/privacy-security.spec.ts` |
+| A new table or column that holds personal data | `npm run test:db` fails until it is written in `docs/guides/PERSONAL-DATA.md` |
 | Anything that shows organisation-typed text (guide, demo, preview) | `tests/hostile-text.spec.ts` |
 | `supabase/config.toml`, `supabase/templates/` | `npm run test:unit` (`auth-config`, `email-template`) |
 | `verification.ts`, the registration form | `npm run test:unit` (`verification.test.ts`) + `npm run test:workspace` |
