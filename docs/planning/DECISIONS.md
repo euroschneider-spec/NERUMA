@@ -157,6 +157,17 @@ to the payments launch. The database enforces it, not only the pages. Backup cod
 (an httpOnly cookie; listed by date only, no device details); not for platform administrators. Not chosen: SMS codes (cost,
 SIM-swap); passkeys for now. Plan: brief `2026-10-13-two-factor-sign-in.md`; reset steps `docs/guides/TWO-FACTOR.md`.
 
+### Deleting an account deletes everything, after 30 days
+Owner, 2026-10-13. A person can delete their own account (or ask an administrator). It is locked at once, shows "deletion in
+progress", and after **30 days everything about them is deleted**: their request, documents, review history, acceptance record,
+the guide versions they published (even when colleagues keep the organisation; the guide then waits for a colleague to publish
+again) and their name in the change history. Within the 30 days an administrator can restore it. Problem reports they sent are
+kept, anonymised and labelled "account deleted", and can be deleted by hand. A sole owner's organisation is hidden for 30 days, so
+an administrator can **hand it to a verified colleague** (also for someone who was fired), then deleted; its QR codes stay and say
+"unavailable". They receive their data, the date they asked and what happens when. Not chosen: keeping an anonymised record that
+the organisation was verified (owner accepts that nothing will show the check happened). Plan: brief `2026-10-13-delete-account.md`;
+what is stored where: `docs/guides/PERSONAL-DATA.md`.
+
 ### Organisations can report a problem to NERUMA
 Owner, 2026-10-11. A button in the organisation sidebar, *Report a problem or ask for help*. Chosen: the report
 is saved in the database and the platform administrator reads it in the admin area. Not chosen: a link that opens
