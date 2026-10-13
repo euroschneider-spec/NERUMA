@@ -36,7 +36,7 @@ On a phone first:
 - [ ] When entering the code, an organisation owner or admin can tick *Remember this device for 30 days*. On that
       device, the next sign-ins within 30 days ask only for the password. On the account page they can see their
       remembered devices and forget them; changing the password or an administrator's reset forgets them all.
-- [ ] When two-factor is set up, the person is shown 10 backup codes once, with a prompt to save them. At sign-in,
+- [x] When two-factor is set up, the person is shown 10 backup codes once, with a prompt to save them. At sign-in,
       *Use a backup code* lets them in without the phone; each code works once. They can make a new set on the
       account page, which cancels the old one. The administrator's reset stays for when the codes are lost too.
 - [ ] All new text is in EN, RO and DE. *(Done for PR 1; repeat for PRs 2 and 3.)*
@@ -58,10 +58,13 @@ On a phone first:
   the server checks the token through a database function that marks that one session as trusted; the policies
   accept `aal2` *or* a trusted session. A stolen cookie alone is useless without the password. Platform
   administrators are always asked for the code, because their accounts can approve organisations (owner agreed).
-- **Backup codes** (owner, 2026-10-13). *Found while building PR 1: supabase-js 2.117 has experimental recovery codes
-  (`mfa.recoveryCodes`). Check in PR 2 whether the hosted project offers them before building our own.* Otherwise ours: 10 random codes, stored only as hashes,
-  each usable once, checked by a database function with a limit on wrong attempts. A correct code marks that one
-  session as trusted, the same way as a remembered device.
+- **Backup codes are Supabase's own** (owner, 2026-10-13, PR 2). supabase-js 2.117 has recovery codes behind
+  `auth.experimental.recoveryCodes`: ten single-use codes, a lock after repeated wrong tries, a new set cancels the old
+  one, and a correct code moves the session to `aal2`, so the database rule from PR 1 needs no change. Chosen over our own
+  codes, which would have added hashing, attempt limits and a trusted-session exception to the rule every permission goes
+  through. Risk: it is experimental and Supabase's docs don't describe it yet; if the hosted project has it switched off,
+  every backup-code control stays hidden and a lost phone goes through the administrator reset. Making a new set asks
+  "are you sure?" first (it can't be undone; `DECISIONS.md`).
 - The test fixture (`scripts/workspace-fixture.mjs`) fakes the MFA endpoints, so `test:workspace` and the e2e test
   run without a real Supabase. Codes are computed with `scripts/fixture-totp.mjs` (Node's crypto, no dependency).
 - One function, `private.second_factor_ok()`, is added to `has_role` and `is_platform_admin`, through which every policy
@@ -79,4 +82,8 @@ migration `20261014090000_two_factor.sql`; `/[locale]/login/verify`; setup on th
 3 new), `tests/platform.spec.ts` (39). Not run: the other browser specs (CI runs them). Not yet done: installing the
 migration on the hosted projects.
 
-**PR 2** backup codes, **PR 3** remember this device: to do.
+**PR 2** (backup codes, Supabase's recovery codes): shown after setup with a download, *Use a backup code instead* on the
+code step, count and a new set on the account page. Ran: typecheck, lint, `test:unit` (94), `test:workspace` (52, 1 new),
+`test:db` (100, unchanged rule). Not yet known: whether the hosted projects have recovery codes switched on.
+
+**PR 3** remember this device: to do.

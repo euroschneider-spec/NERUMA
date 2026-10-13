@@ -2,7 +2,7 @@
 // Auth and Storage HTTP services are simulated; no remote project is contacted.
 import { createServer } from 'node:http';
 import { readFile, readdir } from 'node:fs/promises';
-import { randomUUID, createHmac, createHash } from 'node:crypto';
+import { randomUUID, randomBytes, createHmac, createHash } from 'node:crypto';
 import { PGlite } from '@electric-sql/pglite';
 import { FIXTURE_ADMIN_TOTP_SECRET, newSecret, totpMatches } from './fixture-totp.mjs';
 if (process.env.VIANORAE_TEST_FIXTURE !== '1') throw new Error('Test fixture must be explicitly enabled');
@@ -12,7 +12,7 @@ const db = new PGlite();
 const id = n => `00000000-0000-4000-8000-${String(n).padStart(12,'0')}`;
 const users = [1,2,3,4,5].map(n => ({id:id(n),aud:'authenticated',role:'authenticated',email:`owner${n}@example.test`,email_confirmed_at:'2026-10-01T12:00:00Z',is_anonymous:false,app_metadata:{provider:'email'},user_metadata:{},created_at:'2026-10-01T12:00:00Z'}));
 let verificationEnabled=true;let evidenceEnabled=true;
-const files = new Map(); const tokens = new Map(); const levels = new Map(); const challenges = new Map(); let tail = Promise.resolve();
+const files = new Map(); const tokens = new Map(); const levels = new Map(); const challenges = new Map(); const backupSets = new Map(); let tail = Promise.resolve();
 const locked = fn => {const result=tail.then(fn);tail=result.catch(()=>{});return result;};
 await db.exec(`create role anon;create role authenticated;create role service_role bypassrls;create schema auth;create table auth.users(id uuid primary key,email_confirmed_at timestamptz default now(),is_anonymous boolean not null default false,email text default 'fixture@example.test');
 create function auth.uid() returns uuid language sql stable as $$select nullif(current_setting('request.jwt.claim.sub',true),'')::uuid$$;
@@ -91,6 +91,31 @@ createServer(async(req,res)=>{
     }
     const token=(req.headers.authorization || '').replace(/^Bearer /,'');const user=tokens.get(token);
     if (url.pathname==='/auth/v1/user') return user?send(res,200,await withFactors(user)):send(res,401,{msg:'Invalid token'});
+    // Backup codes, as Supabase's (experimental) recovery codes: ten single-use codes, a lock after five wrong tries.
+    const backupPath=url.pathname.match(/^\/auth\/v1\/factors\/recovery-codes(?:\/(verify|regenerate))?$/);
+    if(backupPath) {
+      if(!user) return send(res,401,{msg:'Invalid token'});
+      const rows=await factorRows(user.id);const row=rows.find(r=>r.factor_type==='recovery_code');const set=backupSets.get(user.id);const step=backupPath[1];
+      const fresh=()=>Array.from({length:10},()=>[...randomBytes(16)].map(byte=>'abcdefghijkmnpqrstuvwxyz23456789'[byte%32]).join(''));
+      if(req.method==='GET' && !step) return row?send(res,200,{id:row.id,type:'recovery_code',total:set.codes.length,remaining:set.codes.filter(c=>!c.used).length}):send(res,404,{error_code:'mfa_factor_not_found',msg:'Recovery codes not found'});
+      if(req.method==='POST' && step==='verify') {
+        if(!row) return send(res,422,{error_code:'mfa_verification_failed',msg:'Invalid recovery code'});
+        if(set.lockedUntil>Date.now()) return send(res,429,{error_code:'mfa_recovery_codes_locked',msg:'Too many attempts'});
+        const typed=String(JSON.parse(body.toString()).code||'').toLowerCase().replace(/[\s-]/g,'');const match=set.codes.find(c=>!c.used && c.code===typed);
+        if(!match) {set.failures++;if(set.failures>=5) {set.lockedUntil=Date.now()+300000;set.failures=0;}return send(res,422,{error_code:'mfa_verification_failed',msg:'Invalid recovery code'});}
+        match.used=true;set.failures=0;tokens.delete(token);return send(res,200,session(await withFactors(user),'aal2'));
+      }
+      if(req.method==='POST') {
+        if(levels.get(token)!=='aal2') return send(res,403,{error_code:'insufficient_aal',msg:'AAL2 required'});
+        if(!rows.some(r=>r.factor_type==='totp' && r.status==='verified')) return send(res,422,{error_code:'mfa_recovery_codes_sole_factor',msg:'Another factor is required'});
+        if(!step && row) return send(res,422,{error_code:'mfa_verified_factor_exists',msg:'Recovery codes already exist'});
+        if(step==='regenerate' && !row) return send(res,404,{error_code:'mfa_factor_not_found',msg:'Recovery codes not found'});
+        const id=row?.id || (await locked(async()=>(await db.query("insert into auth.mfa_factors(user_id,friendly_name,factor_type,status) values($1,$2,'recovery_code','verified') returning id",[user.id,'NERUMA backup codes'])).rows[0])).id;
+        const codes=fresh();backupSets.set(user.id,{codes:codes.map(code=>({code,used:false})),failures:0,lockedUntil:0});
+        return send(res,200,{id,type:'recovery_code',friendly_name:'NERUMA backup codes',total:codes.length,codes});
+      }
+      return send(res,400,{msg:'Unsupported recovery code request'});
+    }
     const factorPath=url.pathname.match(/^\/auth\/v1\/factors(?:\/([0-9a-f-]{36})(?:\/(challenge|verify))?)?$/);
     if(factorPath) {
       if(!user) return send(res,401,{msg:'Invalid token'});

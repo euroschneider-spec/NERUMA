@@ -1,11 +1,13 @@
 'use client';
+import Link from 'next/link';
 import { useActionState, useEffect, useRef } from 'react';
 import { setUpTwoFactor } from '@/app/auth/two-factor-actions';
 import type { Locale } from '@/lib/i18n';
 import { getTwoFactorCopy, groupedKey } from '@/lib/two-factor';
+import { BackupCodeList } from '@/components/backup-codes';
 
 /** Two-factor setup on the account page: one button, then the QR code, its key in text, and the code that confirms it. */
-export function TwoFactorSetup({ locale, enrolled, required }: { locale: Locale; enrolled: boolean; required: boolean }) {
+export function TwoFactorSetup({ locale, enrolled, required, children }: { locale: Locale; enrolled: boolean; required: boolean; children?: React.ReactNode }) {
   const t = getTwoFactorCopy(locale);
   const [state, submit, pending] = useActionState(setUpTwoFactor.bind(null, locale), { message: '' });
   const code = useRef<HTMLInputElement>(null);
@@ -19,7 +21,16 @@ export function TwoFactorSetup({ locale, enrolled, required }: { locale: Locale;
       <h2 id="two-factor-title">{t.title}</h2>
       {required && !on && <p><strong>{t.required}</strong></p>}
       <p>{t.intro}</p>
-      {on ? (
+      {state.done ? (
+        <>
+          <p role="status">{t.on}</p>
+          {state.codes && state.next ? (
+            <BackupCodeList locale={locale} codes={state.codes} next={state.next} />
+          ) : state.next && (
+            <p><Link className="button" href={state.next}>{t.continuePlain}</Link></p>
+          )}
+        </>
+      ) : on ? (
         <p role="status">{t.on}</p>
       ) : state.factor ? (
         <form action={submit} className="organisation-form">
@@ -39,6 +50,7 @@ export function TwoFactorSetup({ locale, enrolled, required }: { locale: Locale;
           <button className="button" type="submit" disabled={pending}>{t.setup}</button>
         </form>
       )}
+      {on && !state.done && children}
       <p>{t.lost}</p>
       {pending && <p role="status">{t.working}</p>}
       {state.message && !state.done && <p role="alert">{state.message}</p>}

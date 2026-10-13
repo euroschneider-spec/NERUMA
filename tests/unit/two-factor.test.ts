@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { getTwoFactorCopy, groupedKey, parseTwoFactorStatus, secondFactorCode, twoFactorStep, upcomingDeadline, type TwoFactorStatus } from '@/lib/two-factor';
+import { backupCode, getTwoFactorCopy, groupedKey, parseTwoFactorStatus, secondFactorCode, twoFactorStep, upcomingDeadline, type TwoFactorStatus } from '@/lib/two-factor';
 import { locales } from '@/lib/i18n';
 
 const status = (overrides: Partial<TwoFactorStatus> = {}): TwoFactorStatus => ({ enrolled: false, required: false, deadline: null, passed: true, ...overrides });
@@ -43,6 +43,16 @@ describe('secondFactorCode', () => {
   });
 });
 
+describe('backupCode', () => {
+  it('accepts a code as typed, with spaces, dashes or capitals', () => {
+    expect(backupCode('k4m9x7qp2ab8ht3z')).toBe('k4m9x7qp2ab8ht3z');
+    expect(backupCode(' K4M9-X7QP 2AB8-HT3Z ')).toBe('K4M9X7QP2AB8HT3Z');
+  });
+  it('rejects what cannot be a backup code', () => {
+    for (const value of ['', 'short', 'k4m9_x7qp_2ab8', 'k4m9x7qp2ab8ht3z'.repeat(3)]) expect(backupCode(value)).toBeNull();
+  });
+});
+
 describe('groupedKey', () => {
   it('groups the setup key in fours', () => {
     expect(groupedKey('JBSWY3DPEHPK3PXPAB')).toBe('JBSW Y3DP EHPK 3PXP AB');
@@ -70,6 +80,8 @@ describe('two-factor copy', () => {
       expect(Object.keys(t).sort()).toEqual(keys);
       expect(Object.values(t).every((value) => value.trim().length > 0)).toBe(true);
       expect(t.banner).toContain('{date}');
+      expect(t.backupLeft).toContain('{left}');
+      expect(t.backupLeft).toContain('{total}');
     }
   });
 });

@@ -9,6 +9,9 @@ trying something out.
 
 ## Someone lost their phone
 
+First ask whether they saved their backup codes: each one signs them in once without the phone (*Use a backup code
+instead* on the code step). Once in, they can make a new set on the account page. Only when they have none left:
+
 Resetting two-factor gives the account back to whoever controls its email and password. So check the person first.
 
 1. **The request must come from the account's own email address.** Reply to that address, not to any other address
@@ -25,7 +28,7 @@ select id, email, last_sign_in_at from auth.users where email = 'person@example.
 ```
 
 ```sql
--- 2. Remove their authenticator app and sign them out on every device.
+-- 2. Remove their authenticator app and backup codes, and sign them out on every device.
 --    Paste the id from step 1 in both places.
 delete from auth.mfa_factors where user_id = 'PASTE-THE-ID';
 delete from auth.sessions where user_id = 'PASTE-THE-ID';

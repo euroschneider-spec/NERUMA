@@ -358,7 +358,9 @@ controls until each is installed, so nothing breaks while they wait). Needs acce
 - [ ] **4. Two-factor sign-in** (`supabase/migrations/20261014090000_two_factor.sql`). **Only after the app version with
   two-factor is live on the site**: from this moment platform administrators must enter an authenticator code, and only
   that app version can set one up. First check **Authentication → Multi-Factor** (or *Sign In / Providers*): *TOTP
-  (App Authenticator)* must be enabled. Organisation owners and admins get 30 days; see `docs/guides/TWO-FACTOR.md`.
+  (App Authenticator)* must be enabled. If the same page offers *Recovery codes* (backup codes), switch them on too; if it
+  doesn't, the site hides backup codes until Supabase offers them. Organisation owners and admins get 30 days; see
+  `docs/guides/TWO-FACTOR.md`.
 
 How, for each file, in this order (1, 2, 3, then 4):
 
