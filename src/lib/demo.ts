@@ -1,9 +1,12 @@
 import type { Locale } from './i18n';
 export type SensoryLevel = 'low' | 'moderate' | 'high' | 'variable' | 'unknown';
 export type SensoryProfile = Record<'sound' | 'light' | 'crowding' | 'smell' | 'temperature' | 'visual', SensoryLevel>;
-export type ZonePhoto = { id: string; alt: string; rights: string; photographedOn: string };
-export type Zone = { id: string; title: string; description: string; note: string; next: string; illustration: string; sensory: SensoryProfile; photo?: ZonePhoto };
-export type Guide = { schemaVersion: 1; title: string; locale: Locale; zones: Zone[]; sourceLevel: 'venue_provided'; isDemo: true };
+/** `src` is set for a published photo; the example guide uses its illustration instead. */
+export type ZonePhoto = { id: string; alt: string; rights: string; photographedOn: string; src?: string };
+export type ZoneField = { label: string; kind: 'text' | 'yes_no'; value: string; answer: 'yes' | 'no' | 'unanswered' };
+export type Zone = { id: string; title: string; description: string; note: string; next: string; illustration: string; sensory: SensoryProfile; photo?: ZonePhoto; optional?: boolean; fields?: ZoneField[] };
+/** The example guide (`isDemo`) or a published one, which has its own description and arrival text. */
+export type Guide = { schemaVersion: 1; title: string; locale: Locale; zones: Zone[]; sourceLevel: 'venue_provided'; isDemo: boolean; description?: string; arrival?: string };
 const profiles: SensoryProfile[] = [
   { sound:'variable', light:'moderate', crowding:'variable', smell:'low', temperature:'variable', visual:'low' },
   { sound:'moderate', light:'moderate', crowding:'variable', smell:'low', temperature:'moderate', visual:'moderate' },

@@ -6,7 +6,8 @@ import { confirmedUser, createClient, type SupabaseClient } from './supabase/ser
 import { authConfigured } from './supabase/config';
 import { newZone, placeAttention, uuidPattern, type OwnField, type PlaceDraft, type PlaceSummary, type RemovableField } from './workspace';
 import type { SensoryProfile } from './demo';
-import { stepFieldsReady, verificationReady } from './verification-server';
+import { publishingReady, stepFieldsReady, verificationReady } from './verification-server';
+import type { Publication } from './publishing';
 import { getViewer } from './viewer-server';
 
 export const workspaceConfigured = () => authConfigured() && process.env.VIANORAE_WORKSPACE_ENABLED === '1';
@@ -24,7 +25,12 @@ export const workspaceSession = cache(async (locale: Locale) => {
   return { supabase, user, organisations, memberships: viewer.memberships };
 });
 export async function listPlaces(supabase: SupabaseClient, org: string, locale: Locale): Promise<PlaceSummary[]> {
-  const { data, error } = await supabase.from('places').select('id,city,address,status,revision,updated_at,place_translations(name,locale),zones(id,status,sort_order),zone_translations(zone_id,title,description,locale),media_assets(zone_id,storage_key,alt_text,active)')
+  // Before the publishing migration these columns and the QR table link don't exist: read without them.
+  const publishing = await publishingReady(supabase);
+  const base = 'id,city,address,status,revision,updated_at,place_translations(name,locale),zones(id,status,sort_order),zone_translations(zone_id,title,description,locale),media_assets(zone_id,storage_key,alt_text,active)' as const;
+  const withPublishing = 'id,city,address,status,revision,updated_at,slug,published_revision,qr_redirects(public_code),place_translations(name,locale),zones(id,status,sort_order),zone_translations(zone_id,title,description,locale),media_assets(zone_id,storage_key,alt_text,active)';
+  // The extra columns are read through `live` below, so the result is typed by the base select.
+  const { data, error } = await supabase.from('places').select((publishing ? withPublishing : base) as typeof base)
     .eq('organization_id',org).neq('status','archived').order('updated_at',{ascending:false}).limit(100);
   if (error) throw new Error('workspace-unavailable');
   return (data || []).map(row => {
@@ -35,10 +41,13 @@ export async function listPlaces(supabase: SupabaseClient, org: string, locale: 
     const texts = (row.zone_translations as {zone_id:string;title:string;description:string;locale:string}[]).filter(t=>t.locale===locale);
     const photos = (row.media_assets as {zone_id:string|null;storage_key:string;alt_text:Record<string,string>;active:boolean}[]).filter(p=>p.active);
     const firstPhoto = steps.map(s=>photos.find(p=>p.zone_id===s.id)).find(Boolean);
+    const live = row as unknown as {slug?:string;published_revision?:number|string|null;qr_redirects?:{public_code:string}[]};
+    const unpublished = publishing && row.status==='published' && live.published_revision!=null && Number(row.revision)>Number(live.published_revision);
     return {id:row.id,city:row.city,address:row.address || '',status:row.status,revision:Number(row.revision),updatedAt:row.updated_at,
+      qrCode:live.qr_redirects?.[0]?.public_code,slug:publishing && live.slug && !live.slug.startsWith('place-') ? live.slug : undefined,
       name:current?.name || (fallback ? `${fallback.name} (${fallback.locale.toUpperCase()})` : row.city),
       photoKey:firstPhoto?.storage_key,
-      attention:placeAttention(steps.map(s=>({id:s.id,hasText:texts.some(t=>t.zone_id===s.id && t.title.trim()!=='' && t.description.trim()!=='')})),photos.map(p=>({zoneId:p.zone_id,alt:p.alt_text[locale] || ''})))};
+      attention:[...placeAttention(steps.map(s=>({id:s.id,hasText:texts.some(t=>t.zone_id===s.id && t.title.trim()!=='' && t.description.trim()!=='')})),photos.map(p=>({zoneId:p.zone_id,alt:p.alt_text[locale] || ''}))),...(unpublished ? ['unpublishedChanges' as const] : [])]};
   });
 }
 type Translation = {zone_id:string;title:string;description:string;useful_note:string;next_step:string};
@@ -100,5 +109,11 @@ export async function loadPlace(supabase: SupabaseClient, id: string, organisati
     }),
   };
   if (!draft.zones.length) draft.zones=[newZone()];
-  return {org,draft,fieldsEnabled,persistedZoneIds:allZones.map(z=>z.id),missingTranslation:!translation.data || draft.zones.some(z=>!z.title || !z.description || z.fields.some(f=>!f.label))};
+  // Publishing state, once the 2026-10-13 migration exists: whether it is live, and at which address.
+  let publication: Publication | undefined;
+  if (await publishingReady(supabase)) {
+    const live = await supabase.from('places').select('status,slug').eq('id',id).maybeSingle();
+    if (!live.error && live.data) publication = {published:live.data.status==='published',slug:live.data.slug.startsWith('place-') ? undefined : live.data.slug};
+  }
+  return {org,draft,fieldsEnabled,publication,persistedZoneIds:allZones.map(z=>z.id),missingTranslation:!translation.data || draft.zones.some(z=>!z.title || !z.description || z.fields.some(f=>!f.label))};
 }

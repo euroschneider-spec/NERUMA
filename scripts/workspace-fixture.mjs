@@ -19,7 +19,7 @@ grant usage on schema public,auth to anon,authenticated,service_role;grant execu
 alter default privileges in schema public grant all on tables to anon,authenticated;
 create schema storage;create table storage.buckets(id text primary key,name text not null,public boolean not null default false,file_size_limit bigint,allowed_mime_types text[]);
 create table storage.objects(id uuid primary key default gen_random_uuid(),bucket_id text references storage.buckets(id),name text not null,unique(bucket_id,name));
-alter table storage.objects enable row level security;grant usage on schema storage to anon,authenticated,service_role;grant all on storage.objects to authenticated,service_role;grant all on storage.buckets to service_role;`);
+alter table storage.objects enable row level security;grant usage on schema storage to anon,authenticated,service_role;grant all on storage.objects to authenticated,service_role;grant select on storage.objects to anon;grant all on storage.buckets to service_role;`);
 for (const file of (await readdir('supabase/migrations')).filter(f=>f.endsWith('.sql')).sort()) await db.exec(await readFile(`supabase/migrations/${file}`,'utf8'));
 for (let n=1;n<=2;n++) {
   await db.query('insert into auth.users(id,email) values($1,$2)',[id(n),users[n-1].email]);
@@ -77,7 +77,9 @@ createServer(async(req,res)=>{
     const token=(req.headers.authorization || '').replace(/^Bearer /,'');const user=tokens.get(token);
     if (url.pathname==='/auth/v1/user') return send(res,user?200:401,user || {msg:'Invalid token'});
     if (url.pathname==='/auth/v1/logout') {tokens.delete(token);res.writeHead(204);return res.end();}
-    if (!user && !['/rest/v1/rpc/workspace_schema_version','/rest/v1/rpc/organization_verification_schema_version','/rest/v1/rpc/mandate_evidence_schema_version'].includes(url.pathname)) return send(res,401,{code:'42501',message:'Sign in required'});
+    // What a visitor may ask without signing in: schema checks, and the functions that return published data only.
+    const anonymousRpc=['workspace_schema_version','organization_verification_schema_version','mandate_evidence_schema_version','publishing_schema_version','published_guide','published_places','resolve_qr'].map(name=>`/rest/v1/rpc/${name}`);
+    if (!user && !anonymousRpc.includes(url.pathname) && !(req.method==='GET' && url.pathname.startsWith('/storage/v1/object/'))) return send(res,401,{code:'42501',message:'Sign in required'});
     await locked(async()=>{
       await db.exec('begin');
       try {
@@ -86,6 +88,13 @@ createServer(async(req,res)=>{
         if (url.pathname.startsWith('/rest/v1/rpc/')) {
           const rpc=url.pathname.split('/').at(-1);let result;
           if(rpc==='workspace_schema_version') result=(await db.query('select public.workspace_schema_version() value')).rows[0].value;
+          else if(rpc==='publishing_schema_version') result=(await db.query('select public.publishing_schema_version() value')).rows[0].value;
+          else if(rpc==='publication_check') {const p=JSON.parse(body.toString());result=(await db.query('select public.publication_check($1,$2) value',[p.org,p.place])).rows[0].value;}
+          else if(rpc==='publish_place') {const p=JSON.parse(body.toString());result=(await db.query('select public.publish_place($1,$2,$3,$4) value',[p.org,p.place,p.expected_revision,p.responsibility])).rows[0].value;}
+          else if(rpc==='unpublish_place') {const p=JSON.parse(body.toString());result=(await db.query('select public.unpublish_place($1,$2) value',[p.org,p.place])).rows[0].value;}
+          else if(rpc==='published_guide') {const p=JSON.parse(body.toString());result=(await db.query('select public.published_guide($1,$2) value',[p.guide_address,p.lang])).rows[0].value;}
+          else if(rpc==='published_places') {const p=JSON.parse(body.toString());result=(await db.query('select public.published_places($1) value',[p.lang])).rows[0].value;}
+          else if(rpc==='resolve_qr') {const p=JSON.parse(body.toString());result=(await db.query('select public.resolve_qr($1) value',[p.code])).rows[0].value;}
           else if(rpc==='step_fields_schema_version') result=(await db.query('select public.step_fields_schema_version() value')).rows[0].value;
           else if(rpc==='organization_verification_schema_version') {if(!verificationEnabled) throw new Error('Verification migration unavailable');result=(await db.query('select public.organization_verification_schema_version() value')).rows[0].value;}
           else if(rpc==='problem_reports_schema_version') result=(await db.query('select public.problem_reports_schema_version() value')).rows[0].value;
@@ -117,7 +126,7 @@ createServer(async(req,res)=>{
           const query=`select * from public.${table}${filters.length?' where '+filters.join(' and '):''}${ordering?' order by '+ordering:''} limit ${limit} offset ${offset}`;
           const rows=(await db.query(query,values)).rows;
           // Embedded child rows of a place, as PostgREST returns them: the columns named inside each name(...).
-          if(table==='places') for(const [child,columns] of [...(url.searchParams.get('select')||'').matchAll(/\b(place_translations|zones|zone_translations|media_assets)\(([^)]*)\)/g)].map(m=>[m[1],m[2]])) for(const row of rows) row[child]=(await db.query(`select ${columns.split(',').map(safe).join(',')} from public.${child} where place_id=$1`,[row.id])).rows;
+          if(table==='places') for(const [child,columns] of [...(url.searchParams.get('select')||'').matchAll(/\b(place_translations|zones|zone_translations|media_assets|qr_redirects)\(([^)]*)\)/g)].map(m=>[m[1],m[2]])) for(const row of rows) row[child]=(await db.query(`select ${columns.split(',').map(safe).join(',')} from public.${child} where place_id=$1`,[row.id])).rows;
           for(const row of rows) if(row.photographed_on instanceof Date) row.photographed_on=row.photographed_on.toISOString().slice(0,10);
           await db.exec('commit');
           if(req.headers.accept?.includes('vnd.pgrst.object')) return rows.length===1?send(res,200,rows[0]):send(res,406,{code:'PGRST116',details:`The result contains ${rows.length} rows`,message:'JSON object requested, multiple (or no) rows returned'});

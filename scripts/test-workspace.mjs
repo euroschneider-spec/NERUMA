@@ -92,7 +92,9 @@ try {
     await page.goto(`${base}/en/workspace`);
     await expect(page.getByRole('heading',{name:'Fixture Gallery',level:3})).toBeVisible();
     await expect(page.locator('.location-card').getByText('Draft',{exact:true})).toBeVisible();
-    await expect(page.locator('.location-card').getByRole('button',{name:'Publish',exact:true})).toHaveAttribute('aria-disabled','true');
+    // With publishing in the database, Publish lives in the editor (where the saved version is), not on the card.
+    await expect(page.locator('.location-card').getByRole('button',{name:'Publish',exact:true})).toHaveCount(0);
+    await expect(page.locator('.location-card').getByRole('button',{name:'QR code and link'})).toHaveCount(0);
     await expect(page.locator('.location-card').getByText('Example city',{exact:false})).toBeVisible();
     const other=await (await browser.newContext({colorScheme:'dark'})).newPage();
     await login(other);await other.getByRole('button',{name:'Sign out',exact:true}).click();
@@ -276,6 +278,109 @@ try {
     await page.getByRole('button',{name:'Detach photo',exact:true}).click();await save(page);await page.reload();
     await expect(page.getByText('No photo yet.',{exact:true})).toBeVisible();
     assert.equal((await context.request.get(`${base}${photoPath}`)).status(),200);
+  });
+  let publicAddress,qrPath;
+  const visitor=await (await browser.newContext({colorScheme:'dark',extraHTTPHeaders:{'Accept-Language':'ro-RO,ro;q=0.9'}})).newPage();
+  const publishDialog=page.getByRole('dialog',{name:'Publish this guide?'});
+  await check('Publish asks first: which languages go live and which wait, the responsibility text and one tick',async()=>{
+    await page.goto(editUrl);
+    // Publishing waits for a saved version: after a change it is switched off.
+    await page.getByLabel('Location name',{exact:true}).fill('Fixture Gallery');
+    await expect(page.getByRole('button',{name:'Publish',exact:true}).first()).toHaveAttribute('aria-disabled','true');
+    await save(page);
+    while(await page.locator('.builder-zone').count()<3) {
+      await page.getByRole('button',{name:'Add a step',exact:true}).click();
+      const zone=page.locator('.builder-zone').last();await zone.getByLabel('Step name',{exact:true}).fill(`Step ${await page.locator('.builder-zone').count()}`);
+      await zone.getByLabel('Short description',{exact:true}).fill('A fictional space, described by the venue.');
+    }
+    await save(page);
+    // Every photo needs its description in English; a step's photo from the earlier checks is detached.
+    await page.getByRole('button',{name:'Publish',exact:true}).first().click();
+    await expect(publishDialog).toBeVisible();
+    await expect(publishDialog.getByRole('region',{name:'Goes live'})).toContainText('English');
+    await expect(publishDialog.getByRole('region',{name:'Waits'})).toContainText('Română: fewer than 3 steps');
+    await expect(publishDialog).toContainText('Your information can change someone’s experience.');
+    await expect(publishDialog.getByRole('button',{name:'Publish now',exact:true})).toBeDisabled();
+    await publishDialog.getByRole('button',{name:'Cancel',exact:true}).click();await expect(publishDialog).toBeHidden();
+  });
+  await check('the owner publishes: the card says Published and has a QR code made for it, and the public guide opens for a visitor',async()=>{
+    await page.getByRole('button',{name:'Publish',exact:true}).first().click();
+    await publishDialog.getByLabel('We have checked this guide and take responsibility for it.').check();
+    await publishDialog.getByRole('button',{name:'Publish now',exact:true}).click();
+    await expect(page.locator('.status-message[role]')).toContainText('Published. Visitors see this version now.');
+    await expect(page.getByRole('link',{name:'Open the public guide'}).first()).toHaveAttribute('href',/\/en\/places\/fixture-gallery-example-city\/guide$/);
+    publicAddress=await page.getByRole('link',{name:'Open the public guide'}).first().getAttribute('href');
+    await page.goto(`${base}/en/workspace`);
+    const card=page.locator('.location-card').filter({hasText:'Fixture Gallery'});
+    await expect(card.locator('.status-badge')).toHaveText('Published');
+    await card.getByRole('button',{name:'QR code and link'}).click();
+    const dialog=page.getByRole('dialog',{name:'QR code and link'});
+    const link=(await dialog.locator('.qr-link code').textContent()).trim();assert.match(link,/^\/q\/[0-9a-f]{8}$/);qrPath=link;
+    await expect(dialog.locator('img.qr-image')).toHaveAttribute('src',`/api${link.replace('/q/','/qr/')}`);
+    await dialog.getByRole('button',{name:'Close'}).click();
+    await visitor.goto(`${base}${publicAddress}`);
+    await expect(visitor.getByRole('heading',{name:'Fixture Gallery',level:1})).toBeVisible();
+    await expect(visitor.locator('.gg-title')).toBeVisible();
+    await expect(visitor.getByText('Demonstration',{exact:false})).toHaveCount(0);
+    await visitor.goto(`${base}/en/explore`);
+    await expect(visitor.getByRole('heading',{name:'Fixture Gallery',level:2})).toBeVisible();
+  });
+  await check('the QR code opens the guide; only published photos are public',async()=>{
+    await visitor.goto(`${base}${qrPath}`);
+    await expect(visitor).toHaveURL(new RegExp(`${publicAddress}$`));
+    await expect(visitor.getByRole('heading',{name:'Fixture Gallery',level:1})).toBeVisible();
+    assert.equal((await visitor.request.get(`${base}/api/guide-photos?key=${'x'.repeat(10)}`)).status(),404);
+    assert.equal((await visitor.request.get(`${base}${photoPath}`)).status(),401);
+    assert.equal((await visitor.request.get(`${base}/q/ffffffff`,{maxRedirects:0})).status(),404);
+    assert.equal((await visitor.request.get(`${base}/en/places/fixture-no-such-guide/guide`)).status(),404);
+    // The public guide passes the same automated checks as the rest of the site, in every theme.
+    for(const theme of ['dark','light','contrast']) {
+      await visitor.addInitScript(value=>localStorage.setItem('vianorae:reading:v1',JSON.stringify({theme:value,themeV:2})),theme);
+      await visitor.goto(`${base}${publicAddress}`);await expect(visitor.locator('.gg-title')).toBeVisible();
+      const result=await new AxeBuilder({page:visitor}).withTags(['wcag2a','wcag2aa','wcag21a','wcag21aa','wcag22aa']).analyze();
+      assert.deepEqual(result.violations.map(v=>v.id),[],`${theme}: published guide`);
+    }
+  });
+  await check('editing after publishing leaves visitors on the live version and the card asks to publish again',async()=>{
+    await page.goto(editUrl);
+    await page.getByLabel('Step name',{exact:true}).first().fill('Renamed after publishing');
+    await save(page);
+    await page.goto(`${base}/en/workspace`);
+    await expect(page.locator('.location-card').filter({hasText:'Fixture Gallery'}).getByText('Changes not yet published: publish to update')).toBeVisible();
+    await visitor.goto(`${base}${publicAddress}`);
+    await expect(visitor.getByText('Renamed after publishing',{exact:false})).toHaveCount(0);
+    await page.goto(editUrl);await page.getByRole('button',{name:'Publish',exact:true}).first().click();
+    await publishDialog.getByLabel('We have checked this guide and take responsibility for it.').check();
+    await publishDialog.getByRole('button',{name:'Publish now',exact:true}).click();
+    await expect(page.locator('.status-message[role]')).toContainText('Published.');
+    await visitor.goto(`${base}${publicAddress}`);
+    await expect(visitor.locator('.gg-title')).toHaveText('Renamed after publishing');
+  });
+  await check('unpublishing asks first; the address and the QR code then say the guide is unavailable, without its name',async()=>{
+    await page.goto(editUrl);
+    await page.getByRole('button',{name:'Unpublish',exact:true}).first().click();
+    const ask=page.getByRole('dialog',{name:'Take this guide down?'});await expect(ask).toBeVisible();
+    await ask.getByRole('button',{name:'Cancel',exact:true}).click();
+    await visitor.goto(`${base}${publicAddress}`);await expect(visitor.locator('.gg-title')).toBeVisible();
+    await page.getByRole('button',{name:'Unpublish',exact:true}).first().click();
+    await page.getByRole('dialog',{name:'Take this guide down?'}).getByRole('button',{name:'Unpublish',exact:true}).click();
+    await expect(page.locator('.status-message[role]')).toContainText('Taken down.');
+    await visitor.goto(`${base}${publicAddress}`);
+    await expect(visitor.getByRole('heading',{name:"This guide isn't available right now"})).toBeVisible();
+    await expect(visitor.getByText('Fixture Gallery')).toHaveCount(0);
+    await visitor.goto(`${base}${qrPath}`);
+    await expect(visitor).toHaveURL(/\/ro\/guide-unavailable$/);
+    await expect(visitor.getByRole('heading',{name:'Acest ghid nu este disponibil acum'})).toBeVisible();
+    await visitor.goto(`${base}/en/explore`);await expect(visitor.getByText('Fixture Gallery')).toHaveCount(0);
+  });
+  await check('publishing again brings back the same address and QR code',async()=>{
+    await page.goto(editUrl);await page.getByRole('button',{name:'Publish',exact:true}).first().click();
+    await publishDialog.getByLabel('We have checked this guide and take responsibility for it.').check();
+    await publishDialog.getByRole('button',{name:'Publish now',exact:true}).click();
+    await expect(page.locator('.status-message[role]')).toContainText('Published.');
+    await visitor.goto(`${base}${qrPath}`);
+    await expect(visitor).toHaveURL(new RegExp(`${publicAddress}$`));
+    await expect(visitor.locator('.gg-title')).toBeVisible();
   });
   await check('sign out clears access to the saved workspace and photo',async()=>{
     await page.goto(`${base}/en/account`);await page.getByRole('button',{name:'Sign out',exact:true}).click();await page.waitForURL('**/en/login');

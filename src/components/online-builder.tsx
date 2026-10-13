@@ -13,6 +13,9 @@ import { OnlinePhotoEditor } from './online-photo';
 import { StepPhoto, type WorkspaceMode } from './step-photo';
 import { ChoiceGroup } from './choice-group';
 import { PublishButton } from './publish-button';
+import { PublishDialog } from './publish-dialog';
+import { getPublishingCopy, type Publication } from '@/lib/publishing';
+import { unpublishPlace } from '@/app/workspace/actions';
 import { ConfirmDialog } from './confirm-dialog';
 
 /** The small × beside a field that hides it from the step (the text is kept). */
@@ -25,11 +28,14 @@ function RemoveField({label,disabled,onClick,enabled=true}:{label:string;disable
  * The step editor. In the demo (`mode='demo'`) it is the same editor, but saving and photos stay in the visitor's
  * browser and publishing is switched off; the live workspace saves to the database.
  */
-export function OnlineBuilder({locale,org,initial,persistedZoneIds,missingTranslation=false,fieldsEnabled=false,mode='live'}: {
-  locale:Locale;org:string;initial:PlaceDraft;persistedZoneIds:string[];missingTranslation?:boolean;fieldsEnabled?:boolean;mode?:WorkspaceMode;
+export function OnlineBuilder({locale,org,initial,persistedZoneIds,missingTranslation=false,fieldsEnabled=false,mode='live',publication}: {
+  locale:Locale;org:string;initial:PlaceDraft;persistedZoneIds:string[];missingTranslation?:boolean;fieldsEnabled?:boolean;mode?:WorkspaceMode;publication?:Publication;
 }) {
   const t=getWorkspaceCopy(locale);const common=getCopy(locale);const o=getOrganisationCopy(locale);const router=useRouter();
   const savedText=mode==='demo' ? t.demoSaved : t.saved;
+  const p=getPublishingCopy(locale);
+  // Publishing is live only in the real workspace, and only once its migration exists (`publication` is then set).
+  const [live,setLive]=useState(publication);const [publishOpen,setPublishOpen]=useState(false);const [takeDown,setTakeDown]=useState(false);
   const [draft,setDraft]=useState(initial);const [dirty,setDirty]=useState(false);const [pending,setPending]=useState(false);
   const [persisted,setPersisted]=useState(new Set(persistedZoneIds));const [busyPhotos,setBusyPhotos]=useState(new Set<string>());
   const [message,setMessage]=useState(initial.revision>0?savedText:'');const [error,setError]=useState<'auth'|'conflict'|'other'|null>(null);
@@ -100,10 +106,21 @@ export function OnlineBuilder({locale,org,initial,persistedZoneIds,missingTransl
     {withHint && !allFolded && <span className="small-note">{t.reorderHint}</span>}
   </p>;
   const previewHref=`/${locale}/${mode==='demo' ? 'demo' : 'workspace'}/${draft.id}/preview`;
+  // Publish: off in the demo, off before the publishing migration, waits for a saved version, otherwise it opens the confirm step.
+  const canPublish=mode==='live' && live!==undefined;
+  const publishButtons=<>
+    {!canPublish ? <PublishButton label={t.publish} hint={mode==='demo' ? t.publishDemo : t.publishSoon} />
+      : dirty || draft.revision===0 ? <PublishButton label={t.publish} hint={p.publishSaveFirst} />
+      : <button className="button button-outline" type="button" disabled={disabled} onClick={()=>setPublishOpen(true)}>{t.publish}</button>}
+    {canPublish && live?.published && <>
+      <button className="button button-outline" type="button" disabled={disabled} onClick={()=>setTakeDown(true)}>{p.unpublish}</button>
+      {live.slug && <Link className="quiet-link" href={`/${locale}/places/${live.slug}/guide`} target="_blank" rel="noopener noreferrer">{p.viewPublic}</Link>}
+    </>}
+  </>;
   const actions=(announce:boolean)=><div className={announce ? 'editor-actions is-bottom' : 'editor-actions'}>
     <button className="button" type="submit" disabled={disabled}>{pending?t.saving:t.save}</button>
     {draft.revision>0 ? <Link className="button button-outline" href={previewHref}>{t.preview}</Link> : <button className="button button-outline" type="button" disabled>{t.preview}</button>}
-    <PublishButton label={t.publish} hint={mode==='demo' ? t.publishDemo : t.publishSoon} />
+    {publishButtons}
     <p className="status-message" {...(announce ? {role:error?'alert':'status'} : {'aria-hidden':true as const})}>{message || (dirty?t.unsaved:'')}</p>
   </div>;
   return <>
@@ -178,6 +195,16 @@ export function OnlineBuilder({locale,org,initial,persistedZoneIds,missingTransl
       </fieldset>
       {actions(true)}
     </form>
+    {canPublish && <PublishDialog open={publishOpen} locale={locale} org={org} placeId={draft.id} revision={draft.revision} onClose={()=>setPublishOpen(false)}
+      onPublished={result=>{setLive({published:true,slug:result.slug});setError(null);setMessage(p.publishDone);router.refresh();}}
+      onFailed={failure=>{setError(failure==='auth'?'auth':failure==='conflict'?'conflict':'other');setMessage(failure==='conflict'?p.publishConflict:failure==='auth'?p.publishAuth:failure==='nothing'?p.publishNothing:p.publishError);}}/>}
+    {canPublish && <ConfirmDialog open={takeDown} title={p.unpublishTitle} body={p.unpublishBody} confirm={p.unpublish} cancel={t.cancel} onCancel={()=>setTakeDown(false)}
+      onConfirm={async()=>{
+        setTakeDown(false);
+        const result=await unpublishPlace(org,draft.id).catch(()=>({ok:false}));
+        if(result.ok){setLive({published:false,slug:live?.slug});setError(null);setMessage(p.unpublishDone);router.refresh();}
+        else {setError('other');setMessage(p.unpublishError);}
+      }}/>}
     <ConfirmDialog open={confirmRemove!==null} title={t.removeConfirmTitle} body={t.removeConfirmBody} confirm={t.removeConfirm} cancel={t.cancel}
       onCancel={()=>setConfirmRemove(null)}
       onConfirm={()=>{const id=confirmRemove;setConfirmRemove(null);if(id){change(current=>({...current,zones:current.zones.filter(z=>z.id!==id)}));focusLater('add-zone');}}}/>

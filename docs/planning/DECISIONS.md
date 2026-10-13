@@ -138,6 +138,15 @@ Owner, 2026-10-11. A printed code can never change, so these rules are fixed bef
   publishing again makes it work. Visitors can't read unpublished rows, so the notice needs a server check that
   says only "exists, not available", never the location's name.
 
+### Publishing goes live straight away, all complete languages at once
+Owner, 2026-10-13. *Publish* puts the guide live without a NERUMA review: organisations are checked when they register,
+and publishing is one confirm step that shows the responsibility text (NERUMA can still take a guide down). One button
+publishes every language whose steps are complete; a language missing text waits, and one published before keeps its last
+version. Published guides appear in Explore automatically. Organisations can unpublish themselves, with "are you sure?";
+the QR code keeps working and shows "This guide isn't available right now". The address is made from the name at the first
+publish and never changes. Not chosen: a NERUMA approval queue (slower, and against "quick and simple"), publishing each
+language separately, unpublishing only through NERUMA. Plan: brief `2026-10-13-publishing.md`.
+
 ### Organisations can report a problem to NERUMA
 Owner, 2026-10-11. A button in the organisation sidebar, *Report a problem or ask for help*. Chosen: the report
 is saved in the database and the platform administrator reads it in the admin area. Not chosen: a link that opens

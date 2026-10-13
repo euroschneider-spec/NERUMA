@@ -1100,3 +1100,11 @@ p, li, dt, dd, summary, label, figcaption, a, .lbl, .small-label, .small-note { 
   .gg-header { position: sticky; top: 64px; z-index: 2; background: var(--color-bg); }
   .gg-sheet-bg { position: fixed; }
 }
+
+/* A published step's own fields and "may skip", under the notes. */
+.gg-fields { display: grid; gap: 8px; margin: 0; }
+.gg-fields > div { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 4px 12px; padding: 10px 0; border-bottom: 1px solid var(--color-divider); }
+.gg-fields dt { font-size: 0.9375rem; }
+.gg-fields dd { margin: 0; font-weight: 600; font-size: 0.875rem; }
+.gg-skip { margin: 0; font-size: 0.9375rem; font-weight: 600; }
+figure.gg-photo { margin: 0; }
