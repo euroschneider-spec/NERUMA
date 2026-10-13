@@ -73,11 +73,28 @@ selector or `testIdAttribute` anywhere else. Never find an element by CSS class 
 
 | Email | What it is |
 |---|---|
-| `owner3@example.test` | Platform administrator; one request (Linden Gallery, with a PDF) waits in the queue. Asks for a two-factor code: run `node scripts/fixture-totp.mjs` |
+| `owner3@example.test` | Platform administrator; one request (Linden Gallery, with a PDF) waits in the queue. Two-factor is set up: `node scripts/fixture-totp.mjs` prints the code |
+| `admin.second@example.test` | Second platform administrator (one can't review their own request), two-factor set up, same code |
 | `owner2@example.test` | Owner of the fictional Willow Museum: one location, five zones (`supabase/seed.sql`) |
+| `admin.willow@example.test` | Organisation **admin** (not owner) of the Willow Museum |
+| `owner.cluj@example.test` | Owner of Visual Arts Museum Cluj: eight steps in EN/RO/DE, own and removed fields, three photos, published. Two-factor is set up: `node scripts/fixture-totp.mjs owner` |
+| `owner.kunsthaus@example.test` | Owner of Kunsthaus am Fluss: a German-only museum, published; a closed problem report |
+| `owner.hotel@example.test` | Owner of Hotel Lindenhof: English and Romanian published, a German guide too short to publish |
+| `owner.arts@example.test` | Owner of Place des Arts Society, with four locations in four states: published ("Place des Arts"), a draft with a very long name, an unfinished one-step draft, and one edited after publishing (asks to publish again) |
+| `owner.railway@example.test` | Owner of a museum that took its guide down: the QR code says "unavailable" |
+| `owner.harbour@example.test` | Owner of a **suspended** organisation: signs in, sees no data, and its guide and QR code say "unavailable" |
+| `applicant.needsinfo@example.test` | Applicant who was asked for more information |
+| `applicant.rejected@example.test` | Applicant whose request was rejected |
+| `unconfirmed@example.test` | Registered but never confirmed the email: sign-in says to confirm first |
 | `owner1@example.test` | Owner of "Fixture museum 1", an empty organisation (to try creating a first location) |
 | `owner4@example.test` | Signed in, no organisation yet (can apply) |
 | `owner5@example.test` | The applicant behind the waiting Linden Gallery request |
+| `owner.large@example.test` | **Only with `DEV_MOCK_VOLUME=1 npm run dev:mock`:** owner of 55 organisations (the app lists 50) and of one with 105 places |
+
+The people and places are **synthetic**: made up, realistic, fictional (every name says so, every address ends `@example.test`).
+They are in `scripts/synthetic-data.mjs` and `scripts/synthetic-data/content.mjs`, created through the app's real database
+functions, and `npm run test:data` checks them (every state is there, nothing is real, loading twice gives the same result).
+The QR codes of the published places are printed when it starts; they change on every start.
 
 This browsing data is switched on by `VIANORAE_FIXTURE_DEMO_DATA=1`, which only `dev:mock` sets; the test
 suites start from the plain fixture.

@@ -1,7 +1,7 @@
-import { PGlite } from '@electric-sql/pglite';
-import { readFile, readdir } from 'node:fs/promises';
+import { readFile } from 'node:fs/promises';
 import assert from 'node:assert/strict';
-const db=new PGlite();let checks=0;
+import { createSupabaseLikeDatabase } from './pglite-supabase.mjs';
+const db=await createSupabaseLikeDatabase();let checks=0;
 const id=n=>`00000000-0000-4000-8000-${String(n).padStart(12,'0')}`;
 const owner=id(1),admin=id(2),editor=id(3),outsider=id(4),ownerB=id(5),assessor=id(6),reviewer=id(7),dual=id(8);
 const orgA=id(101),orgB=id(102),placeA=id(201),placeB=id(202),guideA=id(301),guideB=id(302),zoneA=id(401),zoneB=id(402),profileA=id(501);
@@ -11,22 +11,6 @@ async function check(name,fn){await fn();checks++;console.log(`PASS ${name}`);}
 async function as(user,role='authenticated',aal='aal2',session=user){await db.exec(`reset role; set role ${role}; select set_config('request.jwt.claim.sub','${user||''}',false); select set_config('request.jwt.claims','${user?JSON.stringify({sub:user,aal,session_id:session}):''}',false);`);}
 async function count(table){return (await db.query(`select count(*)::int as n from public.${table}`)).rows[0].n;}
 async function denied(sql){await assert.rejects(()=>db.exec(sql));}
-await db.exec(`create role anon;create role authenticated;create role service_role bypassrls;create schema auth;create table auth.users(id uuid primary key,email_confirmed_at timestamptz default now(),is_anonymous boolean not null default false,email text default 'fixture@example.test',encrypted_password text);
-create function auth.uid() returns uuid language sql stable as $$select nullif(current_setting('request.jwt.claim.sub',true),'')::uuid$$;
-create function auth.jwt() returns jsonb language sql stable as $$select coalesce(nullif(current_setting('request.jwt.claims',true),''),'{}')::jsonb$$;
-create table auth.mfa_factors(id uuid primary key default gen_random_uuid(),user_id uuid not null references auth.users(id),friendly_name text,factor_type text not null default 'totp',status text not null default 'unverified',secret text,created_at timestamptz not null default now(),updated_at timestamptz not null default now());
-grant usage on schema public,auth to anon,authenticated,service_role;grant execute on function auth.uid(),auth.jwt() to anon,authenticated,service_role;
-alter default privileges in schema public grant all on tables to anon,authenticated;
-create schema storage;
-create table storage.buckets(id text primary key,name text not null,public boolean not null default false,file_size_limit bigint,allowed_mime_types text[]);
-create table storage.objects(id uuid primary key default gen_random_uuid(),bucket_id text references storage.buckets(id),name text not null,unique(bucket_id,name));
-alter table storage.objects enable row level security;
-grant usage on schema storage to anon,authenticated,service_role;
-grant all on storage.objects to authenticated,service_role;grant select on storage.objects to anon;
-grant all on storage.buckets to service_role;`);
-const migrations=(await readdir('supabase/migrations')).filter(f=>f.endsWith('.sql')).sort();
-assert.equal(new Set(migrations.map(f=>f.split('_')[0])).size,migrations.length,'migration timestamps must be unique');
-for(const file of migrations)await db.exec(await readFile(`supabase/migrations/${file}`,'utf8'));
 await check('all 30 public tables use RLS',async()=>{const result=await db.query("select tablename from pg_tables where schemaname='public' and not rowsecurity");assert.deepEqual(result.rows,[]);assert.equal((await db.query("select count(*)::int n from pg_tables where schemaname='public'")).rows[0].n,30);});
 await db.exec(`insert into auth.users values ${[owner,admin,editor,outsider,ownerB,assessor,reviewer,dual].map(x=>`('${x}')`).join(',')};
 insert into public.organizations(id,name,approval_status) values('${orgA}','Demo A','approved'),('${orgB}','Demo B','approved');

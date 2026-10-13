@@ -13,13 +13,14 @@ workspace saves to the browser, not to the database.
 - [x] **Started (no Docker needed):** `npm run dev:mock` runs the site against the test fixture with five mock
   users (platform administrator, two organisation owners, two users without an organisation); see
   `docs/guides/TESTING.md`. It now has the Willow Museum (five zones) and one request waiting for review.
-  Still missing: photos, organisations in other states (needs information, suspended), several places.
-- [ ] Seed script for a **local** Supabase (`supabase start`) that creates one user per state:
-  platform administrator, organisation owner, organisation admin, applicant waiting for review,
-  applicant asked for more information, suspended organisation.
-- [ ] Several organisations and places in different statuses (draft, pending, approved, suspended),
-  cities, countries and categories, so the dashboards, the admin queue and the Explore filters have
-  something to show.
+  Photos, organisations in other states and several places are now there (synthetic data, §1 below).
+- [x] A user for every state in the fake Supabase (`dev:mock`): platform administrators, owners, an organisation admin, applicants
+  waiting / asked for more information / rejected, a suspended organisation, an unconfirmed account. Still open: the same for a
+  **local** Supabase (`supabase start`, needs Docker) and for `neruma-dev`.
+- [x] Several organisations and places in different statuses (draft, pending, approved, suspended, taken down, edited after
+  publishing), cities, countries and categories, so the dashboards, the admin queue and the Explore filters have something to
+  show. Done for `dev:mock`: `scripts/synthetic-data.mjs`, checked by `npm run test:data`. Still open: loading it into the hosted
+  `neruma-dev` project (a SQL file you paste, with a guard that refuses anything but a dev project).
 - [ ] Fictional names and `@example.test` emails only. Document the shared local password in the
   script itself, never in a real environment.
 - [ ] A guard that refuses to run unless the database URL is local, so it can never hit production.

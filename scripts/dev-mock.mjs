@@ -4,13 +4,12 @@
 // to it. Everything resets when you stop it. No remote project is contacted.
 //
 // Sign in at /en/login. One shared password for every mock user: see FIXTURE_PASSWORD in
-// scripts/workspace-fixture.mjs (test-only, never used in a real environment).
-//   owner3@example.test  platform administrator (lands on the organisation review queue)
-//   owner1@example.test  owner of "Fixture museum 1" (approved organisation)
-//   owner2@example.test  owner of the fictional Willow Museum (five zones, from supabase/seed.sql)
-//   owner4@example.test  signed-in user with no organisation (can apply)
-//   owner5@example.test  has a request for "Linden Gallery" waiting in the review queue
+// scripts/workspace-fixture.mjs (test-only, never used in a real environment). Every person, with the state they are in, is
+// listed when it starts and in docs/guides/TESTING.md. The data is synthetic and fictional (scripts/synthetic-data.mjs).
+//   DEV_MOCK_VOLUME=1 npm run dev:mock   adds 54 organisations for one owner and an organisation with 105 places
+//   node scripts/fixture-totp.mjs [owner]   prints the current two-factor code (administrators, or owner.cluj)
 import { spawn } from 'node:child_process';
+import { people } from './synthetic-data.mjs';
 
 if (process.env.NODE_ENV === 'production' || process.env.VERCEL) {
   throw new Error('dev:mock is for local use only.');
@@ -21,6 +20,7 @@ const env = {
   ...process.env,
   VIANORAE_TEST_FIXTURE: '1',
   VIANORAE_FIXTURE_DEMO_DATA: '1',
+  VIANORAE_FIXTURE_VOLUME: process.env.DEV_MOCK_VOLUME === '1' ? '1' : '',
   VIANORAE_SUPABASE_PROJECT_REF: 'vianorae-fixture',
   NEXT_PUBLIC_SUPABASE_URL: 'https://vianorae-fixture.supabase.co',
   NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: 'sb_publishable_fixture',
@@ -60,4 +60,14 @@ const next = run(
 next.on('exit', (code) => { stop(); process.exit(code || 0); });
 
 console.log(`\nMock site: http://localhost:${port}/en/login  (stop with Ctrl+C; data resets each run)`);
-console.log('Users: owner3 = platform administrator (one request waiting), owner2 = Willow Museum (five zones), owner1 = an empty organisation.');
+const base = [
+  ['owner3@example.test', 'Platform administrator, with two-factor set up (one request waits in the queue)'],
+  ['owner1@example.test', 'Owner of "Fixture museum 1", an empty organisation (to try creating a first location)'],
+  ['owner2@example.test', 'Owner of the fictional Willow Museum (five steps, from supabase/seed.sql)'],
+  ['owner4@example.test', 'Signed in, no organisation yet (can apply)'],
+  ['owner5@example.test', 'The applicant behind the waiting Linden Gallery request'],
+];
+const volume = process.env.DEV_MOCK_VOLUME === '1';
+console.log('\nWho is who (shared password: FIXTURE_PASSWORD in scripts/workspace-fixture.mjs):');
+for (const [email, note] of [...base, ...people.filter((entry) => volume || !entry.volume).map((entry) => [entry.email, entry.note])]) console.log(`  ${email.padEnd(36)} ${note}`);
+console.log('\nTwo-factor code: node scripts/fixture-totp.mjs for the administrators, node scripts/fixture-totp.mjs owner for owner.cluj');

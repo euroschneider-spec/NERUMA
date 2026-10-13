@@ -1,55 +1,33 @@
 // Loopback-only Supabase API fixture backed by the real migrations and Postgres RLS.
 // Auth and Storage HTTP services are simulated; no remote project is contacted.
 import { createServer } from 'node:http';
-import { readFile, readdir } from 'node:fs/promises';
-import { randomUUID, randomBytes, createHmac, createHash } from 'node:crypto';
-import { PGlite } from '@electric-sql/pglite';
-import { FIXTURE_ADMIN_TOTP_SECRET, newSecret, totpMatches } from './fixture-totp.mjs';
+import { randomUUID, randomBytes, createHmac } from 'node:crypto';
+import { createSupabaseLikeDatabase } from './pglite-supabase.mjs';
+import { loadFixtureBase } from './fixture-base.mjs';
+import { loadSyntheticData, people } from './synthetic-data.mjs';
+import { newSecret, totpMatches } from './fixture-totp.mjs';
 if (process.env.VIANORAE_TEST_FIXTURE !== '1') throw new Error('Test fixture must be explicitly enabled');
 // One shared password for every mock user. Test-only: this fixture is a fake Supabase and never runs in a real environment.
 const FIXTURE_PASSWORD='Fixture-only-passphrase-123';
-const db = new PGlite();
+const db = await createSupabaseLikeDatabase();
 const id = n => `00000000-0000-4000-8000-${String(n).padStart(12,'0')}`;
 const users = [1,2,3,4,5].map(n => ({id:id(n),aud:'authenticated',role:'authenticated',email:`owner${n}@example.test`,email_confirmed_at:'2026-10-01T12:00:00Z',is_anonymous:false,app_metadata:{provider:'email'},user_metadata:{},created_at:'2026-10-01T12:00:00Z'}));
 let verificationEnabled=true;let evidenceEnabled=true;
 const files = new Map(); const tokens = new Map(); const levels = new Map(); const sessionIds = new Map(); const challenges = new Map(); const backupSets = new Map(); let tail = Promise.resolve();
 const locked = fn => {const result=tail.then(fn);tail=result.catch(()=>{});return result;};
-await db.exec(`create role anon;create role authenticated;create role service_role bypassrls;create schema auth;create table auth.users(id uuid primary key,email_confirmed_at timestamptz default now(),is_anonymous boolean not null default false,email text default 'fixture@example.test',encrypted_password text);
-create function auth.uid() returns uuid language sql stable as $$select nullif(current_setting('request.jwt.claim.sub',true),'')::uuid$$;
-create function auth.jwt() returns jsonb language sql stable as $$select coalesce(nullif(current_setting('request.jwt.claims',true),''),'{}')::jsonb$$;
-create table auth.mfa_factors(id uuid primary key default gen_random_uuid(),user_id uuid not null references auth.users(id),friendly_name text,factor_type text not null default 'totp',status text not null default 'unverified',secret text,created_at timestamptz not null default now(),updated_at timestamptz not null default now());
-grant usage on schema public,auth to anon,authenticated,service_role;grant execute on function auth.uid(),auth.jwt() to anon,authenticated,service_role;
-alter default privileges in schema public grant all on tables to anon,authenticated;
-create schema storage;create table storage.buckets(id text primary key,name text not null,public boolean not null default false,file_size_limit bigint,allowed_mime_types text[]);
-create table storage.objects(id uuid primary key default gen_random_uuid(),bucket_id text references storage.buckets(id),name text not null,unique(bucket_id,name));
-alter table storage.objects enable row level security;grant usage on schema storage to anon,authenticated,service_role;grant all on storage.objects to authenticated,service_role;grant select on storage.objects to anon;grant all on storage.buckets to service_role;`);
-for (const file of (await readdir('supabase/migrations')).filter(f=>f.endsWith('.sql')).sort()) await db.exec(await readFile(`supabase/migrations/${file}`,'utf8'));
-for (let n=1;n<=2;n++) {
-  await db.query('insert into auth.users(id,email) values($1,$2)',[id(n),users[n-1].email]);
-  await db.query("insert into public.organizations(id,name,approval_status) values($1,$2,'approved')",[id(100+n),`Fixture museum ${n}`]);
-  await db.query('insert into public.organization_members(organization_id,user_id,role) values($1,$2,$3)',[id(100+n),id(n),'owner']);
-}
-for(let n=3;n<=5;n++) await db.query('insert into auth.users(id,email) values($1,$2)',[id(n),users[n-1].email]);
-await db.query('insert into private.platform_admins(user_id) values($1)',[id(3)]);
-// The platform administrator has an authenticator app from the start (code: node scripts/fixture-totp.mjs).
-await db.query("insert into auth.mfa_factors(user_id,friendly_name,status,secret) values($1,'NERUMA','verified',$2)",[id(3),FIXTURE_ADMIN_TOTP_SECRET]);
-// Browsing data for npm run dev:mock only; the test suite never sets this, so its starting state is unchanged.
-// owner2 owns the fictional Willow Museum (five zones from supabase/seed.sql); owner5 has a request waiting for review.
-if (process.env.VIANORAE_FIXTURE_DEMO_DATA === '1') {
-  const willow='a0000000-0000-4000-8000-000000000001';
-  await db.exec(await readFile('supabase/seed.sql','utf8'));
-  await db.query("update public.organizations set approval_status='approved' where id=$1",[willow]);
-  await db.query('delete from public.organization_members where user_id=$1',[id(2)]);
-  await db.query("insert into public.organization_members(organization_id,user_id,role) values($1,$2,'owner')",[willow,id(2)]);
-  const application=(await db.query(`insert into public.organization_applications(applicant_id,applicant_email,organization_name,organization_type,country_code,official_website,registry_reference,representative_name,representative_role,authorization_description,statement_version,statement_locale)
-    values($1,'owner5@example.test','Linden Gallery (fictional)','museum','RO','https://linden-gallery.example.test','RO-REG-0042','Ana Popescu (fictional)','Director','The city cultural office can confirm the director appointment by phone. A signed authorisation is attached.','2026-10-07-v1','en') returning id`,[id(5)])).rows[0].id;
-  const pdf=Buffer.from('%PDF-1.7\n1 0 obj\n<< /Type /Catalog >>\nendobj\ntrailer\n<< /Root 1 0 R >>\n%%EOF\n');
-  const documentId=randomUUID();const key=`${id(5)}/${documentId}.pdf`;
-  await db.query(`insert into public.organization_evidence_documents(id,applicant_id,application_id,storage_key,filename,mime_type,byte_size,sha256,uploaded_at)
-    values($1,$2,$3,$4,'signed-authorisation.pdf','application/pdf',$5,$6,now())`,[documentId,id(5),application,key,pdf.length,createHash('sha256').update(pdf).digest('hex')]);
-  await db.query("insert into storage.objects(bucket_id,name) values('vianorae-mandate-evidence',$1)",[key]);
-  await db.query('update public.organization_applications set evidence_document_ids=array[$1::uuid] where id=$2',[documentId,application]);
-  files.set(key,pdf);
+// Browsing data (Willow Museum, a waiting request, and the synthetic world) is for npm run dev:mock only; the test suite never
+// sets it, so its starting state is unchanged.
+const demo = process.env.VIANORAE_FIXTURE_DEMO_DATA === '1';
+const base = await loadFixtureBase(db, { demo });
+for (const [key, bytes] of base.files) files.set(key, bytes);
+if (demo) {
+  const world = await loadSyntheticData(db, { volume: process.env.VIANORAE_FIXTURE_VOLUME === '1' });
+  for (const [key, bytes] of world.photos) files.set(key, bytes);
+  for (const entry of people.filter(entry => process.env.VIANORAE_FIXTURE_VOLUME === '1' || !entry.volume)) {
+    users.push({...users[0],id:id(entry.n),email:entry.email,email_confirmed_at:entry.confirmed===false?null:'2026-10-01T12:00:00Z'});
+  }
+  const codes = world.summary.places.filter(place => place.code && !place.key.startsWith('archive-')).map(place => `${place.code} ${place.key}`);
+  console.log('QR codes (published places): '+codes.join(', '));
 }
 // Two-factor sign-in as Supabase Auth does it: factors on the user, the assurance level (aal) in the access token.
 const factorRows=userId=>locked(async()=>(await db.query('select id,friendly_name,factor_type,status,secret,created_at,updated_at from auth.mfa_factors where user_id=$1 order by created_at',[userId])).rows);
@@ -88,6 +66,8 @@ createServer(async(req,res)=>{
       const payload=JSON.parse(body.toString());const refreshing=url.searchParams.get('grant_type')==='refresh_token';
       const user=refreshing?tokens.get(payload.refresh_token):users.find(u=>u.email===payload.email && payload.password===FIXTURE_PASSWORD);
       if(!user) return send(res,400,{error:'invalid_grant',error_description:'Invalid fixture credentials'});
+      // As Supabase Auth refuses an account whose email was never confirmed.
+      if(!refreshing && !user.email_confirmed_at) return send(res,400,{error_code:'email_not_confirmed',msg:'Email not confirmed'});
       const fresh=refreshing?session(await withFactors(user),levels.get(payload.refresh_token),sessionIds.get(payload.refresh_token)):session(await withFactors(user));return send(res,200,fresh);
     }
     const token=(req.headers.authorization || '').replace(/^Bearer /,'');const user=tokens.get(token);
