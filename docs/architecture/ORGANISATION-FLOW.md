@@ -10,7 +10,7 @@
 
 ## Real accounts and manual approval
 
-The dedicated Supabase project is `uzlngrzokjzxvdfpctnt`. The owner installed the first four migrations and previously confirmed the old signup → email confirmation → organisation creation flow. The fifth migration replaces immediate tenant creation with pending verification requests and revokes both old onboarding RPC entry points. See [the verification procedure](organisation-verification.md) for the new flow, administrator permissions and activation.
+The dedicated Supabase project is `ywbcsvswisorlgajbkev`. The owner installed the first four migrations and previously confirmed the old signup → email confirmation → organisation creation flow. The fifth migration replaces immediate tenant creation with pending verification requests and revokes both old onboarding RPC entry points. See [the verification procedure](organisation-verification.md) for the new flow, administrator permissions and activation.
 
 The separate VIANORAE Vercel project has dedicated Preview/Production settings and the authorised temporary public subdomain `vianorae.lignorae.com`. No service-role key or another application's credentials are used. Editable metadata only prefills suggestions; submitted identity and responsibilities are independently validated and recorded. Confirmed users without an approved organisation cannot access the online editor or private photographs.
 
@@ -20,7 +20,7 @@ Management API access still refuses this project, so the owner must apply the su
 
 ## Remaining activation and integration checks
 
-1. Dedicated project provisioned by the owner: `uzlngrzokjzxvdfpctnt`. Never use another project as a fallback.
+1. Dedicated project provisioned by the owner: `ywbcsvswisorlgajbkev`. Never use another project as a fallback.
 2. Schema installed manually; run Supabase advisors and regenerate database types when management access is available. Reconcile migration history before future CLI pushes.
 3. Set only this project's `VIANORAE_SUPABASE_PROJECT_REF`, `NEXT_PUBLIC_SUPABASE_URL`, and `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` in the VIANORAE preview. The guard requires matching project ref/URL and a publishable key. No service-role key is used.
 4. Enable email confirmation; configure the app URL and allow only the exact VIANORAE callback/branch URLs for redirects. Configure an appropriate email provider and abuse controls before public signup; built-in email delivery has development limits.

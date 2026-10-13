@@ -6,7 +6,7 @@ Why: `docs/planning/DECISIONS.md`, "A dev database and a production database".
 | | Name | Region | Reference | Gets migrations by | Who uses it |
 |---|---|---|---|---|---|
 | Dev | `neruma-dev` | Central EU (Frankfurt) | `yfwpywjkztfuwiehyysg` | `npx supabase db push` | Developing and trying things, never real organisations |
-| Production (today) | `neruma-prod` | West EU (Ireland) | `uzlngrzokjzxvdfpctnt` | Pasting each file into the SQL Editor, in order | The live site. **Planned to move to Frankfurt**, see `docs/planning/TECH-TASKS.md` |
+| Production (today) | `neruma-prod` | West EU (Ireland) | `ywbcsvswisorlgajbkev` | Pasting each file into the SQL Editor, in order | The live site. **Planned to move to Frankfurt**, see `docs/planning/TECH-TASKS.md` |
 
 Two more kinds of "database" exist and are separate: the in-memory fixture behind `npm run test:workspace` and
 `npm run dev:mock`, and the isolated PostgreSQL behind `npm run test:db`. They need no account. Use them for

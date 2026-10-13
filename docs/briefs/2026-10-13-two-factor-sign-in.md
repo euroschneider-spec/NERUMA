@@ -1,5 +1,5 @@
 ---
-status: building   # idea → building → done
+status: done   # idea → building → done
 date: 2026-10-13
 ---
 
@@ -80,16 +80,16 @@ On a phone first:
   code by a site that can't set one up yet.
 
 ## Result
-**PR 1** (setup, code at sign-in, database rule, deadline and banner, reset steps, end-to-end test):
+**PR 1, #48** (setup, code at sign-in, database rule, deadline and banner, reset steps, end-to-end test):
 migration `20261014090000_two_factor.sql`; `/[locale]/login/verify`; setup on the account page; banner in the workspace;
 `docs/guides/TWO-FACTOR.md`. Ran: typecheck, lint, `test:unit` (92), `test:db` (100, 7 new), `test:workspace` (51,
 3 new), `tests/platform.spec.ts` (39). Not run: the other browser specs (CI runs them). Not yet done: installing the
 migration on the hosted projects.
 
-**PR 2** (backup codes, Supabase's recovery codes): shown after setup with a download, *Use a backup code instead* on the
+**PR 2, #49** (backup codes, Supabase's recovery codes): shown after setup with a download, *Use a backup code instead* on the
 code step, count and a new set on the account page. Ran: typecheck, lint, `test:unit` (94), `test:workspace` (52, 1 new),
 `test:db` (100, unchanged rule). Not yet known: whether the hosted projects have recovery codes switched on.
 
-**PR 3** (remember this device): the box on the code step, the device list with *Forget* on the account page. Ran:
+**PR 3, #50** (remember this device): the box on the code step, the device list with *Forget* on the account page. Ran:
 typecheck, lint, `test:unit` (96), `test:db` (110, 10 new), `test:workspace` (53, 1 new). Not yet done: installing both
 migrations on the hosted projects; listing the `neruma_device` cookie on the privacy page (TECH-TASKS §3).
