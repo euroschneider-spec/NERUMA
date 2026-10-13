@@ -1,4 +1,4 @@
--- Apply ONLY to VIANORAE project uzlngrzokjzxvdfpctnt, after its foundation.
+-- Apply ONLY to VIANORAE project ywbcsvswisorlgajbkev, after its foundation.
 -- Additive changes only. No accounts, guides or stored files are deleted.
 begin;
 do $$ begin

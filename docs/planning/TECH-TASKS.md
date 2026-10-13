@@ -348,7 +348,7 @@ Added on 2026-10-11, after the dashboard cards (PR #29). Decisions are in `DECIS
 
 **Job for the owner's friend: apply five migrations to the real Supabase project** (the app hides the matching
 controls until each is installed, so nothing breaks while they wait). Needs access to the VIANORAE Supabase project
-(`uzlngrzokjzxvdfpctnt`, see the README), nothing else.
+(`ywbcsvswisorlgajbkev`, see the README), nothing else.
 
 - [ ] **1. Field controls** (`supabase/migrations/20261011120000_step_fields.sql`): adds the × and *Add a field* controls
   in the step editor.
@@ -395,13 +395,14 @@ no IP addresses, device details, date of birth, home address or national ID.
 Each step is its own small pull request. When it is merged, remove its task from this list.
 
 0. [ ] **Registration doesn't work on production** (found by the owner, 2026-10-13: `vianorae.lignorae.com/en/register` shows
-   the form but it can't be submitted, and no "being activated" notice explains why). The form is switched off when the
-   sign-in settings are missing or don't match in Vercel Production (`NEXT_PUBLIC_SUPABASE_URL`,
-   `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`, `VIANORAE_SUPABASE_PROJECT_REF`; see `src/lib/supabase/config.ts`). With the
-   settings present but the verification migration missing it shows a notice instead. These are the owner's steps (check
-   the three values, redeploy because `NEXT_PUBLIC_*` values are fixed at build time), then see that registration, the
-   confirmation email and sign-in work end to end on the live site. A code change may follow if the cause is another one.
-   Do this before the migrations in the friend's job below.
+   the form but it can't be submitted). Cause found: the Supabase project reference written in the docs and in Vercel
+   (`uzl…`) doesn't exist; the real `neruma-prod` is `ywbcsvswisorlgajbkev`. The site switches the form off when its
+   three settings don't name one project. The owner's steps in Vercel, Production: `NEXT_PUBLIC_SUPABASE_URL` =
+   `https://ywbcsvswisorlgajbkev.supabase.co`, `VIANORAE_SUPABASE_PROJECT_REF` = `ywbcsvswisorlgajbkev`,
+   `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` = the publishable key of that project (Supabase → *Get Connected*), then redeploy
+   without the build cache. Preview still points at production's project with a placeholder key; it should use `neruma-dev`
+   (`DATABASE-ENVIRONMENTS.md`). Docs corrected in the same pull request. Then check registration, the confirmation email
+   and sign-in end to end. Do this before the migrations in the friend's job below.
 1. [ ] **Password rules in the hosted projects** (the owner's steps, no code; also section 7). Minimum 12 characters and, if
    the plan offers it, *Prevent use of leaked passwords*, on `neruma-dev` first, then production (the friend's project
    access). Also set the minimum in `supabase/config.toml` so local matches.

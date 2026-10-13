@@ -1,6 +1,6 @@
 # Database foundation and safety boundaries
 
-The CLI created all five migration filenames. Supabase CLI 2.81.3 was used after the newer CLI could not initialise its global config in the managed read-only home. PostgreSQL 17 is configured for future local Supabase use. The CLI remains unlinked. The owner installed the four migrations manually in the new dedicated Supabase project `uzlngrzokjzxvdfpctnt`; the VIANORAE preview uses that project. Manual installation did not populate CLI migration history: inspect and reconcile it before any migration push, and do not reapply the foundation.
+The CLI created all five migration filenames. Supabase CLI 2.81.3 was used after the newer CLI could not initialise its global config in the managed read-only home. PostgreSQL 17 is configured for future local Supabase use. The CLI remains unlinked. The owner installed the four migrations manually in the new dedicated Supabase project `ywbcsvswisorlgajbkev`; the VIANORAE preview uses that project. Manual installation did not populate CLI migration history: inspect and reconcile it before any migration push, and do not reapply the foundation.
 
 `npm run test:db` executes all five migrations in an isolated PGlite PostgreSQL instance with test-only `auth.users`, `auth.uid()`, anon/authenticated/service roles and initially permissive default privileges. It tests real SQL grants, constraints and RLS; it does not substitute for a full Supabase integration test.
 

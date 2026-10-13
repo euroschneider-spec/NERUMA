@@ -37,7 +37,7 @@ Optional speech tests simulate the browser speech engine and cover no autoplay, 
 
 ## Live evidence and limits
 
-- The new-account Supabase project is `uzlngrzokjzxvdfpctnt`. The owner installed the foundation (24 public tables, all RLS) and additional online-builder migration. A read-only API probe confirms `workspace_schema_version = 1` with HTTP 200. Do not repeat the initial installer; reconcile manual migration history before a CLI push.
+- The new-account Supabase project is `ywbcsvswisorlgajbkev`. The owner installed the foundation (24 public tables, all RLS) and additional online-builder migration. A read-only API probe confirms `workspace_schema_version = 1` with HTTP 200. Do not repeat the initial installer; reconcile manual migration history before a CLI push.
 - The dedicated public key is accepted by Auth; email confirmation is required and anonymous Auth is disabled. Anonymous internal reads and onboarding are denied. Those API probes are read-only and created no rows/accounts.
 - The owner confirmed real signup → email confirmation → account → organisation creation in the deployed preview. A live owner-operated save/photo/reload pilot is still required for the new builder. Local fixtures cannot establish actual hosted Storage/API behaviour or email delivery.
 - Vercel preview protection previously denied automated fetch access (403); protection is retained. No automated live browser walkthrough is claimed.

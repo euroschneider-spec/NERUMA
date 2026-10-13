@@ -13,7 +13,7 @@ The review portal is `/{locale}/admin/organisations`, with EN/RO/DE translations
 
 ## Activation
 
-Apply `supabase/migrations/20261007111624_organisation_verification.sql` once, after the existing four migrations, to the dedicated VIANORAE project `uzlngrzokjzxvdfpctnt`. Do not replay the original database installer. The owner delivery SQL combines this additive migration with an explicitly authorised initial administrator bootstrap; it validates the existing VIANORAE workspace schema and exactly one confirmed, non-anonymous Auth account with the selected email before changing anything. The selected email is an existing account in the VIANORAE database, not permission to access another application's database.
+Apply `supabase/migrations/20261007111624_organisation_verification.sql` once, after the existing four migrations, to the dedicated VIANORAE project `ywbcsvswisorlgajbkev`. Do not replay the original database installer. The owner delivery SQL combines this additive migration with an explicitly authorised initial administrator bootstrap; it validates the existing VIANORAE workspace schema and exactly one confirmed, non-anonymous Auth account with the selected email before changing anything. The selected email is an existing account in the VIANORAE database, not permission to access another application's database.
 
 If the selected email has no confirmed VIANORAE Auth account, use the separate schema-only delivery SQL first. It assigns no platform roles and enables the new registration flow after deployment. Create and confirm the selected personal sign-in (or explicitly select an already confirmed account), then run the separate administrator bootstrap. The bootstrap refuses a missing/unconfirmed/ambiguous account.
 
