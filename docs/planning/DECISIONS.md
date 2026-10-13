@@ -147,6 +147,15 @@ the QR code keeps working and shows "This guide isn't available right now". The 
 publish and never changes. Not chosen: a NERUMA approval queue (slower, and against "quick and simple"), publishing each
 language separately, unpublishing only through NERUMA. Plan: brief `2026-10-13-publishing.md`.
 
+### Two-factor sign-in is required for owners, admins and platform administrators
+Owner, 2026-10-13. Payments are coming, and a leaked password alone must not reach billing, an organisation's data or
+NERUMA's data. Everyone in those roles confirms sign-in with an authenticator-app code. Platform administrators from the day
+it is installed; organisation owners and admins after 30 days with a banner, then sign-in leads straight to setup (nobody
+is locked out; this follows Microsoft 365, GitHub and Google Workspace). The date is one setting and can move, for example
+to the payments launch. The database enforces it, not only the pages. Still to come, each as its own pull request:
+*Remember this device for 30 days* (not for platform administrators) and backup codes. Not chosen: SMS codes (cost,
+SIM-swap); passkeys for now. Plan: brief `2026-10-13-two-factor-sign-in.md`; reset steps `docs/guides/TWO-FACTOR.md`.
+
 ### Organisations can report a problem to NERUMA
 Owner, 2026-10-11. A button in the organisation sidebar, *Report a problem or ask for help*. Chosen: the report
 is saved in the database and the platform administrator reads it in the admin area. Not chosen: a link that opens

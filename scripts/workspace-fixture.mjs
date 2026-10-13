@@ -4,6 +4,7 @@ import { createServer } from 'node:http';
 import { readFile, readdir } from 'node:fs/promises';
 import { randomUUID, createHmac, createHash } from 'node:crypto';
 import { PGlite } from '@electric-sql/pglite';
+import { FIXTURE_ADMIN_TOTP_SECRET, newSecret, totpMatches } from './fixture-totp.mjs';
 if (process.env.VIANORAE_TEST_FIXTURE !== '1') throw new Error('Test fixture must be explicitly enabled');
 // One shared password for every mock user. Test-only: this fixture is a fake Supabase and never runs in a real environment.
 const FIXTURE_PASSWORD='Fixture-only-passphrase-123';
@@ -11,11 +12,13 @@ const db = new PGlite();
 const id = n => `00000000-0000-4000-8000-${String(n).padStart(12,'0')}`;
 const users = [1,2,3,4,5].map(n => ({id:id(n),aud:'authenticated',role:'authenticated',email:`owner${n}@example.test`,email_confirmed_at:'2026-10-01T12:00:00Z',is_anonymous:false,app_metadata:{provider:'email'},user_metadata:{},created_at:'2026-10-01T12:00:00Z'}));
 let verificationEnabled=true;let evidenceEnabled=true;
-const files = new Map(); const tokens = new Map(); let tail = Promise.resolve();
+const files = new Map(); const tokens = new Map(); const levels = new Map(); const challenges = new Map(); let tail = Promise.resolve();
 const locked = fn => {const result=tail.then(fn);tail=result.catch(()=>{});return result;};
 await db.exec(`create role anon;create role authenticated;create role service_role bypassrls;create schema auth;create table auth.users(id uuid primary key,email_confirmed_at timestamptz default now(),is_anonymous boolean not null default false,email text default 'fixture@example.test');
 create function auth.uid() returns uuid language sql stable as $$select nullif(current_setting('request.jwt.claim.sub',true),'')::uuid$$;
-grant usage on schema public,auth to anon,authenticated,service_role;grant execute on function auth.uid() to anon,authenticated,service_role;
+create function auth.jwt() returns jsonb language sql stable as $$select coalesce(nullif(current_setting('request.jwt.claims',true),''),'{}')::jsonb$$;
+create table auth.mfa_factors(id uuid primary key default gen_random_uuid(),user_id uuid not null references auth.users(id),friendly_name text,factor_type text not null default 'totp',status text not null default 'unverified',secret text,created_at timestamptz not null default now(),updated_at timestamptz not null default now());
+grant usage on schema public,auth to anon,authenticated,service_role;grant execute on function auth.uid(),auth.jwt() to anon,authenticated,service_role;
 alter default privileges in schema public grant all on tables to anon,authenticated;
 create schema storage;create table storage.buckets(id text primary key,name text not null,public boolean not null default false,file_size_limit bigint,allowed_mime_types text[]);
 create table storage.objects(id uuid primary key default gen_random_uuid(),bucket_id text references storage.buckets(id),name text not null,unique(bucket_id,name));
@@ -28,6 +31,8 @@ for (let n=1;n<=2;n++) {
 }
 for(let n=3;n<=5;n++) await db.query('insert into auth.users(id,email) values($1,$2)',[id(n),users[n-1].email]);
 await db.query('insert into private.platform_admins(user_id) values($1)',[id(3)]);
+// The platform administrator has an authenticator app from the start (code: node scripts/fixture-totp.mjs).
+await db.query("insert into auth.mfa_factors(user_id,friendly_name,status,secret) values($1,'NERUMA','verified',$2)",[id(3),FIXTURE_ADMIN_TOTP_SECRET]);
 // Browsing data for npm run dev:mock only; the test suite never sets this, so its starting state is unchanged.
 // owner2 owns the fictional Willow Museum (five zones from supabase/seed.sql); owner5 has a request waiting for review.
 if (process.env.VIANORAE_FIXTURE_DEMO_DATA === '1') {
@@ -46,12 +51,16 @@ if (process.env.VIANORAE_FIXTURE_DEMO_DATA === '1') {
   await db.query('update public.organization_applications set evidence_document_ids=array[$1::uuid] where id=$2',[documentId,application]);
   files.set(key,pdf);
 }
-function session(user) {
+// Two-factor sign-in as Supabase Auth does it: factors on the user, the assurance level (aal) in the access token.
+const factorRows=userId=>locked(async()=>(await db.query('select id,friendly_name,factor_type,status,secret,created_at,updated_at from auth.mfa_factors where user_id=$1 order by created_at',[userId])).rows);
+const asFactor=row=>({id:row.id,friendly_name:row.friendly_name,factor_type:row.factor_type,status:row.status,created_at:row.created_at,updated_at:row.updated_at});
+const withFactors=async user=>({...user,factors:(await factorRows(user.id)).map(asFactor)});
+function session(user,aal='aal1') {
   const now=Math.floor(Date.now()/1000);
   const encode=value=>Buffer.from(JSON.stringify(value)).toString('base64url');
-  const unsigned=`${encode({alg:'HS256',typ:'JWT'})}.${encode({sub:user.id,aud:'authenticated',role:'authenticated',iss:'https://vianorae-fixture.supabase.co/auth/v1',iat:now,exp:now+3600,email:user.email,is_anonymous:false})}`;
+  const unsigned=`${encode({alg:'HS256',typ:'JWT'})}.${encode({sub:user.id,aud:'authenticated',role:'authenticated',iss:'https://vianorae-fixture.supabase.co/auth/v1',iat:now,exp:now+3600,email:user.email,is_anonymous:false,aal,amr:[{method:'password',timestamp:now},...(aal==='aal2'?[{method:'totp',timestamp:now}]:[])]})}`;
   const access=`${unsigned}.${createHmac('sha256','fixture-only-key').update(unsigned).digest('base64url')}`;
-  const refresh=randomUUID();tokens.set(access,user);tokens.set(refresh,user);
+  const refresh=randomUUID();tokens.set(access,user);tokens.set(refresh,user);levels.set(access,aal);levels.set(refresh,aal);
   return {access_token:access,refresh_token:refresh,token_type:'bearer',expires_in:3600,expires_at:now+3600,user};
 }
 const send=(res,status,value,headers={})=>{res.writeHead(status,{'Content-Type':'application/json',...headers});res.end(JSON.stringify(value));};
@@ -62,6 +71,10 @@ createServer(async(req,res)=>{
     const url=new URL(req.url,'http://127.0.0.1:3012');const chunks=[];for await(const chunk of req) chunks.push(chunk);const body=Buffer.concat(chunks);
     if(url.pathname==='/__fixture/verification-mode' && req.method==='POST') {verificationEnabled=JSON.parse(body.toString()).enabled;return send(res,200,{verificationEnabled});}
     if(url.pathname==='/__fixture/evidence-mode' && req.method==='POST') {evidenceEnabled=JSON.parse(body.toString()).enabled;return send(res,200,{evidenceEnabled});}
+    if(url.pathname==='/__fixture/two-factor-deadline' && req.method==='POST') {
+      const from=JSON.parse(body.toString()).from;
+      await locked(()=>db.query('update private.two_factor_policy set organisations_from=$1',[from]));return send(res,200,{from});
+    }
     if (url.pathname==='/health') return send(res,200,{ready:true});
     if(url.pathname==='/auth/v1/signup' || url.pathname==='/auth/v1/resend') {
       const payload=JSON.parse(body.toString());
@@ -71,20 +84,47 @@ createServer(async(req,res)=>{
       return send(res,200,{id:id(20),aud:'authenticated',role:'authenticated',email:payload.email,email_confirmed_at:null,is_anonymous:false,app_metadata:{provider:'email'},user_metadata:payload.data||{},identities:[],created_at:new Date().toISOString()});
     }
     if (url.pathname==='/auth/v1/token') {
-      const payload=JSON.parse(body.toString());const user=url.searchParams.get('grant_type')==='refresh_token'?tokens.get(payload.refresh_token):users.find(u=>u.email===payload.email && payload.password===FIXTURE_PASSWORD);
-      return send(res,user?200:400,user?session(user):{error:'invalid_grant',error_description:'Invalid fixture credentials'});
+      const payload=JSON.parse(body.toString());const refreshing=url.searchParams.get('grant_type')==='refresh_token';
+      const user=refreshing?tokens.get(payload.refresh_token):users.find(u=>u.email===payload.email && payload.password===FIXTURE_PASSWORD);
+      if(!user) return send(res,400,{error:'invalid_grant',error_description:'Invalid fixture credentials'});
+      const fresh=session(await withFactors(user),refreshing?levels.get(payload.refresh_token):'aal1');return send(res,200,fresh);
     }
     const token=(req.headers.authorization || '').replace(/^Bearer /,'');const user=tokens.get(token);
-    if (url.pathname==='/auth/v1/user') return send(res,user?200:401,user || {msg:'Invalid token'});
+    if (url.pathname==='/auth/v1/user') return user?send(res,200,await withFactors(user)):send(res,401,{msg:'Invalid token'});
+    const factorPath=url.pathname.match(/^\/auth\/v1\/factors(?:\/([0-9a-f-]{36})(?:\/(challenge|verify))?)?$/);
+    if(factorPath) {
+      if(!user) return send(res,401,{msg:'Invalid token'});
+      const [,factorId,step]=factorPath;const rows=await factorRows(user.id);const factor=rows.find(row=>row.id===factorId);
+      const payload=body.length?JSON.parse(body.toString()):{};
+      if(!factorId && req.method==='POST') {
+        if(rows.some(row=>row.status==='verified') && levels.get(token)!=='aal2') return send(res,403,{error_code:'insufficient_aal',msg:'AAL2 required to enroll a new factor'});
+        if(rows.some(row=>row.friendly_name===payload.friendly_name)) return send(res,422,{error_code:'mfa_factor_name_conflict',msg:'A factor with this name already exists'});
+        const secret=newSecret();
+        const created=await locked(async()=>(await db.query("insert into auth.mfa_factors(user_id,friendly_name,status,secret) values($1,$2,'unverified',$3) returning id",[user.id,payload.friendly_name,secret])).rows[0]);
+        return send(res,200,{id:created.id,type:'totp',friendly_name:payload.friendly_name,totp:{qr_code:'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 21 21"><rect width="21" height="21" fill="#fff"/><rect x="1" y="1" width="7" height="7"/></svg>',secret,uri:`otpauth://totp/${payload.issuer}:${user.email}?secret=${secret}&issuer=${payload.issuer}`}});
+      }
+      if(!factor) return send(res,404,{error_code:'mfa_factor_not_found',msg:'Factor not found'});
+      if(!step && req.method==='DELETE') {await locked(()=>db.query('delete from auth.mfa_factors where id=$1',[factor.id]));return send(res,200,{id:factor.id});}
+      if(step==='challenge') {const challenge=randomUUID();challenges.set(challenge,factor.id);return send(res,200,{id:challenge,type:'totp',expires_at:Math.floor(Date.now()/1000)+300});}
+      if(step==='verify') {
+        if(challenges.get(payload.challenge_id)!==factor.id) return send(res,422,{error_code:'mfa_challenge_expired',msg:'Challenge not found'});
+        challenges.delete(payload.challenge_id);
+        if(!totpMatches(factor.secret,String(payload.code||''))) return send(res,422,{error_code:'mfa_verification_failed',msg:'Invalid TOTP code entered'});
+        await locked(()=>db.query("update auth.mfa_factors set status='verified',updated_at=now() where id=$1",[factor.id]));
+        tokens.delete(token);return send(res,200,session(await withFactors(user),'aal2'));
+      }
+      return send(res,400,{msg:'Unsupported factor request'});
+    }
     if (url.pathname==='/auth/v1/logout') {tokens.delete(token);res.writeHead(204);return res.end();}
     // What a visitor may ask without signing in: schema checks, and the functions that return published data only.
-    const anonymousRpc=['workspace_schema_version','organization_verification_schema_version','mandate_evidence_schema_version','publishing_schema_version','published_guide','published_places','resolve_qr'].map(name=>`/rest/v1/rpc/${name}`);
+    const anonymousRpc=['workspace_schema_version','organization_verification_schema_version','mandate_evidence_schema_version','publishing_schema_version','two_factor_schema_version','published_guide','published_places','resolve_qr'].map(name=>`/rest/v1/rpc/${name}`);
     if (!user && !anonymousRpc.includes(url.pathname) && !(req.method==='GET' && url.pathname.startsWith('/storage/v1/object/'))) return send(res,401,{code:'42501',message:'Sign in required'});
     await locked(async()=>{
       await db.exec('begin');
       try {
         await db.exec(`set local role ${user?'authenticated':'anon'}`);
         await db.query("select set_config('request.jwt.claim.sub',$1,true)",[user?.id || '']);
+        await db.query("select set_config('request.jwt.claims',$1,true)",[user?JSON.stringify({sub:user.id,aal:levels.get(token)||'aal1'}):'']);
         if (url.pathname.startsWith('/rest/v1/rpc/')) {
           const rpc=url.pathname.split('/').at(-1);let result;
           if(rpc==='workspace_schema_version') result=(await db.query('select public.workspace_schema_version() value')).rows[0].value;
@@ -103,6 +143,8 @@ createServer(async(req,res)=>{
           else if(rpc==='mandate_evidence_schema_version') {if(!evidenceEnabled) throw new Error('Evidence migration unavailable');result=(await db.query('select public.mandate_evidence_schema_version() value')).rows[0].value;}
           else if(rpc==='reserve_mandate_document') {const p=JSON.parse(body.toString());result=(await db.query('select public.reserve_mandate_document($1,$2,$3,$4) value',[p.original_name,p.content_type,p.bytes,p.digest])).rows[0].value;}
           else if(rpc==='complete_mandate_document') {const p=JSON.parse(body.toString());result=(await db.query('select public.complete_mandate_document($1) value',[p.document_id])).rows[0].value;}
+          else if(rpc==='two_factor_schema_version') result=(await db.query('select public.two_factor_schema_version() value')).rows[0].value;
+          else if(rpc==='two_factor_status') result=(await db.query('select public.two_factor_status() value')).rows[0].value;
           else if(rpc==='is_platform_admin') result=(await db.query('select public.is_platform_admin() value')).rows[0].value;
           else if(rpc==='submit_organization_application') {const p=JSON.parse(body.toString());result=(await db.query('select public.submit_organization_application($1::jsonb,$2) value',[JSON.stringify(p.application),p.expected_revision??null])).rows[0].value;}
           else if(rpc==='review_organization_application') {const p=JSON.parse(body.toString());result=(await db.query('select public.review_organization_application($1,$2,$3,$4,$5,$6,$7,$8,$9::uuid[]) value',[p.application_id,p.expected_revision,p.decision,p.entity_confirmed,p.mandate_confirmed,p.verified_source,p.evidence_reference,p.applicant_note,p.reviewed_documents])).rows[0].value;}

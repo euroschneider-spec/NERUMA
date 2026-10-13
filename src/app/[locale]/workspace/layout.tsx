@@ -1,3 +1,4 @@
+import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { getCopy, isLocale } from '@/lib/i18n';
 import { getOrganisationCopy } from '@/lib/organisation-copy';
@@ -6,6 +7,7 @@ import { problemReportsReady } from '@/lib/verification-server';
 import { workspaceSession } from '@/lib/workspace-server';
 import { signOut } from '@/app/auth/actions';
 import { OrgSidebar } from '@/components/org-sidebar';
+import { getTwoFactorCopy, upcomingDeadline } from '@/lib/two-factor';
 
 export default async function WorkspaceLayout({ children, params }: { children: React.ReactNode; params: Promise<{ locale: string }> }) {
   const { locale } = await params;
@@ -14,6 +16,9 @@ export default async function WorkspaceLayout({ children, params }: { children: 
   const context = await workspaceSession(locale);
   // Before the 2026-10-12 migration the button stays hidden, like the field controls before theirs.
   const reportsEnabled = await problemReportsReady(context.supabase);
+  // Until two-factor is required for owners and admins, those without it see the date it starts.
+  const deadline = upcomingDeadline(context.twoFactor);
+  const twoFactor = getTwoFactorCopy(locale);
   const roleLabels = { owner: t.roleOwner, admin: t.roleAdmin };
   const memberships = context.memberships.map((membership) => ({
     organisation: membership.organisation,
@@ -37,7 +42,15 @@ export default async function WorkspaceLayout({ children, params }: { children: 
         }}
         signOutAction={signOut.bind(null, locale)}
       />
-      <div className="app-content">{children}</div>
+      <div className="app-content">
+        {deadline && (
+          <p className="notice two-factor-banner">
+            {twoFactor.banner.replace('{date}', new Date(deadline).toLocaleDateString(locale, { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'Europe/Berlin' }))}{' '}
+            <Link href={`/${locale}/account#two-factor-title`}>{twoFactor.bannerLink}</Link>
+          </p>
+        )}
+        {children}
+      </div>
     </div>
   );
 }

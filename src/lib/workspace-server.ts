@@ -9,6 +9,7 @@ import type { SensoryProfile } from './demo';
 import { publishingReady, stepFieldsReady, verificationReady } from './verification-server';
 import type { Publication } from './publishing';
 import { getViewer } from './viewer-server';
+import { requireSecondFactor } from './two-factor-server';
 
 export const workspaceConfigured = () => authConfigured() && process.env.VIANORAE_WORKSPACE_ENABLED === '1';
 // Cached per request: the shell and the page both ask for the session, and it is only fetched once.
@@ -18,11 +19,12 @@ export const workspaceSession = cache(async (locale: Locale) => {
   const user = await confirmedUser(supabase);
   if (!user) redirect(`/${locale}/login`);
   if(!await verificationReady(supabase)) redirect(`/${locale}/account`);
+  const twoFactor = await requireSecondFactor(supabase, locale);
   const viewer = await getViewer(supabase, user.id);
   if (!viewer) throw new Error('workspace-unavailable');
   const organisations = viewer.memberships.map(m => ({ id: m.organisation, name: m.name }));
   if(!organisations.length) redirect(`/${locale}/account`);
-  return { supabase, user, organisations, memberships: viewer.memberships };
+  return { supabase, user, organisations, memberships: viewer.memberships, twoFactor };
 });
 export async function listPlaces(supabase: SupabaseClient, org: string, locale: Locale): Promise<PlaceSummary[]> {
   // Before the publishing migration these columns and the QR table link don't exist: read without them.

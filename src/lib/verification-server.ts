@@ -22,6 +22,8 @@ export const stepFieldsReady=(supabase:SupabaseClient)=>schemaVersionIsOne(supab
 export const problemReportsReady=(supabase:SupabaseClient)=>schemaVersionIsOne(supabase,'problem_reports_schema_version');
 // Publishing exists only after the 2026-10-13 migration; before it, Publish stays switched off.
 export const publishingReady=(supabase:SupabaseClient)=>schemaVersionIsOne(supabase,'publishing_schema_version');
+// Two-factor sign-in exists only after the 2026-10-14 migration; before it, the database applies no such rule either.
+export const twoFactorReady=(supabase:SupabaseClient)=>schemaVersionIsOne(supabase,'two_factor_schema_version');
 export const evidenceReady=(supabase:SupabaseClient)=>schemaVersionIsOne(supabase,'mandate_evidence_schema_version');
 
 export async function approvedOrganization(supabase:SupabaseClient,org:string):Promise<boolean> {

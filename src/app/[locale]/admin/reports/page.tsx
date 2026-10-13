@@ -8,6 +8,7 @@ import { closeProblemReport } from '@/app/admin/actions';
 import { problemReportsReady, verificationReady } from '@/lib/verification-server';
 import { confirmedUser, createClient } from '@/lib/supabase/server';
 import { authConfigured } from '@/lib/supabase/config';
+import { requireSecondFactor } from '@/lib/two-factor-server';
 
 export const dynamic = 'force-dynamic';
 export const metadata = { title: 'Problem reports · NERUMA', robots: { index: false, follow: false } };
@@ -20,6 +21,7 @@ export default async function ProblemReports({ params, searchParams }: { params:
   const user = await confirmedUser(supabase);
   if (!user) redirect(`/${locale}/login`);
   if (!await verificationReady(supabase)) notFound();
+  await requireSecondFactor(supabase, locale);
   const admin = await supabase.rpc('is_platform_admin');
   if (admin.error || admin.data !== true) notFound();
   const base = `/${locale}/admin/reports`;

@@ -344,7 +344,7 @@ Added on 2026-10-11, after the dashboard cards (PR #29). Decisions are in `DECIS
 4. [ ] **Publishing** (needs Opus): the QR registry above, the "isn't available" page, language choice, the real QR
    pop-up and visit counts on the card.
 
-**Job for the owner's friend: apply three migrations to the real Supabase project** (the app hides the matching
+**Job for the owner's friend: apply four migrations to the real Supabase project** (the app hides the matching
 controls until each is installed, so nothing breaks while they wait). Needs access to the VIANORAE Supabase project
 (`uzlngrzokjzxvdfpctnt`, see the README), nothing else.
 
@@ -355,8 +355,12 @@ controls until each is installed, so nothing breaks while they wait). Needs acce
 - [ ] **3. Publishing** (`supabase/migrations/20261013090000_publishing.sql`): switches on *Publish* and *Unpublish*,
   the QR code on the dashboard cards, public guide addresses and Explore. It also changes the example place's internal
   address if it was ever created from the old seed; nothing else is touched.
+- [ ] **4. Two-factor sign-in** (`supabase/migrations/20261014090000_two_factor.sql`). **Only after the app version with
+  two-factor is live on the site**: from this moment platform administrators must enter an authenticator code, and only
+  that app version can set one up. First check **Authentication → Multi-Factor** (or *Sign In / Providers*): *TOTP
+  (App Authenticator)* must be enabled. Organisation owners and admins get 30 days; see `docs/guides/TWO-FACTOR.md`.
 
-How, for each file, in this order (1, 2, then 3):
+How, for each file, in this order (1, 2, 3, then 4):
 
 1. Open the project in Supabase, then **SQL Editor → New query**.
 2. Paste the whole file and press **Run**. Each file starts with a check and stops with a "STOP: … must already be
@@ -364,7 +368,7 @@ How, for each file, in this order (1, 2, then 3):
 3. Run each file **once**. A second run fails with "already exists", which is safe but means it was already installed.
 4. Check it worked: run `select public.step_fields_schema_version(), public.problem_reports_schema_version(), public.publishing_schema_version();`
    (it only works after all three files are installed; before that it names the missing function). The result should be
-   `1 | 1 | 1`.
+   `1 | 1 | 1`. After file 4, also `select public.two_factor_schema_version();` should give `1`.
 5. Tell the owner. On the live site the sidebar then shows *Report a problem* for organisation owners, and step
    cards show *Add a field*.
 

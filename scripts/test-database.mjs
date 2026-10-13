@@ -6,12 +6,15 @@ const id=n=>`00000000-0000-4000-8000-${String(n).padStart(12,'0')}`;
 const owner=id(1),admin=id(2),editor=id(3),outsider=id(4),ownerB=id(5),assessor=id(6),reviewer=id(7),dual=id(8);
 const orgA=id(101),orgB=id(102),placeA=id(201),placeB=id(202),guideA=id(301),guideB=id(302),zoneA=id(401),zoneB=id(402),profileA=id(501);
 async function check(name,fn){await fn();checks++;console.log(`PASS ${name}`);}
-async function as(user,role='authenticated'){await db.exec(`reset role; set role ${role}; select set_config('request.jwt.claim.sub','${user||''}',false);`);}
+// Sessions are fully signed in (aal2) unless a check says otherwise, as after a password and an authenticator code.
+async function as(user,role='authenticated',aal='aal2'){await db.exec(`reset role; set role ${role}; select set_config('request.jwt.claim.sub','${user||''}',false); select set_config('request.jwt.claims','${user?JSON.stringify({sub:user,aal}):''}',false);`);}
 async function count(table){return (await db.query(`select count(*)::int as n from public.${table}`)).rows[0].n;}
 async function denied(sql){await assert.rejects(()=>db.exec(sql));}
 await db.exec(`create role anon;create role authenticated;create role service_role bypassrls;create schema auth;create table auth.users(id uuid primary key,email_confirmed_at timestamptz default now(),is_anonymous boolean not null default false,email text default 'fixture@example.test');
 create function auth.uid() returns uuid language sql stable as $$select nullif(current_setting('request.jwt.claim.sub',true),'')::uuid$$;
-grant usage on schema public,auth to anon,authenticated,service_role;grant execute on function auth.uid() to anon,authenticated,service_role;
+create function auth.jwt() returns jsonb language sql stable as $$select coalesce(nullif(current_setting('request.jwt.claims',true),''),'{}')::jsonb$$;
+create table auth.mfa_factors(id uuid primary key default gen_random_uuid(),user_id uuid not null references auth.users(id),friendly_name text,factor_type text not null default 'totp',status text not null default 'unverified',secret text,created_at timestamptz not null default now(),updated_at timestamptz not null default now());
+grant usage on schema public,auth to anon,authenticated,service_role;grant execute on function auth.uid(),auth.jwt() to anon,authenticated,service_role;
 alter default privileges in schema public grant all on tables to anon,authenticated;
 create schema storage;
 create table storage.buckets(id text primary key,name text not null,public boolean not null default false,file_size_limit bigint,allowed_mime_types text[]);
@@ -343,6 +346,51 @@ await check('the platform administrator reads every report and closes one once, 
  assert.equal(closed.status,'closed');assert.equal(closed.closed_by,platformAdmin);
  await assert.rejects(()=>db.query('select public.close_problem_report($1)',[firstReport]));
 });
+// Two-factor sign-in: a session that only used the password (aal1) loses organisation and administrator access once
+// the account has an authenticator app, or once two-factor is required for it.
+const twoFactor=async()=>(await db.query('select public.two_factor_status() s')).rows[0].s;
+const deadline=async when=>{await db.exec('reset role');await db.query('update private.two_factor_policy set organisations_from=$1',[when]);};
+await as(newOwner,'authenticated','aal1');
+await check('before the deadline, an owner without two-factor keeps working with the password only',async()=>{
+ const status=await twoFactor();assert.equal(status.enrolled,false);assert.equal(status.required,false);assert.equal(status.passed,true);
+ assert.ok(new Date(status.deadline)>new Date());assert.ok(await count('places')>0);
+});
+await check('nobody signed in can read or move the two-factor deadline',async()=>{
+ await denied('select * from private.two_factor_policy');await denied("update private.two_factor_policy set organisations_from=now()+interval '10 years'");
+});
+await db.exec('reset role');await db.query("insert into auth.mfa_factors(user_id,status) values($1,'verified')",[newOwner]);
+await as(newOwner,'authenticated','aal1');
+await check('an owner with an authenticator app but no code this session cannot read, save, publish, unpublish or report',async()=>{
+ assert.equal((await twoFactor()).passed,false);assert.equal(await count('places'),0);assert.equal(await count('organizations'),0);
+ await assert.rejects(()=>saveDraft(newOrg,livePlace,1,'en',draft),/editing is not allowed/);
+ await assert.rejects(()=>publish(pubPlace,5),/Only owners and admins/);await assert.rejects(()=>unpublish(pubPlace),/Only owners and admins/);
+ await assert.rejects(()=>report(newOrg),/Two-factor/);
+});
+await as(newOwner);
+await check('the same owner after entering the code (aal2) has their access back',async()=>{assert.equal((await twoFactor()).passed,true);assert.ok(await count('places')>0);});
+await db.exec('reset role');await db.query('delete from auth.mfa_factors where user_id=$1',[newOwner]);
+await deadline(new Date(Date.now()-60000).toISOString());
+await as(newOwner,'authenticated','aal1');
+await check('after the deadline, an owner without two-factor loses access until they set it up',async()=>{
+ const status=await twoFactor();assert.equal(status.required,true);assert.equal(status.passed,false);
+ assert.equal(await count('places'),0);await assert.rejects(()=>publish(pubPlace,5),/Only owners and admins/);
+});
+await as(editor,'authenticated','aal1');
+await check('the requirement applies to owners and admins, not to other roles',async()=>{
+ const status=await twoFactor();assert.equal(status.deadline,null);assert.equal(status.passed,true);assert.ok(await count('places')>0);
+});
+await deadline(new Date(Date.now()+30*86400000).toISOString());
+const openReport=(await db.query("select id from public.problem_reports where status='open' limit 1")).rows[0].id;
+await as(platformAdmin,'authenticated','aal1');
+await check('a platform administrator needs the second factor from day one',async()=>{
+ const status=await twoFactor();assert.equal(status.required,true);assert.equal(status.passed,false);
+ assert.equal((await db.query('select public.is_platform_admin() ok')).rows[0].ok,false);
+ assert.equal((await db.query('select count(*)::int n from public.organization_applications where applicant_id<>auth.uid()')).rows[0].n,0);
+ assert.equal(await count('problem_reports'),0);
+ await assert.rejects(()=>review(applicationId,4,'suspended',false,false,'','','Access suspended while the mandate is investigated.'));
+ await assert.rejects(()=>db.query('select public.close_problem_report($1)',[openReport]),/Platform administrator required/);
+});
+
 await as(platformAdmin);
 await check('suspension immediately blocks member data and private storage with existing identity',async()=>{await review(applicationId,4,'suspended',false,false,'','','Access suspended while the mandate is investigated.');});
 await as(newOwner);
