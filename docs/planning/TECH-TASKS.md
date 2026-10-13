@@ -44,8 +44,10 @@ motion is already respected. The root URL always redirects to English (`src/app/
 
 Not legal advice. Confirm with a lawyer before a public launch.
 
-**Today:** no analytics or tracking. Two things are stored on the device:
+**Today:** no analytics or tracking. These are stored on the device:
 - Supabase sign-in cookies (`src/lib/supabase/server.ts`), only for signed-in organisations.
+- `neruma_device` (httpOnly cookie, 30 days), only when an organisation owner or admin ticks *Remember this device*
+  after the two-factor code. Holds a random token; the database keeps only its hash.
 - Reading preferences in `localStorage` (`vianorae:reading:v1`). The demo workspace also keeps its
   two locations (`neruma:demo:v1:*`) in `localStorage` and the visitor's photos in IndexedDB; *Reset demo* clears both.
 
@@ -344,7 +346,7 @@ Added on 2026-10-11, after the dashboard cards (PR #29). Decisions are in `DECIS
 4. [ ] **Publishing** (needs Opus): the QR registry above, the "isn't available" page, language choice, the real QR
    pop-up and visit counts on the card.
 
-**Job for the owner's friend: apply four migrations to the real Supabase project** (the app hides the matching
+**Job for the owner's friend: apply five migrations to the real Supabase project** (the app hides the matching
 controls until each is installed, so nothing breaks while they wait). Needs access to the VIANORAE Supabase project
 (`uzlngrzokjzxvdfpctnt`, see the README), nothing else.
 
@@ -361,8 +363,10 @@ controls until each is installed, so nothing breaks while they wait). Needs acce
   (App Authenticator)* must be enabled. If the same page offers *Recovery codes* (backup codes), switch them on too; if it
   doesn't, the site hides backup codes until Supabase offers them. Organisation owners and admins get 30 days; see
   `docs/guides/TWO-FACTOR.md`.
+- [ ] **5. Remember this device** (`supabase/migrations/20261015090000_remember_device.sql`), right after 4: adds the
+  *Remember this device for 30 days* box on the code step for organisation owners and admins.
 
-How, for each file, in this order (1, 2, 3, then 4):
+How, for each file, in this order (1 to 5):
 
 1. Open the project in Supabase, then **SQL Editor → New query**.
 2. Paste the whole file and press **Run**. Each file starts with a check and stops with a "STOP: … must already be
@@ -370,7 +374,8 @@ How, for each file, in this order (1, 2, 3, then 4):
 3. Run each file **once**. A second run fails with "already exists", which is safe but means it was already installed.
 4. Check it worked: run `select public.step_fields_schema_version(), public.problem_reports_schema_version(), public.publishing_schema_version();`
    (it only works after all three files are installed; before that it names the missing function). The result should be
-   `1 | 1 | 1`. After file 4, also `select public.two_factor_schema_version();` should give `1`.
+   `1 | 1 | 1`. After files 4 and 5, also
+   `select public.two_factor_schema_version(), public.remember_device_schema_version();` should give `1 | 1`.
 5. Tell the owner. On the live site the sidebar then shows *Report a problem* for organisation owners, and step
    cards show *Add a field*.
 

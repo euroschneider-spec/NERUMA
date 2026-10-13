@@ -33,13 +33,13 @@ On a phone first:
 - [x] An end-to-end test goes through the whole path as a person would: set up two-factor, sign out, sign in with the
       code, check that a wrong code is refused, and check that the workspace stays closed without the code. It runs
       in CI.
-- [ ] When entering the code, an organisation owner or admin can tick *Remember this device for 30 days*. On that
+- [x] When entering the code, an organisation owner or admin can tick *Remember this device for 30 days*. On that
       device, the next sign-ins within 30 days ask only for the password. On the account page they can see their
       remembered devices and forget them; changing the password or an administrator's reset forgets them all.
 - [x] When two-factor is set up, the person is shown 10 backup codes once, with a prompt to save them. At sign-in,
       *Use a backup code* lets them in without the phone; each code works once. They can make a new set on the
       account page, which cancels the old one. The administrator's reset stays for when the codes are lost too.
-- [ ] All new text is in EN, RO and DE. *(Done for PR 1; repeat for PRs 2 and 3.)*
+- [x] All new text is in EN, RO and DE.
 
 ## Not in scope
 - Text-message (SMS) codes.
@@ -53,11 +53,15 @@ On a phone first:
 - The database enforces it: row policies and the publishing functions check the session's assurance level (`aal2`)
   for anyone who has enrolled, and for everyone in those roles once their deadline has passed. The page checks are
   only for showing the right screen.
-- **Remember this device** (owner, 2026-10-13). Supabase has no such option, so it is ours: a random token in a
-  secure, `httpOnly` cookie on the device, stored only as a hash with an expiry of 30 days. After a password sign-in,
-  the server checks the token through a database function that marks that one session as trusted; the policies
-  accept `aal2` *or* a trusted session. A stolen cookie alone is useless without the password. Platform
-  administrators are always asked for the code, because their accounts can approve organisations (owner agreed).
+- **Remember this device** (owner, 2026-10-13; built in PR 3, migration `20261015090000_remember_device.sql`). Supabase
+  has no such option, so it is ours: a random token in an `httpOnly`, `Secure`, `SameSite=Lax` cookie (`neruma_device`,
+  30 days), stored only as a SHA-256 hash. After a password sign-in the app hands it to `trust_this_session`, which marks
+  that one session (`session_id` in the access token) as trusted; `second_factor_ok` accepts `aal2` *or* a trusted session.
+  A stolen cookie alone is useless without the password. Platform administrators are always asked for the code (owner
+  agreed). A device is tied to the authenticator app it was confirmed with, so an administrator's reset forgets it; a new
+  password forgets every device (trigger on `auth.users`). At most ten per account. **No device details are kept**
+  (TECH-TASKS §13): the account page lists remembered devices by date only, and marks the one in use. Forgetting asks
+  nothing, as the cost is entering the code once more.
 - **Backup codes are Supabase's own** (owner, 2026-10-13, PR 2). supabase-js 2.117 has recovery codes behind
   `auth.experimental.recoveryCodes`: ten single-use codes, a lock after repeated wrong tries, a new set cancels the old
   one, and a correct code moves the session to `aal2`, so the database rule from PR 1 needs no change. Chosen over our own
@@ -86,4 +90,6 @@ migration on the hosted projects.
 code step, count and a new set on the account page. Ran: typecheck, lint, `test:unit` (94), `test:workspace` (52, 1 new),
 `test:db` (100, unchanged rule). Not yet known: whether the hosted projects have recovery codes switched on.
 
-**PR 3** remember this device: to do.
+**PR 3** (remember this device): the box on the code step, the device list with *Forget* on the account page. Ran:
+typecheck, lint, `test:unit` (96), `test:db` (110, 10 new), `test:workspace` (53, 1 new). Not yet done: installing both
+migrations on the hosted projects; listing the `neruma_device` cookie on the privacy page (TECH-TASKS §3).

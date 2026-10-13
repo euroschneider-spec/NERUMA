@@ -12,9 +12,9 @@ const db = new PGlite();
 const id = n => `00000000-0000-4000-8000-${String(n).padStart(12,'0')}`;
 const users = [1,2,3,4,5].map(n => ({id:id(n),aud:'authenticated',role:'authenticated',email:`owner${n}@example.test`,email_confirmed_at:'2026-10-01T12:00:00Z',is_anonymous:false,app_metadata:{provider:'email'},user_metadata:{},created_at:'2026-10-01T12:00:00Z'}));
 let verificationEnabled=true;let evidenceEnabled=true;
-const files = new Map(); const tokens = new Map(); const levels = new Map(); const challenges = new Map(); const backupSets = new Map(); let tail = Promise.resolve();
+const files = new Map(); const tokens = new Map(); const levels = new Map(); const sessionIds = new Map(); const challenges = new Map(); const backupSets = new Map(); let tail = Promise.resolve();
 const locked = fn => {const result=tail.then(fn);tail=result.catch(()=>{});return result;};
-await db.exec(`create role anon;create role authenticated;create role service_role bypassrls;create schema auth;create table auth.users(id uuid primary key,email_confirmed_at timestamptz default now(),is_anonymous boolean not null default false,email text default 'fixture@example.test');
+await db.exec(`create role anon;create role authenticated;create role service_role bypassrls;create schema auth;create table auth.users(id uuid primary key,email_confirmed_at timestamptz default now(),is_anonymous boolean not null default false,email text default 'fixture@example.test',encrypted_password text);
 create function auth.uid() returns uuid language sql stable as $$select nullif(current_setting('request.jwt.claim.sub',true),'')::uuid$$;
 create function auth.jwt() returns jsonb language sql stable as $$select coalesce(nullif(current_setting('request.jwt.claims',true),''),'{}')::jsonb$$;
 create table auth.mfa_factors(id uuid primary key default gen_random_uuid(),user_id uuid not null references auth.users(id),friendly_name text,factor_type text not null default 'totp',status text not null default 'unverified',secret text,created_at timestamptz not null default now(),updated_at timestamptz not null default now());
@@ -55,12 +55,13 @@ if (process.env.VIANORAE_FIXTURE_DEMO_DATA === '1') {
 const factorRows=userId=>locked(async()=>(await db.query('select id,friendly_name,factor_type,status,secret,created_at,updated_at from auth.mfa_factors where user_id=$1 order by created_at',[userId])).rows);
 const asFactor=row=>({id:row.id,friendly_name:row.friendly_name,factor_type:row.factor_type,status:row.status,created_at:row.created_at,updated_at:row.updated_at});
 const withFactors=async user=>({...user,factors:(await factorRows(user.id)).map(asFactor)});
-function session(user,aal='aal1') {
+// One sign-in keeps its session id through refreshes and the code step, as in Supabase Auth.
+function session(user,aal='aal1',sessionId=randomUUID()) {
   const now=Math.floor(Date.now()/1000);
   const encode=value=>Buffer.from(JSON.stringify(value)).toString('base64url');
-  const unsigned=`${encode({alg:'HS256',typ:'JWT'})}.${encode({sub:user.id,aud:'authenticated',role:'authenticated',iss:'https://vianorae-fixture.supabase.co/auth/v1',iat:now,exp:now+3600,email:user.email,is_anonymous:false,aal,amr:[{method:'password',timestamp:now},...(aal==='aal2'?[{method:'totp',timestamp:now}]:[])]})}`;
+  const unsigned=`${encode({alg:'HS256',typ:'JWT'})}.${encode({sub:user.id,aud:'authenticated',role:'authenticated',iss:'https://vianorae-fixture.supabase.co/auth/v1',iat:now,exp:now+3600,email:user.email,is_anonymous:false,aal,session_id:sessionId,amr:[{method:'password',timestamp:now},...(aal==='aal2'?[{method:'totp',timestamp:now}]:[])]})}`;
   const access=`${unsigned}.${createHmac('sha256','fixture-only-key').update(unsigned).digest('base64url')}`;
-  const refresh=randomUUID();tokens.set(access,user);tokens.set(refresh,user);levels.set(access,aal);levels.set(refresh,aal);
+  const refresh=randomUUID();tokens.set(access,user);tokens.set(refresh,user);levels.set(access,aal);levels.set(refresh,aal);sessionIds.set(access,sessionId);sessionIds.set(refresh,sessionId);
   return {access_token:access,refresh_token:refresh,token_type:'bearer',expires_in:3600,expires_at:now+3600,user};
 }
 const send=(res,status,value,headers={})=>{res.writeHead(status,{'Content-Type':'application/json',...headers});res.end(JSON.stringify(value));};
@@ -87,7 +88,7 @@ createServer(async(req,res)=>{
       const payload=JSON.parse(body.toString());const refreshing=url.searchParams.get('grant_type')==='refresh_token';
       const user=refreshing?tokens.get(payload.refresh_token):users.find(u=>u.email===payload.email && payload.password===FIXTURE_PASSWORD);
       if(!user) return send(res,400,{error:'invalid_grant',error_description:'Invalid fixture credentials'});
-      const fresh=session(await withFactors(user),refreshing?levels.get(payload.refresh_token):'aal1');return send(res,200,fresh);
+      const fresh=refreshing?session(await withFactors(user),levels.get(payload.refresh_token),sessionIds.get(payload.refresh_token)):session(await withFactors(user));return send(res,200,fresh);
     }
     const token=(req.headers.authorization || '').replace(/^Bearer /,'');const user=tokens.get(token);
     if (url.pathname==='/auth/v1/user') return user?send(res,200,await withFactors(user)):send(res,401,{msg:'Invalid token'});
@@ -103,7 +104,7 @@ createServer(async(req,res)=>{
         if(set.lockedUntil>Date.now()) return send(res,429,{error_code:'mfa_recovery_codes_locked',msg:'Too many attempts'});
         const typed=String(JSON.parse(body.toString()).code||'').toLowerCase().replace(/[\s-]/g,'');const match=set.codes.find(c=>!c.used && c.code===typed);
         if(!match) {set.failures++;if(set.failures>=5) {set.lockedUntil=Date.now()+300000;set.failures=0;}return send(res,422,{error_code:'mfa_verification_failed',msg:'Invalid recovery code'});}
-        match.used=true;set.failures=0;tokens.delete(token);return send(res,200,session(await withFactors(user),'aal2'));
+        match.used=true;set.failures=0;const sessionId=sessionIds.get(token);tokens.delete(token);return send(res,200,session(await withFactors(user),'aal2',sessionId));
       }
       if(req.method==='POST') {
         if(levels.get(token)!=='aal2') return send(res,403,{error_code:'insufficient_aal',msg:'AAL2 required'});
@@ -136,20 +137,20 @@ createServer(async(req,res)=>{
         challenges.delete(payload.challenge_id);
         if(!totpMatches(factor.secret,String(payload.code||''))) return send(res,422,{error_code:'mfa_verification_failed',msg:'Invalid TOTP code entered'});
         await locked(()=>db.query("update auth.mfa_factors set status='verified',updated_at=now() where id=$1",[factor.id]));
-        tokens.delete(token);return send(res,200,session(await withFactors(user),'aal2'));
+        const sessionId=sessionIds.get(token);tokens.delete(token);return send(res,200,session(await withFactors(user),'aal2',sessionId));
       }
       return send(res,400,{msg:'Unsupported factor request'});
     }
     if (url.pathname==='/auth/v1/logout') {tokens.delete(token);res.writeHead(204);return res.end();}
     // What a visitor may ask without signing in: schema checks, and the functions that return published data only.
-    const anonymousRpc=['workspace_schema_version','organization_verification_schema_version','mandate_evidence_schema_version','publishing_schema_version','two_factor_schema_version','published_guide','published_places','resolve_qr'].map(name=>`/rest/v1/rpc/${name}`);
+    const anonymousRpc=['workspace_schema_version','organization_verification_schema_version','mandate_evidence_schema_version','publishing_schema_version','two_factor_schema_version','remember_device_schema_version','published_guide','published_places','resolve_qr'].map(name=>`/rest/v1/rpc/${name}`);
     if (!user && !anonymousRpc.includes(url.pathname) && !(req.method==='GET' && url.pathname.startsWith('/storage/v1/object/'))) return send(res,401,{code:'42501',message:'Sign in required'});
     await locked(async()=>{
       await db.exec('begin');
       try {
         await db.exec(`set local role ${user?'authenticated':'anon'}`);
         await db.query("select set_config('request.jwt.claim.sub',$1,true)",[user?.id || '']);
-        await db.query("select set_config('request.jwt.claims',$1,true)",[user?JSON.stringify({sub:user.id,aal:levels.get(token)||'aal1'}):'']);
+        await db.query("select set_config('request.jwt.claims',$1,true)",[user?JSON.stringify({sub:user.id,aal:levels.get(token)||'aal1',session_id:sessionIds.get(token)}):'']);
         if (url.pathname.startsWith('/rest/v1/rpc/')) {
           const rpc=url.pathname.split('/').at(-1);let result;
           if(rpc==='workspace_schema_version') result=(await db.query('select public.workspace_schema_version() value')).rows[0].value;
@@ -169,6 +170,11 @@ createServer(async(req,res)=>{
           else if(rpc==='reserve_mandate_document') {const p=JSON.parse(body.toString());result=(await db.query('select public.reserve_mandate_document($1,$2,$3,$4) value',[p.original_name,p.content_type,p.bytes,p.digest])).rows[0].value;}
           else if(rpc==='complete_mandate_document') {const p=JSON.parse(body.toString());result=(await db.query('select public.complete_mandate_document($1) value',[p.document_id])).rows[0].value;}
           else if(rpc==='two_factor_schema_version') result=(await db.query('select public.two_factor_schema_version() value')).rows[0].value;
+          else if(rpc==='remember_device_schema_version') result=(await db.query('select public.remember_device_schema_version() value')).rows[0].value;
+          else if(rpc==='remember_device') result=(await db.query('select public.remember_device() value')).rows[0].value;
+          else if(rpc==='trust_this_session') {const p=JSON.parse(body.toString());result=(await db.query('select public.trust_this_session($1) value',[p.device_token])).rows[0].value;}
+          else if(rpc==='remembered_devices') result=(await db.query('select public.remembered_devices() value')).rows[0].value;
+          else if(rpc==='forget_devices') {const p=JSON.parse(body.toString()||'{}');result=(await db.query('select public.forget_devices($1) value',[p.device??null])).rows[0].value;}
           else if(rpc==='two_factor_status') result=(await db.query('select public.two_factor_status() value')).rows[0].value;
           else if(rpc==='is_platform_admin') result=(await db.query('select public.is_platform_admin() value')).rows[0].value;
           else if(rpc==='submit_organization_application') {const p=JSON.parse(body.toString());result=(await db.query('select public.submit_organization_application($1::jsonb,$2) value',[JSON.stringify(p.application),p.expected_revision??null])).rows[0].value;}

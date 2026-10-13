@@ -1117,3 +1117,8 @@ figure.gg-photo { margin: 0; }
 .backup-code-list code { font-size: 1rem; letter-spacing: 0.05em; }
 .backup-code-verify { margin: 16px 0; }
 .backup-code-verify summary { cursor: pointer; text-decoration: underline; }
+.inline-form { display: inline; }
+.remembered-devices ul { padding-left: 1.25em; }
+.remember-device { display: flex; gap: 8px; align-items: flex-start; margin: 12px 0; }
+.remember-device input { margin-top: 4px; }
+.remember-device .form-hint { margin: 2px 0 0; font-size: 0.8125rem; color: var(--v-muted); }

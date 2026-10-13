@@ -2,7 +2,7 @@ import type { Locale } from './i18n';
 
 // What public.two_factor_status() answers for the signed-in account. `passed` is the database's own verdict: false means
 // organisation and administrator access is closed for this session until the code is entered or two-factor is set up.
-export type TwoFactorStatus = { enrolled: boolean; required: boolean; deadline: string | null; passed: boolean };
+export type TwoFactorStatus = { enrolled: boolean; required: boolean; deadline: string | null; passed: boolean; canRemember: boolean };
 
 // Anything unexpected reads as "not passed", so a caller fails closed.
 export function parseTwoFactorStatus(value: unknown): TwoFactorStatus | null {
@@ -10,8 +10,25 @@ export function parseTwoFactorStatus(value: unknown): TwoFactorStatus | null {
   const row = value as Record<string, unknown>;
   if (typeof row.enrolled !== 'boolean' || typeof row.required !== 'boolean' || typeof row.passed !== 'boolean') return null;
   const deadline = typeof row.deadline === 'string' && !Number.isNaN(Date.parse(row.deadline)) ? row.deadline : null;
-  return { enrolled: row.enrolled, required: row.required, deadline, passed: row.passed };
+  // Before the remember-device migration the answer has no can_remember: nobody can, then.
+  return { enrolled: row.enrolled, required: row.required, deadline, passed: row.passed, canRemember: row.can_remember === true };
 }
+
+// A device the account remembered: dates only, no name or browser (TECH-TASKS §13 keeps no device details).
+export type RememberedDevice = { id: string; createdAt: string; expiresAt: string; current: boolean };
+
+export function parseRememberedDevices(value: unknown): RememberedDevice[] {
+  if (!Array.isArray(value)) return [];
+  return value.flatMap((row) => {
+    if (!row || typeof row !== 'object') return [];
+    const { id, created_at: createdAt, expires_at: expiresAt, current } = row as Record<string, unknown>;
+    if (typeof id !== 'string' || typeof createdAt !== 'string' || typeof expiresAt !== 'string') return [];
+    return [{ id, createdAt, expiresAt, current: current === true }];
+  });
+}
+
+// The token a remembered device keeps: 64 hex characters, made by the database.
+export const deviceTokenPattern = /^[0-9a-f]{64}$/;
 
 // Backup codes as Supabase reports them: switched off on the project, none made yet, or how many are left.
 export type BackupCodes = { state: 'off' } | { state: 'none' } | { state: 'some'; total: number; remaining: number };
@@ -65,6 +82,14 @@ const copy = {
     banner: 'From {date}, organisation owners and admins must use two-factor sign-in.',
     bannerLink: 'Set it up now',
     working: 'Checking…',
+    remember: 'Remember this device for 30 days',
+    rememberHint: 'Only on your own device: with it and your password, someone could sign in without the code.',
+    devicesTitle: 'Remembered devices',
+    deviceLine: 'Remembered on {from}, until {until}',
+    thisDevice: 'this device',
+    forget: 'Forget',
+    forgetAll: 'Forget all devices',
+    devicesNone: 'No device is remembered. You enter the code at every sign-in.',
     backupTitle: 'Backup codes',
     backupIntro: 'If you don’t have your phone, each of these codes lets you sign in once. Save them somewhere safe now, for example printed or in a password manager: they are shown only this once.',
     backupDownload: 'Download the codes',
@@ -105,6 +130,14 @@ const copy = {
     banner: 'De la {date}, proprietarii și administratorii organizațiilor trebuie să folosească autentificarea în doi pași.',
     bannerLink: 'Configurați acum',
     working: 'Se verifică…',
+    remember: 'Țineți minte acest dispozitiv 30 de zile',
+    rememberHint: 'Doar pe dispozitivul dumneavoastră: cu el și cu parola, cineva ar putea intra fără cod.',
+    devicesTitle: 'Dispozitive memorate',
+    deviceLine: 'Memorat pe {from}, până pe {until}',
+    thisDevice: 'acest dispozitiv',
+    forget: 'Uitați',
+    forgetAll: 'Uitați toate dispozitivele',
+    devicesNone: 'Niciun dispozitiv nu este memorat. Introduceți codul la fiecare autentificare.',
     backupTitle: 'Coduri de rezervă',
     backupIntro: 'Dacă nu aveți telefonul la îndemână, fiecare dintre aceste coduri vă permite să intrați în cont o singură dată. Salvați-le acum într-un loc sigur, de exemplu tipărite sau într-un manager de parole: sunt afișate doar acum.',
     backupDownload: 'Descărcați codurile',
@@ -145,6 +178,14 @@ const copy = {
     banner: 'Ab dem {date} müssen Inhaber und Administratoren von Organisationen die Zwei-Faktor-Anmeldung verwenden.',
     bannerLink: 'Jetzt einrichten',
     working: 'Wird geprüft…',
+    remember: 'Dieses Gerät 30 Tage lang merken',
+    rememberHint: 'Nur auf Ihrem eigenen Gerät: Damit und mit Ihrem Passwort könnte sich jemand ohne Code anmelden.',
+    devicesTitle: 'Gemerkte Geräte',
+    deviceLine: 'Gemerkt am {from}, bis {until}',
+    thisDevice: 'dieses Gerät',
+    forget: 'Vergessen',
+    forgetAll: 'Alle Geräte vergessen',
+    devicesNone: 'Kein Gerät ist gemerkt. Sie geben den Code bei jeder Anmeldung ein.',
     backupTitle: 'Ersatzcodes',
     backupIntro: 'Wenn Sie Ihr Telefon nicht zur Hand haben, können Sie sich mit jedem dieser Codes einmal anmelden. Speichern Sie sie jetzt an einem sicheren Ort, zum Beispiel ausgedruckt oder in einem Passwortmanager: Sie werden nur dieses eine Mal angezeigt.',
     backupDownload: 'Codes herunterladen',

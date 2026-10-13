@@ -6,6 +6,7 @@ import { authConfigured } from '@/lib/supabase/config';
 import { confirmedUser, createClient } from '@/lib/supabase/server';
 import { getTwoFactorCopy, twoFactorStep } from '@/lib/two-factor';
 import { getBackupCodes, getTwoFactorStatus, twoFactorPath } from '@/lib/two-factor-server';
+import { rememberDeviceReady } from '@/lib/verification-server';
 import { getViewer } from '@/lib/viewer-server';
 import { signOut } from '@/app/auth/actions';
 import { BackupCodeVerify, TwoFactorVerify } from '@/components/two-factor-verify';
@@ -38,7 +39,7 @@ export default async function VerifySecondFactor({ params }: { params: Promise<{
         <p className="lead">{t.verifyIntro}</p>
       </div>
       <div className="content-body">
-        <TwoFactorVerify locale={locale} />
+        <TwoFactorVerify locale={locale} canRemember={status.canRemember && await rememberDeviceReady(supabase)} />
         {backup.state === 'some' && backup.remaining > 0 && <BackupCodeVerify locale={locale} />}
         <p>{t.lost}</p>
         <form action={signOut.bind(null, locale)}>
