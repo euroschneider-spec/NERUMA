@@ -10,6 +10,7 @@ import { evidenceReady, verificationReady } from '@/lib/verification-server';
 import { confirmedUser, createClient } from '@/lib/supabase/server';
 import { authConfigured } from '@/lib/supabase/config';
 import { OrganisationReviewForm } from '@/components/organisation-review-form';
+import { requireSecondFactor } from '@/lib/two-factor-server';
 
 export const dynamic='force-dynamic';
 export const metadata={title:'Organisation verification · NERUMA',robots:{index:false,follow:false}};
@@ -18,6 +19,7 @@ export default async function ReviewQueue({params,searchParams}:{params:Promise<
   const v=getVerificationCopy(locale);const t=getOrganisationCopy(locale);const supabase=await createClient();
   const user=await confirmedUser(supabase);if(!user) redirect(`/${locale}/login`);
   if(!await verificationReady(supabase)) return <main id="main-content" className="container verification-page"><div className="page-heading"><h1>{v.admin}</h1></div><p className="notice">{v.setup}</p></main>;
+  await requireSecondFactor(supabase,locale);
   const admin=await supabase.rpc('is_platform_admin');if(admin.error || admin.data!==true) notFound();
   const search=await searchParams;const history=search.history==='1';const requestedPage=Number(search.page||0);const page=Number.isSafeInteger(requestedPage) && requestedPage>=0 && requestedPage<=10000 ? requestedPage : 0;
   let query=supabase.from('organization_applications').select('*').order('submitted_at');

@@ -1109,3 +1109,6 @@ p, li, dt, dd, summary, label, figcaption, a, .lbl, .small-label, .small-note { 
 .gg-fields dd { margin: 0; font-weight: 600; font-size: 0.875rem; }
 .gg-skip { margin: 0; font-size: 0.9375rem; font-weight: 600; }
 figure.gg-photo { margin: 0; }
+/* Authenticator apps need dark modules on a light ground, whatever the theme. */
+.two-factor-qr { background: #fff; padding: 8px; margin: 0 0 12px; }
+.two-factor-key { font-size: 1rem; letter-spacing: 0.05em; overflow-wrap: anywhere; }

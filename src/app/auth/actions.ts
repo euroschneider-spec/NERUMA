@@ -13,6 +13,8 @@ import { getEvidenceCopy } from '@/lib/mandate-evidence';
 import { evidenceReady, verificationReady } from '@/lib/verification-server';
 import { landingPath } from '@/lib/roles';
 import { getViewer } from '@/lib/viewer-server';
+import { twoFactorStep } from '@/lib/two-factor';
+import { getTwoFactorStatus, twoFactorPath } from '@/lib/two-factor-server';
 
 export type AuthState = { message: string; confirmation?:boolean };
 const text = (form: FormData, key: string) => String(form.get(key) || '').trim();
@@ -57,9 +59,13 @@ export async function authenticate(locale: string, mode: 'register' | 'login', _
     signedIn = !error;loginError=authErrorMessage(locale,error?.code,true);
     // Each tier starts where its work is. The destination is a convenience only; every
     // page behind it re-checks the role itself.
+    // An account with an authenticator app, or one that must set it up, goes there first.
     if (signedIn && data.user) {
-      const viewer = await getViewer(supabase, data.user.id);
-      if (viewer) destination = landingPath(viewer, locale);
+      const twoFactor = await getTwoFactorStatus(supabase);
+      const step = twoFactor && twoFactorStep(twoFactor);
+      const viewer = twoFactor && !step ? await getViewer(supabase, data.user.id) : null;
+      if (step) destination = twoFactorPath(step, locale);
+      else if (viewer) destination = landingPath(viewer, locale);
     }
   } catch { return { message: t.authError }; }
   if (signedIn) redirect(destination);

@@ -4,6 +4,7 @@ import { createWriteStream } from 'node:fs';
 import { chromium, expect } from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
 import sharp from 'sharp';
+import { FIXTURE_ADMIN_TOTP_SECRET, totp } from './fixture-totp.mjs';
 
 const env={...process.env,VIANORAE_TEST_FIXTURE:'1',VIANORAE_SUPABASE_PROJECT_REF:'vianorae-fixture',NEXT_PUBLIC_SUPABASE_URL:'https://vianorae-fixture.supabase.co',NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY:'sb_publishable_fixture',VIANORAE_WORKSPACE_ENABLED:'1'};
 const children=[];let browser;let checks=0;
@@ -20,11 +21,18 @@ async function ready(url) {
 }
 async function check(name,fn){await fn();checks++;console.log(`PASS ${name}`);}
 const base='http://localhost:3011';
-async function login(page,owner=1) {
+// Authenticator keys of the fixture users who have two-factor sign-in: the administrator from the start, others once set up.
+const authenticators={3:FIXTURE_ADMIN_TOTP_SECRET};
+const enterCode=async(page,code)=>{await page.getByLabel('6-digit code from the app',{exact:true}).fill(code);await page.getByRole('button',{name:'Confirm',exact:true}).click();};
+async function signInWithPassword(page,owner) {
   await page.goto(`${base}/en/login`);await page.getByLabel('Work email',{exact:true}).fill(`owner${owner}@example.test`);
   await page.getByLabel('Password',{exact:true}).fill('Fixture-only-passphrase-123');
   await page.getByRole('button',{name:'Sign in',exact:true}).click();
-  await page.waitForURL(/\/en\/(account|workspace|admin\/organisations)$/);
+  await page.waitForURL(/\/en\/(account|workspace|admin\/organisations|login\/verify)$/);
+}
+async function login(page,owner=1) {
+  await signInWithPassword(page,owner);
+  if(page.url().endsWith('/en/login/verify')) {await enterCode(page,totp(authenticators[owner]));await page.waitForURL(/\/en\/(account|workspace|admin\/organisations)$/);}
 }
 const saved=page=>expect(page.locator('.status-message[role]')).toContainText('Draft saved');
 const save=async page=>{await page.getByRole('button',{name:'Save',exact:true}).last().click();await saved(page);};
@@ -581,6 +589,50 @@ try {
       await expect(page.getByText('Organisation verification is being activated.',{exact:false})).toBeVisible();
       assert.equal((await context.request.get(`${base}${photoPath}`)).status(),401);
     } finally {await fetch('http://127.0.0.1:3012/__fixture/verification-mode',{method:'POST',body:JSON.stringify({enabled:true})});}
+  });
+  // Two-factor sign-in (brief docs/briefs/2026-10-13-two-factor-sign-in.md).
+  const deadline=from=>fetch('http://127.0.0.1:3012/__fixture/two-factor-deadline',{method:'POST',body:JSON.stringify({from})});
+  await check('an owner without two-factor sees the date it becomes required',async()=>{
+    const view=await (await browser.newContext({colorScheme:'dark'})).newPage();await login(view,1);await expect(view).toHaveURL(/\/en\/workspace$/);
+    await expect(view.getByText('organisation owners and admins must use two-factor sign-in',{exact:false})).toBeVisible();
+    await view.getByRole('link',{name:'Set it up now',exact:true}).click();await expect(view).toHaveURL(/\/en\/account#two-factor-title$/);
+    await expect(view.getByRole('heading',{name:'Two-factor sign-in',level:2})).toBeVisible();
+    await view.context().close();
+  });
+  await check('an owner sets up two-factor; afterwards the workspace stays closed until the code is entered',async()=>{
+    const view=await (await browser.newContext({colorScheme:'dark'})).newPage();await login(view,2);
+    await view.goto(`${base}/en/account`);await view.getByRole('button',{name:'Set up two-factor sign-in',exact:true}).click();
+    await expect(view.getByRole('img',{name:'QR code for your authenticator app'})).toBeVisible();
+    const code=view.getByLabel('6-digit code from the app',{exact:true});await expect(code).toBeFocused();
+    const secret=(await view.getByText(/^[A-Z2-7]{4}( [A-Z2-7]{1,4})+$/).textContent()).replace(/\s/g,'');
+    const audit=await new AxeBuilder({page:view}).withTags(['wcag2a','wcag2aa','wcag21a','wcag21aa','wcag22aa']).analyze();assert.deepEqual(audit.violations.map(v=>v.id),[],'two-factor setup');
+    await code.fill('12345');await view.getByRole('button',{name:'Turn on two-factor sign-in',exact:true}).click();
+    await expect(view.locator('main').getByRole('alert')).toContainText('Enter the 6 digits from the app.');
+    const wrong=String((Number(totp(secret))+500000)%1000000).padStart(6,'0');
+    await code.fill(wrong);await view.getByRole('button',{name:'Turn on two-factor sign-in',exact:true}).click();
+    await expect(view.locator('main').getByRole('alert')).toContainText('That code didn’t work.');
+    await code.fill(totp(secret));await view.getByRole('button',{name:'Turn on two-factor sign-in',exact:true}).click();
+    await expect(view.getByText('Two-factor sign-in is on.',{exact:true})).toBeVisible();authenticators[2]=secret;
+    await view.getByRole('button',{name:'Sign out',exact:true}).click();await expect(view).toHaveURL(/\/en\/login$/);
+    await signInWithPassword(view,2);await expect(view).toHaveURL(/\/en\/login\/verify$/);
+    await expect(view.getByRole('heading',{name:'Enter your code',level:1})).toBeVisible();
+    const verifyAudit=await new AxeBuilder({page:view}).withTags(['wcag2a','wcag2aa','wcag21a','wcag21aa','wcag22aa']).analyze();assert.deepEqual(verifyAudit.violations.map(v=>v.id),[],'two-factor code step');
+    for(const path of ['/en/workspace','/en/account','/en/admin/organisations']) {await view.goto(base+path);await expect(view).toHaveURL(/\/en\/login\/verify$/);}
+    await enterCode(view,wrong);await expect(view.locator('main').getByRole('alert')).toContainText('That code didn’t work.');
+    await enterCode(view,totp(secret));await expect(view).toHaveURL(/\/en\/workspace$/);
+    await expect(view.getByRole('complementary').getByText('Fixture museum 2',{exact:true})).toBeVisible();
+    await expect(view.getByText('must use two-factor sign-in',{exact:false})).toHaveCount(0);
+    await view.context().close();
+  });
+  await check('after the deadline, an owner without two-factor is sent to setup and the workspace stays closed',async()=>{
+    await deadline(new Date(Date.now()-60000).toISOString());
+    try {
+      const view=await (await browser.newContext({colorScheme:'dark'})).newPage();await login(view,1);await expect(view).toHaveURL(/\/en\/account$/);
+      await expect(view.getByText('Your account must use two-factor sign-in. Set it up to continue.',{exact:true})).toBeVisible();
+      await expect(view.getByRole('button',{name:'Submit for manual review',exact:true})).toHaveCount(0);
+      await view.goto(`${base}/en/workspace`);await expect(view).toHaveURL(/\/en\/account$/);
+      await view.context().close();
+    } finally {await deadline(new Date(Date.now()+30*86400000).toISOString());}
   });
   console.log(`${checks} online workspace checks passed (real migrations; simulated Auth/Storage HTTP).`);
 } finally {

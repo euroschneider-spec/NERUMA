@@ -15,6 +15,10 @@ import { getEvidenceCopy, type MandateDocument } from '@/lib/mandate-evidence';
 import { evidenceReady, verificationReady } from '@/lib/verification-server';
 import { getVerificationCopy, type OrganizationApplication } from '@/lib/verification';
 import { getViewer } from '@/lib/viewer-server';
+import { twoFactorReady } from '@/lib/verification-server';
+import { getTwoFactorStatus } from '@/lib/two-factor-server';
+import { twoFactorStep } from '@/lib/two-factor';
+import { TwoFactorSetup } from '@/components/two-factor-setup';
 
 export const dynamic = 'force-dynamic';
 export const metadata = { title: 'Organisation account', robots: { index: false, follow: false } };
@@ -25,11 +29,17 @@ export default async function Account({ params }: { params: Promise<{ locale: st
   const supabase=await createClient();const user=await confirmedUser(supabase);
   if(!user) redirect(`/${locale}/login`);
   if(!await verificationReady(supabase)) return <main id="main-content" className="container verification-page"><div className="page-heading"><h1>{t.account}</h1></div><p className="notice" role="status">{v.setup}</p><form action={signOut.bind(null,locale)}><button className="text-button">{t.signOut}</button></form></main>;
+  // An account with an authenticator app enters its code first; one that still has to set it up does that here.
+  const twoFactor=await getTwoFactorStatus(supabase);
+  // Until then the database hides the account's organisation, so the rest of the page would be misleading.
+  const step=twoFactor && twoFactorStep(twoFactor);
+  if(step==='verify') redirect(`/${locale}/login/verify`);
+  if(step==='setup') return <main id="main-content" className="container verification-page"><div className="page-heading"><h1>{t.account}</h1></div><div className="content-body"><TwoFactorSetup locale={locale} enrolled={false} required/><form action={signOut.bind(null,locale)}><button className="text-button" type="submit">{t.signOut}</button></form></div></main>;
   const [viewer,applicationResult]=await Promise.all([
     getViewer(supabase,user.id),
     supabase.from('organization_applications').select('*').eq('applicant_id',user.id).maybeSingle(),
   ]);
-  if(!viewer || applicationResult.error) return <main id="main-content" className="container verification-page"><div className="page-heading"><h1>{t.account}</h1></div><p role="alert">{t.authError}</p></main>;
+  if(!twoFactor || !viewer || applicationResult.error) return <main id="main-content" className="container verification-page"><div className="page-heading"><h1>{t.account}</h1></div><p role="alert">{t.authError}</p></main>;
   const ownOrganizations=viewer.memberships.map(membership=>({id:membership.organisation,name:membership.name}));
   const application=applicationResult.data as OrganizationApplication|null;
   const documentsEnabled=await evidenceReady(supabase);
@@ -54,6 +64,7 @@ export default async function Account({ params }: { params: Promise<{ locale: st
     {!documentsEnabled && !ownOrganizations.length && <p className="notice" role="status">{getEvidenceCopy(locale).setup}</p>}
     {ownOrganizations.length ? <><ul>{ownOrganizations.map(org=><li key={org.id}>{org.name}</li>)}</ul>{workspaceConfigured() ? <><p className="notice">{getWorkspaceCopy(locale).boundary}</p><Link className="button" href={`/${locale}/workspace`}>{getWorkspaceCopy(locale).workspace}</Link></> : <p className="notice">{t.liveBoundary}</p>}</> : null}
     {(!application || ['needs_information','rejected'].includes(application.status)) && !ownOrganizations.length && <OrganisationForm key={application?.revision || 'new'} locale={locale} mode="onboard" enabled={documentsEnabled && !documentsResult?.error} initial={initial} initialDocuments={initialDocuments}/>}
+    {await twoFactorReady(supabase) && <TwoFactorSetup locale={locale} enrolled={twoFactor.enrolled} required={false}/>}
     <p><Link className="quiet-link" href={`/${locale}/demo`}>{getCopy(locale).openWorkspace}</Link></p>
     <form action={signOut.bind(null,locale)}><button className="text-button" type="submit">{t.signOut}</button></form>
   </div></main>;
