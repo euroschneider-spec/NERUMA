@@ -397,11 +397,6 @@ Each step is its own small pull request. When it is merged, remove its task from
 1. [ ] **Password rules in the hosted projects** (the owner's steps, no code; also section 7). Minimum 12 characters and, if
    the plan offers it, *Prevent use of leaked passwords*, on `neruma-dev` first, then production (the friend's project
    access). Also set the minimum in `supabase/config.toml` so local matches.
-2. [ ] **Two-factor sign-in for owners and admins** (needs Opus: auth logic). Supabase MFA with an authenticator app (TOTP).
-   Enrolment on the account page, a challenge step at sign-in, and the workspace, publishing and the admin area require the
-   second factor (`aal2`) once an owner or admin has enrolled; decide in the brief whether it is required for everyone in
-   those roles from a date, or only offered at first. Recovery: a platform administrator can reset a lost factor after
-   checking the person; write the steps down. Database tests for "can't": an account at `aal1` can't publish once enrolled.
 3. [ ] **Delete my account and export my data.** A documented path (GDPR). Start as an administrator action with the steps
    written down; decide what happens to an organisation's published guides when its only owner is deleted (they go down;
    the QR codes stay and show the "isn't available" notice).
