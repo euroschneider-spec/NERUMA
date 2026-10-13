@@ -98,8 +98,9 @@ zones is about 3 MB.
 - [ ] Pick a plan. **Free:** 1 GB storage (≈ 300 such guides), 50 MB per file, 5 GB/month egress,
   and the project **pauses after a week without activity**, which is unacceptable for a live site.
   **Pro (≈ $25/month):** 100 GB storage, 250 GB egress, image resizing on the fly, no pausing.
-- [ ] Publishing: public guides need their photos served publicly. Use a public bucket for
-  published copies, or signed URLs with caching. Decide which.
+- [x] Publishing: public guides need their photos served publicly. Decided and built: the photos stay in the
+  private bucket, and a storage policy lets anyone read exactly the photos a current published version lists
+  (`/api/guide-photos`, five minutes of caching). Revisit with the plan/CDN decision.
 - [ ] Decide on a photo limit per zone and per guide, and enforce it in the database, not only in
   the form.
 - [ ] Strip EXIF location data from uploads. Re-encoding in the browser does this today; keep it so
@@ -113,7 +114,8 @@ on the request form are `required`.
 
 - [ ] Make one table of every field: required?, min/max length, browser check, server check,
   database check. Fix any field that is only checked in the browser.
-- [ ] Decide what a guide needs before it can be published, e.g. place name, at least three zones,
+- [x] Decided and built (`publication_check`): a language needs a location name, 3 to 8 steps that each have a name and
+  a description, a description for every shown photo, and a name for every own field. Original note: place name, at least three zones,
   and a title and description per zone. Sensory levels may stay "not recorded". Alt text is required
   whenever there is a photo.
 - [ ] Error messages per field in EN/RO/DE, linked to the field (`aria-describedby`), not only a
@@ -282,23 +284,23 @@ locally is in `docs/guides/TESTING.md`.
 Added on 2026-10-11, after the dashboard cards (PR #29). Decisions are in `DECISIONS.md`; the brief is
 `docs/briefs/2026-10-11-organisation-app.md`.
 
-**To do with publishing (needs Opus; the choices are already made, see "QR codes" in `DECISIONS.md`):**
+**Publishing, built 2026-10-13** (brief `docs/briefs/2026-10-13-publishing.md`; choices in `DECISIONS.md`, "QR codes" and "Publishing goes live straight away"). Still to do: install `supabase/migrations/20261013090000_publishing.sql` (see the job below), then check it on the dev project.
 
-- [ ] **QR registry migration.** Today `qr_redirects` has a text `public_code` that points at one guide, which
+
+- [x] **QR registry migration.** Today `qr_redirects` has a text `public_code` that points at one guide, which
   is one language, and the only working code is the hard-coded `willow-museum` in `src/lib/qr.ts`. Change it to
   one short random code per place, created in the same transaction as the first publish, never deleted or
   reused. Add database tests for the "can't" cases: another organisation can't read or change a code, and a
   code that exists is never handed to a second place.
-- [ ] **Which language opens.** `/q/[code]` picks the visitor's language when it is published, otherwise a
+- [x] **Which language opens.** `/q/[code]` picks the visitor's language when it is published, otherwise a
   published one, with the language switch available.
-- [ ] **The "isn't available right now" page.** Visitors can't read unpublished rows, so a narrow database
+- [x] **The "isn't available right now" page.** Visitors can't read unpublished rows, so a narrow database
   function answers only "exists, not available" without returning the name. Replace the bare 404 in
   `src/app/q/[code]/route.ts`.
-- [ ] **QR and link on the dashboard card.** A "QR & link" button opens a pop-up with the code (view and
+- [x] **QR and link on the dashboard card.** A "QR & link" button opens a pop-up with the code (view and
   download) and a copy-link button. Shown only once the place has a code. The pop-up is Sonnet work once the
   migration exists.
-- [ ] **Needs attention, the missing items.** "Unpublished changes" and "not verified on site" need publishing
-  first. Add them to `placeAttention()` in `src/lib/workspace.ts` then.
+- [x] **Needs attention: unpublished changes.** Done (`listPlaces`). Still open: "not verified on site", which needs assessments.
 
 **Waiting on the owner or a decision:**
 
@@ -342,7 +344,7 @@ Added on 2026-10-11, after the dashboard cards (PR #29). Decisions are in `DECIS
 4. [ ] **Publishing** (needs Opus): the QR registry above, the "isn't available" page, language choice, the real QR
    pop-up and visit counts on the card.
 
-**Job for the owner's friend: apply two migrations to the real Supabase project** (the app hides the matching
+**Job for the owner's friend: apply three migrations to the real Supabase project** (the app hides the matching
 controls until each is installed, so nothing breaks while they wait). Needs access to the VIANORAE Supabase project
 (`uzlngrzokjzxvdfpctnt`, see the README), nothing else.
 
@@ -350,16 +352,19 @@ controls until each is installed, so nothing breaks while they wait). Needs acce
   in the step editor.
 - [ ] **2. Report a problem** (`supabase/migrations/20261012090000_problem_reports.sql`): adds the *Report a problem*
   button for organisations and the administrator's list at `/admin/reports`.
+- [ ] **3. Publishing** (`supabase/migrations/20261013090000_publishing.sql`): switches on *Publish* and *Unpublish*,
+  the QR code on the dashboard cards, public guide addresses and Explore. It also changes the example place's internal
+  address if it was ever created from the old seed; nothing else is touched.
 
-How, for each file, in this order (1, then 2):
+How, for each file, in this order (1, 2, then 3):
 
 1. Open the project in Supabase, then **SQL Editor → New query**.
 2. Paste the whole file and press **Run**. Each file starts with a check and stops with a "STOP: … must already be
    installed" message if an earlier migration is missing; tell the owner if that appears, and run nothing else.
 3. Run each file **once**. A second run fails with "already exists", which is safe but means it was already installed.
-4. Check it worked: run `select public.step_fields_schema_version(), public.problem_reports_schema_version();`
-   (it only works after both files are installed; before that it names the missing function). The result should be
-   `1 | 1`.
+4. Check it worked: run `select public.step_fields_schema_version(), public.problem_reports_schema_version(), public.publishing_schema_version();`
+   (it only works after all three files are installed; before that it names the missing function). The result should be
+   `1 | 1 | 1`.
 5. Tell the owner. On the live site the sidebar then shows *Report a problem* for organisation owners, and step
    cards show *Add a field*.
 

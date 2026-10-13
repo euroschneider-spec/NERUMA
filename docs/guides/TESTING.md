@@ -19,6 +19,7 @@ npm run typecheck && npm run lint && npm run test:unit
 | `read-aloud`, `lib/speech` | `tests/read-aloud.spec.ts` |
 | `reading-settings`, `lib/reading-prefs` | `tests/reading-accessibility.spec.ts` + `tests/read-aloud.spec.ts` |
 | `auth/actions`, `lib/roles`, `lib/workspace*` | `tests/platform.spec.ts` + `npm run test:unit` |
+| `publishing`, `publish-dialog`, `published-server`, `/q`, `/api/guide-photos`, Explore, the guide page | `npm run test:db` + `npm run test:workspace` (the whole flow: publish, visitor, QR, edit, unpublish, notice) + `tests/guide-example.spec.ts` + `npm run test:unit` |
 | `lib/demo-workspace`, `components/demo-workspace`, `online-builder`, `location-cards`, `draft-preview`, `step-photo`, `org-sidebar` | `tests/demo-workspace.spec.ts` + `npm run test:unit` + `npm run test:workspace` (the same components serve the signed-in workspace) |
 | Design tokens or palette in `globals.css` | **everything** — the axe WCAG contrast sweeps are spread across all three spec files |
 

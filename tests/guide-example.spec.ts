@@ -67,3 +67,21 @@ test('Variable has its own symbol, and the home preview uses the same squares as
   expect(await home.first().locator('span').evaluateAll((spans) => spans.map((span) => span.className))).toEqual(['on', '', 'on']);
   await expect(page.locator('.sensory-mini .gg-chip')).toHaveCount(0);
 });
+
+test('a scan of the example code opens it in the phone language, and an asked-for language wins', async ({ browser }) => {
+  const phone = await browser.newContext({ locale: 'de-DE' });
+  const page = await phone.newPage();
+  await page.goto('/q/willow-museum');
+  await expect(page).toHaveURL(/\/de\/places\/willow-museum\/guide$/);
+  await page.goto('/q/willow-museum?locale=ro');
+  await expect(page).toHaveURL(/\/ro\/places\/willow-museum\/guide$/);
+  await phone.close();
+});
+
+test('a code nobody made is a plain 404, and the notice page names no location', async ({ page, request }) => {
+  expect((await request.get('/q/ffffffff', { maxRedirects: 0 })).status()).toBe(404);
+  await page.goto('/en/guide-unavailable');
+  await expect(page.getByRole('heading', { name: "This guide isn't available right now" })).toBeVisible();
+  await page.goto('/ro/guide-unavailable');
+  await expect(page.getByRole('heading', { name: 'Acest ghid nu este disponibil acum' })).toBeVisible();
+});

@@ -134,3 +134,12 @@ code is the sign of it.
 **Takeaway**: never put the check and the merge in one command. Look at the check output first, and a red
 run means stop, even when another run is green. When two runs of the same code disagree, suspect timing
 (animations, transitions) before suspecting the change.
+
+## 2026-10-13 — a plpgsql variable named like a column
+
+In `publish_place` I declared a variable `address` and used `update public.places set slug=address ...`.
+PostgreSQL stopped with `column reference "address" is ambiguous`, because `places` has an `address` column.
+The error came from the database tests, not from reading the SQL.
+
+**Takeaway**: in plpgsql functions, give variables and parameters a prefix (`v_address`, `guide_address`) so they can't
+share a name with any column the function touches, including columns added later.

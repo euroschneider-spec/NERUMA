@@ -1,10 +1,12 @@
-import { isLocale, type Locale } from './i18n';
+import { isLocale, locales, type Locale } from './i18n';
 
-// The QR registry table is not wired up yet; until it is, one demo code exists.
-const knownCodes = ['willow-museum'];
-export const isKnownQrCode = (code: string) => knownCodes.includes(code);
+/** The example guide's own code: it needs no database. Real codes are looked up (`resolve_qr`). */
+export const EXAMPLE_QR_CODE = 'willow-museum';
+export const isExampleQrCode = (code: string) => code === EXAMPLE_QR_CODE;
+export const exampleLocales: Locale[] = [...locales];
 
-export function qrLocale(url: URL): Locale {
-  const requested = url.searchParams.get('locale') || 'en';
-  return isLocale(requested) ? requested : 'en';
+/** A locale asked for in the address (`?locale=`), or null: a printed code carries none, the phone decides. */
+export function requestedLocale(url: URL): string | null {
+  const requested = url.searchParams.get('locale');
+  return requested && isLocale(requested) ? requested : null;
 }

@@ -3,7 +3,7 @@ import { getDemoGuide } from '../src/lib/demo.ts';
 const org='a0000000-0000-4000-8000-000000000001',place='a0000000-0000-4000-8000-000000000002';
 const quote=value=>"'"+String(value).replaceAll("'","''")+"'";
 const zoneId=i=>`a0000000-0000-4000-8000-${String(10+i).padStart(12,'0')}`;
-let sql=`-- FICTIONAL local fixtures. Run only against a disposable or dedicated VIANORAE database.\n-- No auth accounts, passwords, memberships or live published guides are created.\nbegin;\ninsert into public.organizations(id,name,status) values('${org}','Willow Museum — FICTIONAL DEMO','draft');\ninsert into public.places(id,organization_id,slug,city,address,place_type,status,template_id) values('${place}','${org}','willow-museum','Fictional example','Willow Square — fictional address','museum','draft',(select id from public.templates where place_type='museum' and version=1));\n`;
+let sql=`-- FICTIONAL local fixtures. Run only against a disposable or dedicated VIANORAE database.\n-- No auth accounts, passwords, memberships or live published guides are created.\nbegin;\ninsert into public.organizations(id,name,status) values('${org}','Willow Museum — FICTIONAL DEMO','draft');\ninsert into public.places(id,organization_id,slug,city,address,place_type,status,template_id) values('${place}','${org}','place-${place}','Fictional example','Willow Square — fictional address','museum','draft',(select id from public.templates where place_type='museum' and version=1));\n`;
 const english=getDemoGuide('en');
 for(let i=0;i<5;i++) {
  sql+=`insert into public.zones(id,place_id,organization_id,type,sort_order) values('${zoneId(i)}','${place}','${org}',${quote(english.zones[i].id)},${i});\n`;

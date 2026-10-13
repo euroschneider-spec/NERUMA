@@ -5,6 +5,7 @@ import { getOrganisationCopy } from '@/lib/organisation-copy';
 import { getWorkspaceCopy } from '@/lib/workspace';
 import { LocationCards } from '@/components/location-cards';
 import { listPlaces, workspaceConfigured, workspaceSession } from '@/lib/workspace-server';
+import { publishingReady } from '@/lib/verification-server';
 
 export const dynamic='force-dynamic';
 // The browser tab speaks the page's language too.
@@ -23,6 +24,7 @@ export default async function Workspace({params,searchParams}:{params:Promise<{l
   const organisation=chosen ? context.organisations.find(o=>o.id===chosen) : context.organisations[0];
   if(chosen && !organisation) notFound();
   const places=organisation && workspaceConfigured() ? await listPlaces(context.supabase,organisation.id,locale) : [];
+  const publishing=await publishingReady(context.supabase);
   const newPlaceHref=organisation ? `/${locale}/workspace/new?org=${organisation.id}` : '';
   return <main id="main-content" className="app-main">
     <div className="app-heading">
@@ -32,7 +34,7 @@ export default async function Workspace({params,searchParams}:{params:Promise<{l
     {context.organisations.length>1 && <nav className="button-row" aria-label={getOrganisationCopy(locale).organisation}>{context.organisations.map(o=><Link key={o.id} className="quiet-link" href={`/${locale}/workspace?org=${o.id}`} aria-current={o.id===organisation?.id?'page':undefined}>{o.name}</Link>)}</nav>}
     {!workspaceConfigured() ? <p>{t.readyLater}</p> : !organisation ? <p>{t.forbidden}</p> : <section aria-labelledby="locations-heading">
       <h2 id="locations-heading">{t.locationsHeading}</h2>
-      {!places.length ? <div className="empty-state"><p>{t.empty}</p><Link className="button" href={newPlaceHref}>{t.newPlace}</Link></div> : <LocationCards places={places} locale={locale} base={`/${locale}/workspace`} sample={sampleOnly ? 'all' : 'none'} qrCode="willow-museum" visits={sampleVisits}/>}
+      {!places.length ? <div className="empty-state"><p>{t.empty}</p><Link className="button" href={newPlaceHref}>{t.newPlace}</Link></div> : <LocationCards places={places} locale={locale} base={`/${locale}/workspace`} sample={sampleOnly && !publishing ? 'all' : 'none'} qrCode="willow-museum" visits={sampleVisits} publishing={publishing}/>}
     </section>}
   </main>;
 }

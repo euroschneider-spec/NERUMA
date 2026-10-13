@@ -18,7 +18,7 @@ create table storage.buckets(id text primary key,name text not null,public boole
 create table storage.objects(id uuid primary key default gen_random_uuid(),bucket_id text references storage.buckets(id),name text not null,unique(bucket_id,name));
 alter table storage.objects enable row level security;
 grant usage on schema storage to anon,authenticated,service_role;
-grant all on storage.objects to authenticated,service_role;
+grant all on storage.objects to authenticated,service_role;grant select on storage.objects to anon;
 grant all on storage.buckets to service_role;`);
 const migrations=(await readdir('supabase/migrations')).filter(f=>f.endsWith('.sql')).sort();
 assert.equal(new Set(migrations.map(f=>f.split('_')[0])).size,migrations.length,'migration timestamps must be unique');
@@ -199,6 +199,110 @@ await check('another tenant cannot read or write own fields',async()=>{
 });
 await as(ownerB);
 await check('another tenant cannot read photos or edit online drafts',async()=>{assert.equal((await db.query('select count(*)::int n from storage.objects where bucket_id=\'vianorae-private-photos\'')).rows[0].n,0);await assert.rejects(()=>saveDraft(newOrg,livePlace,8,'en',draft));});
+// Publishing (brief docs/briefs/2026-10-13-publishing.md): live straight away, every complete language at once.
+const pubPlace=id(1301),pubZones=[id(1311),id(1312),id(1313)],pubPhoto=id(1321),twinPlace=id(1302),twinZones=[id(1314),id(1315),id(1316)];
+const pubKey=`${newOrg}/${pubPlace}/${pubZones[0]}/${pubPhoto}.webp`;
+const step=(zoneId,title,extra={})=>({id:zoneId,title,description:`${title}: what to expect`,note:'Ask staff',next:'Then continue',type:'visit-space',optional:false,sensory:{sound:'low',light:'moderate',crowding:'variable',smell:'unknown',temperature:'unknown',visual:'low'},...extra});
+const pubDraft=(names,extra={})=>({...draft,zones:pubZones.slice(0,names.length).map((zoneId,i)=>step(zoneId,names[i],i===1?{hidden:['note']}:{})),...extra});
+const publish=async(place,revision,org=newOrg)=>(await db.query('select public.publish_place($1,$2,$3,$4) result',[org,place,revision,'2026-10-07-v1'])).rows[0].result;
+const unpublish=async(place,org=newOrg)=>(await db.query('select public.unpublish_place($1,$2) ok',[org,place])).rows[0].ok;
+const guideFor=async(address,lang)=>(await db.query('select public.published_guide($1,$2) guide',[address,lang])).rows[0].guide;
+const qr=async code=>(await db.query('select public.resolve_qr($1) result',[code])).rows[0].result;
+// Only this organisation's places: the test data above has a published guide of its own.
+const placesList=async lang=>(await db.query('select public.published_places($1) list',[lang])).rows[0].list.filter(p=>p.slug.startsWith('a-visitor'));
+const photoVisible=async name=>(await db.query("select count(*)::int n from storage.objects where bucket_id='vianorae-private-photos' and name=$1",[name])).rows[0].n===1;
+let published,pubCode,pubRevision;
+await db.exec(`reset role;insert into public.organization_members(organization_id,user_id,role) values('${newOrg}','${editor}','editor');`);
+await as(newOwner);
+await check('a location is saved in three languages: two complete, one with too few steps',async()=>{
+ assert.equal(await saveDraft(newOrg,pubPlace,0,'en',pubDraft(['Entrance','Gallery','Quiet room'])),1);
+ await db.query("insert into storage.objects(bucket_id,name) values('vianorae-private-photos',$1)",[pubKey]);
+ const withPhoto=pubDraft(['Entrance','Gallery','Quiet room']);withPhoto.zones[0].photo={id:pubPhoto,storageKey:pubKey,alt:'Glass doors',rights:'Own photo',photographedOn:'2026-01-02'};
+ assert.equal(await saveDraft(newOrg,pubPlace,1,'en',withPhoto),2);
+ const ro=pubDraft(['Intrare','Galerie','Camera liniștită'],{name:'Muzeul vizitatorului'});ro.zones[0].photo={...withPhoto.zones[0].photo,alt:'Uși de sticlă'};
+ assert.equal(await saveDraft(newOrg,pubPlace,2,'ro',ro),3);
+ const de=pubDraft(['Eingang','Galerie'],{name:'Museum der Besucher'});de.zones[0].photo={...withPhoto.zones[0].photo,alt:'Glastüren'};
+ assert.equal(await saveDraft(newOrg,pubPlace,3,'de',de),4);
+ const checks=Object.fromEntries((await db.query('select public.publication_check($1,$2) c',[newOrg,pubPlace])).rows[0].c.map(c=>[c.locale,c]));
+ assert.equal(checks.en.ready,true);assert.equal(checks.ro.ready,true);assert.equal(checks.de.ready,false);assert.equal(checks.de.steps,2);
+});
+await as(null,'anon');
+await check('before publishing a visitor finds nothing: no guide, no photo, no QR code',async()=>{
+ assert.equal(await guideFor(`place-${pubPlace}`,'en'),null);assert.deepEqual(await placesList('en'),[]);assert.equal(await photoVisible(pubKey),false);
+ await assert.rejects(()=>publish(pubPlace,4));
+});
+await as(editor);
+await check('an editor can check but cannot publish',async()=>{await assert.rejects(()=>publish(pubPlace,4),/Only owners and admins/);});
+await as(ownerB);
+await check('another organisation cannot publish or check the location',async()=>{await assert.rejects(()=>publish(pubPlace,4));await assert.rejects(()=>db.query('select public.publication_check($1,$2)',[newOrg,pubPlace]));});
+await as(newOwner);
+await check('publishing needs the saved revision the page showed',async()=>{await assert.rejects(()=>publish(pubPlace,3),e=>e.code==='40001');});
+await check('the owner publishes: complete languages go live, the address and the QR code are made once',async()=>{
+ published=await publish(pubPlace,4);
+ assert.deepEqual(published.live,['en','ro']);assert.deepEqual(published.waiting.map(w=>w.locale),['de']);
+ assert.equal(published.slug,'a-visitor-s-museum-demo-city');assert.match(published.code,/^[0-9a-f]{8}$/);pubCode=published.code;
+ const place=(await db.query('select status,slug,published_revision from public.places where id=$1',[pubPlace])).rows[0];
+ assert.equal(place.status,'published');assert.equal(Number(place.published_revision),4);
+ assert.equal((await db.query("select responsibility_version from public.guide_versions where place_id=$1 limit 1",[pubPlace])).rows[0].responsibility_version,'2026-10-07-v1');
+});
+await as(null,'anon');
+await check('a visitor reads the published guide, in their language or a published one, with its photo',async()=>{
+ const en=await guideFor(published.slug,'en');
+ assert.equal(en.status,'published');assert.deepEqual(en.locales,['en','ro']);
+ assert.deepEqual(en.content.zones.map(z=>z.title),['Entrance','Gallery','Quiet room']);
+ assert.equal(en.content.zones[0].photo.key,pubKey);assert.equal(en.content.zones[0].photo.alt,'Glass doors');
+ // A removed field is left out of what visitors get.
+ assert.equal(en.content.zones[1].note,'');assert.equal(en.content.zones[0].note,'Ask staff');
+ assert.equal((await guideFor(published.slug,'ro')).content.zones[2].title,'Camera liniștită');
+ const de=await guideFor(published.slug,'de');assert.equal(de.locale,'en');
+ assert.equal(await photoVisible(pubKey),true);
+ assert.deepEqual(await qr(pubCode),{status:'published',slug:published.slug,locales:['en','ro']});
+ const list=await placesList('ro');assert.equal(list.length,1);assert.equal(list[0].name,'Muzeul vizitatorului');assert.equal(list[0].slug,published.slug);
+ assert.equal(await qr('nosuchcode'),null);assert.equal(await guideFor('no-such-guide','en'),null);
+ // Photos of drafts stay private.
+ assert.equal(await photoVisible(key),false);
+});
+await as(newOwner);
+await check('editing after publishing changes nothing public until the next publish',async()=>{
+ const changed=pubDraft(['Main door','Gallery','Quiet room'],{name:'Renamed museum'});changed.zones[0].photo={id:pubPhoto,storageKey:pubKey,alt:'Glass doors',rights:'Own photo',photographedOn:'2026-01-02'};
+ pubRevision=await saveDraft(newOrg,pubPlace,4,'en',changed);assert.equal(pubRevision,5);
+ await as(null,'anon');assert.equal((await guideFor(published.slug,'en')).content.zones[0].title,'Entrance');
+ await as(newOwner);
+ const again=await publish(pubPlace,5);
+ assert.equal(again.slug,published.slug);assert.equal(again.code,pubCode);
+ await as(null,'anon');const en=await guideFor(published.slug,'en');assert.equal(en.content.zones[0].title,'Main door');assert.equal(en.content.name,'Renamed museum');
+});
+await as(newOwner);
+await check('the address, the publication fields and the QR code cannot be changed directly',async()=>{
+ await denied(`update public.places set slug='another-address' where id='${pubPlace}'`);
+ await denied(`update public.qr_redirects set public_code='mine' where place_id='${pubPlace}'`);
+ await denied(`insert into public.qr_redirects(public_code,place_id,organization_id) values('second','${pubPlace}','${newOrg}')`);
+ await as(editor);
+ await denied(`update public.places set status='draft' where id='${pubPlace}'`);
+ await denied(`update public.places set published_revision=1 where id='${pubPlace}'`);
+ await assert.rejects(()=>unpublish(pubPlace),/Only owners and admins/);
+});
+await as(newOwner);
+await check('a second location with the same name gets its own address',async()=>{
+ await saveDraft(newOrg,twinPlace,0,'en',{...draft,zones:twinZones.map((zoneId,i)=>step(zoneId,['One','Two','Three'][i]))});
+ assert.equal((await publish(twinPlace,1)).slug,'a-visitor-s-museum-demo-city-2');
+ assert.equal((await db.query("select private.slug_text('Șapte Țări Ölmühle')")).rows[0].slug_text,'sapte-tari-oelmuehle');
+ assert.equal((await db.query('select private.slug_taken($1,$2) taken',['willow-museum',twinPlace])).rows[0].taken,true);
+});
+await check('the owner unpublishes: address and QR code say unavailable, never the name; photos go private',async()=>{
+ assert.equal(await unpublish(pubPlace),true);
+ await as(null,'anon');
+ assert.deepEqual(await guideFor(published.slug,'en'),{status:'unavailable'});
+ assert.deepEqual(await qr(pubCode),{status:'unavailable'});
+ assert.deepEqual((await placesList('en')).map(p=>p.slug),['a-visitor-s-museum-demo-city-2']);
+ assert.equal(await photoVisible(pubKey),false);
+});
+await as(newOwner);
+await check('publishing again brings back the same address and code',async()=>{
+ const back=await publish(pubPlace,5);assert.equal(back.slug,published.slug);assert.equal(back.code,pubCode);
+ await as(null,'anon');assert.equal((await qr(pubCode)).status,'published');
+});
+
 // Problem reports: owners and admins of an approved organisation report to NERUMA; only the platform administrator closes.
 const stranger=id(77),reportText='The photo upload stops at 90 percent.';
 await db.exec(`reset role;insert into auth.users(id,email) values('${stranger}','stranger@example.test');`);
@@ -251,7 +355,7 @@ await check('suspension also blocks assigned assessor and reviewer data',async()
 await as(null,'anon');
 await check('suspended tenant public snapshots and QR codes also disappear',async()=>{assert.equal(await count('guides'),0);assert.equal(await count('guide_versions'),0);assert.equal(await count('qr_redirects'),0);});
 await as(null,'anon');
-await check('online draft content remains private and never enters public snapshots',async()=>{await denied('select * from storage.objects');assert.equal((await db.query('select count(*)::int n from public.guides where place_id=$1',[livePlace])).rows[0].n,0);});
+await check('online draft content remains private and never enters public snapshots',async()=>{assert.equal((await db.query('select count(*)::int n from storage.objects')).rows[0].n,0);assert.equal((await db.query('select count(*)::int n from public.guides where place_id=$1',[livePlace])).rows[0].n,0);});
 await db.exec('reset role');
 await db.exec("select set_config('request.jwt.claim.sub','',false)");
 await db.exec(await readFile('supabase/seed.sql','utf8'));

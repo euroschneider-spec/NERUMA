@@ -4,7 +4,8 @@ import { useMemo, useRef, useState } from 'react';
 import { ArrowLeft, ArrowRight, CheckCircle2, ShieldCheck, SlidersHorizontal, X } from 'lucide-react';
 import { getCopy, type Locale } from '@/lib/i18n';
 import { getAccessCopy } from '@/lib/accessibility-copy';
-import { getDemoGuide, type SensoryProfile } from '@/lib/demo';
+import { getDemoGuide, type Guide, type SensoryProfile, type Zone } from '@/lib/demo';
+import { fill, getPublishingCopy } from '@/lib/publishing';
 import { spokenGuide, spokenZone } from '@/lib/speech';
 import { ReadAloud } from './read-aloud';
 import { GuideText } from './guide-text';
@@ -17,14 +18,17 @@ const channels = ['sound','light','crowding','smell','temperature','visual'] as 
  * no autoplay, content first. Reading choices (step-by-step or complete text, and read-aloud) live
  * in the guide's own options sheet rather than above the content, so a visitor arrives at the guide
  * itself. The sheet stays mounted while closed so speech continues after it is dismissed.
+ * Without `published` it shows the fictional example; with it, a published guide (`publishedOn` is its date).
  */
-export function GuestGuide({locale}:{locale:Locale}) {
-  const t=getCopy(locale);const a=getAccessCopy(locale);
-  const guide=useMemo(()=>getDemoGuide(locale),[locale]);
+export function GuestGuide({locale,published,publishedOn}:{locale:Locale;published?:Guide;publishedOn?:string}) {
+  const t=getCopy(locale);const a=getAccessCopy(locale);const p=getPublishingCopy(locale);
+  const guide=useMemo(()=>published ?? getDemoGuide(locale),[locale,published]);
   const [index,setIndex]=useState(0);const [textView,setTextView]=useState(false);const [optionsOpen,setOptionsOpen]=useState(false);
   const titleRef=useRef<HTMLHeadingElement>(null);const optionsButton=useRef<HTMLButtonElement>(null);
   const zone=guide.zones[index];
-  const info:[string,string][]=[[t.arrival,t.arrivalBody],[t.general,t.generalBody],[t.provenance,t.provenanceBody]];
+  // The example explains itself as fictional; a published guide has the venue's own arrival text and when it was published.
+  const info:[string,string][]=guide.isDemo ? [[t.arrival,t.arrivalBody],[t.general,t.generalBody],[t.provenance,t.provenanceBody]]
+    : [...(guide.arrival ? [[t.arrival,guide.arrival] as [string,string]] : []),[t.provenance,fill(p.provenanceBody,{date:publishedOn ?? ''})]];
 
   function move(next:number) {setTextView(false);setOptionsOpen(false);setIndex(next);requestAnimationFrame(()=>titleRef.current?.focus());}
   function display(show:boolean) {setTextView(show);setOptionsOpen(false);requestAnimationFrame(()=>titleRef.current?.focus());}
@@ -46,7 +50,7 @@ export function GuestGuide({locale}:{locale:Locale}) {
             <div className="gg-progress" aria-hidden="true">{guide.zones.map((item,i)=><div key={item.id} className={i<=index?'done':undefined}/>)}</div>
             <p className="small-label">{t.step} {index+1} {t.of} {guide.zones.length}</p>
             <h2 className="gg-title" ref={titleRef} tabIndex={-1}>{zone.title}</h2>
-            <div className="gg-photo"><Image src={zone.illustration} alt={t.illustration+': '+zone.title} width={600} height={400} priority/></div>
+            <StepImage zone={zone} label={t.illustration}/>
             <p className="gg-desc">{zone.description}</p>
             <div>{channels.map(channel=>{
               const level=zone.sensory[channel as keyof SensoryProfile];
@@ -56,8 +60,10 @@ export function GuestGuide({locale}:{locale:Locale}) {
                 <span className="gg-lv"><b>{t[level]}</b></span>
               </div>;
             })}</div>
-            <div className="gg-note"><span className="h">{t.support}</span><p>{zone.note}</p></div>
-            <div className="gg-note"><span className="h">{t.predictability}</span><p>{zone.next}</p></div>
+            {zone.note && <div className="gg-note"><span className="h">{t.support}</span><p>{zone.note}</p></div>}
+            {zone.next && <div className="gg-note"><span className="h">{t.predictability}</span><p>{zone.next}</p></div>}
+            {zone.fields && zone.fields.length>0 && <dl className="gg-fields">{zone.fields.map(field=><div key={field.label}><dt>{field.label}</dt><dd>{field.kind==='text' ? field.value : field.answer==='yes' ? p.answerYes : p.answerNo}</dd></div>)}</dl>}
+            {zone.optional && <p className="gg-skip">{p.maySkip}</p>}
           </>
           : <div className="completion"><CheckCircle2 size={32} aria-hidden="true"/><h2 ref={titleRef} tabIndex={-1}>{t.completed}</h2><p>{t.completedBody}</p><button className="button" onClick={()=>move(0)}>{t.restart}<ArrowRight size={17} aria-hidden="true"/></button></div>}
 
@@ -91,8 +97,15 @@ export function GuestGuide({locale}:{locale:Locale}) {
           </li>)}</ol>
         </nav>
         <ReadAloud key={textView?'full-text':zone?.id||'completion'} locale={locale} label={textView?a.listenGuide:a.listenStep}
-          text={textView?spokenGuide(guide,locale):zone?t.demo+'\n'+t.source+'\n'+spokenZone(zone,locale,index,guide.zones.length):t.completed+'\n'+t.completedBody}/>
+          text={textView?spokenGuide(guide,locale):zone?(guide.isDemo?t.demo+'\n':'')+t.source+'\n'+spokenZone(zone,locale,index,guide.zones.length):t.completed+'\n'+t.completedBody}/>
       </div>
     </div>
   </div>;
+}
+
+/** A published photo with its description, the example's illustration, or nothing when a step has neither. */
+function StepImage({zone,label}:{zone:Zone;label:string}) {
+  if(zone.photo?.src) return <figure className="gg-photo"><Image unoptimized src={zone.photo.src} alt={zone.photo.alt} width={600} height={400} priority/></figure>;
+  if(!zone.illustration) return null;
+  return <div className="gg-photo"><Image src={zone.illustration} alt={label+': '+zone.title} width={600} height={400} priority/></div>;
 }

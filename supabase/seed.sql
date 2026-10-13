@@ -3,7 +3,7 @@
 begin;
 insert into public.organizations(id,name,status) values('a0000000-0000-4000-8000-000000000001','Willow Museum — FICTIONAL DEMO','draft');
 -- revision 1: the example counts as saved once, so Preview is available straight away.
-insert into public.places(id,organization_id,slug,city,address,place_type,status,revision,template_id) values('a0000000-0000-4000-8000-000000000002','a0000000-0000-4000-8000-000000000001','willow-museum','Fictional example','Willow Square — fictional address','museum','draft',1,(select id from public.templates where place_type='museum' and version=1));
+insert into public.places(id,organization_id,slug,city,address,place_type,status,revision,template_id) values('a0000000-0000-4000-8000-000000000002','a0000000-0000-4000-8000-000000000001','place-a0000000-0000-4000-8000-000000000002','Fictional example','Willow Square — fictional address','museum','draft',1,(select id from public.templates where place_type='museum' and version=1));
 insert into public.zones(id,place_id,organization_id,type,sort_order) values('a0000000-0000-4000-8000-000000000010','a0000000-0000-4000-8000-000000000002','a0000000-0000-4000-8000-000000000001','entrance',0);
 insert into public.sensory_profiles(zone_id,place_id,organization_id,sound_level,light_level,smell_level,crowding_level,temperature_level,visual_complexity_level) values('a0000000-0000-4000-8000-000000000010','a0000000-0000-4000-8000-000000000002','a0000000-0000-4000-8000-000000000001','variable','moderate','low','variable','variable','low');
 insert into public.zones(id,place_id,organization_id,type,sort_order) values('a0000000-0000-4000-8000-000000000011','a0000000-0000-4000-8000-000000000002','a0000000-0000-4000-8000-000000000001','reception',1);
