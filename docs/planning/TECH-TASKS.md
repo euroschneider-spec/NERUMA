@@ -372,3 +372,29 @@ Both files only add things; nothing is deleted or changed in existing tables.
 
 **Report a problem** (#31) is built; what is left of it: the email to the administrator when a report arrives
 (section 4) and visitor reports (with publishing).
+
+## 13. Registration and sign-in: small steps (owner, 2026-10-13)
+
+**Today:** registration collects what the administrator needs to approve an organisation (name, type, country, representative
+and role, website, registry reference, mandate statement and document, the responsibility consent with its version).
+Sign-in is email and password through Supabase Auth, which stores only a hash; our tables hold no password and the code never
+logs one. No visitor accounts exist, and nothing about sign-in history is kept beyond Supabase's own logs. Keep it that way:
+no IP addresses, device details, date of birth, home address or national ID.
+
+Each step is its own small pull request. When it is merged, remove its task from this list.
+
+1. [ ] **Password rules in the hosted projects** (the owner's steps, no code; also section 7). Minimum 12 characters and, if
+   the plan offers it, *Prevent use of leaked passwords*, on `neruma-dev` first, then production (the friend's project
+   access). Also set the minimum in `supabase/config.toml` so local matches.
+2. [ ] **Two-factor sign-in for owners and admins** (needs Opus: auth logic). Supabase MFA with an authenticator app (TOTP).
+   Enrolment on the account page, a challenge step at sign-in, and the workspace, publishing and the admin area require the
+   second factor (`aal2`) once an owner or admin has enrolled; decide in the brief whether it is required for everyone in
+   those roles from a date, or only offered at first. Recovery: a platform administrator can reset a lost factor after
+   checking the person; write the steps down. Database tests for "can't": an account at `aal1` can't publish once enrolled.
+3. [ ] **Delete my account and export my data.** A documented path (GDPR). Start as an administrator action with the steps
+   written down; decide what happens to an organisation's published guides when its only owner is deleted (they go down;
+   the QR codes stay and show the "isn't available" notice).
+4. [ ] **A preferred language saved on the account**, for the emails the app sends later (section 4). Optional; defaults to
+   the language of the page they registered in.
+5. [ ] **An optional second contact for the organisation**, for when the representative leaves or their email stops working.
+   Shown to the administrator only.
