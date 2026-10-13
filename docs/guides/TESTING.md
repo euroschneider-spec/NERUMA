@@ -40,6 +40,27 @@ Always pass `PORT` when a `next dev` server may be running. Playwright's `reuseE
 adopts whatever already listens on the port, and a dev server's HMR socket breaks hydration under
 test — every interactive test then fails for reasons unrelated to the change. See GOTCHA.md.
 
+## Finding elements: the words always travel with the locator
+
+A test that finds a control must also prove it says what a person reads or hears, in the language of the run. Two ways, and
+no third:
+
+1. **By the words**: `getByRole('button', { name: 'Confirm' })`, `getByLabel('Password')`. This is the default.
+2. **By a test id, with the words bound to it**: when several controls share a name, or a test drives the same control in
+   every language, give the element `data-testid="…"` and find it only through `tests/support/bound.ts`:
+
+```ts
+const confirm = await button(page, 'code-confirm', 'Confirm');          // visible text AND accessible name
+const code = await field(page, 'code-input', '6-digit code from the app'); // accessible name = its label
+const note = await message(page, 'backup-left', /^\d+ of 10 backup codes left\.$/);
+```
+
+The helpers find the element, require exactly one that is visible, and assert its words in the same step. A control can't
+pass because its id exists while its label is missing, empty, wrong or in another language, and a button whose
+`aria-label` differs from its visible text fails (WCAG 2.5.3). `tests/bound-locators.spec.ts` proves the helpers refuse
+each of those. `tests/unit/test-conventions.test.ts` fails the build if a test uses `getByTestId`, a `data-testid`
+selector or `testIdAttribute` anywhere else. Never find an element by CSS class or id alone (GOTCHA.md, 11 October).
+
 ## The demo workspace
 
 `/en/demo` needs no sign-in and no database: any build serves it, and `npm run dev` is enough. It is the real organisation app saved only in the browser (`localStorage`, keys `neruma:demo:v1:<id>`, plus IndexedDB for photos). Open it in a private window to see the original; *Reset demo* brings it back.

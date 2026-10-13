@@ -755,7 +755,7 @@ try {
   });
   await check('password limits are applied by the server, not only by the form',async()=>{
     const {context,view}=await newContext();
-    const unlock=()=>view.locator('#account-password').evaluate(input=>{input.removeAttribute('minlength');input.removeAttribute('maxlength');});
+    const unlock=()=>view.getByLabel('Password',{exact:true}).evaluate(input=>{input.removeAttribute('minlength');input.removeAttribute('maxlength');});
     const fill=async(page,email,password)=>{
       await page.getByLabel('Organisation name',{exact:true}).fill('Edge fixture museum');await page.getByLabel('Responsible representative',{exact:true}).fill('Fixture director');
       await page.getByLabel('Official website (https://)',{exact:true}).fill('https://museum.example.test');await page.getByLabel('Country code (two letters)',{exact:true}).fill('DE');
@@ -765,7 +765,7 @@ try {
       await page.getByLabel('Work email',{exact:true}).fill(email);await page.locator('#account-password').fill(password);
     };
     for(const [label,password] of [['11 characters','a'.repeat(11)],['129 characters','a'.repeat(129)],['empty','']]) {
-      await view.goto(base+'/en/register');await view.waitForLoadState('networkidle');await unlock();await view.locator('#account-password').evaluate(input=>{input.removeAttribute('required');});
+      await view.goto(base+'/en/register');await view.waitForLoadState('networkidle');await unlock();await view.getByLabel('Password',{exact:true}).evaluate(input=>{input.removeAttribute('required');});
       await fill(view,'edge@example.test',password);
       await view.getByRole('button',{name:'Request organisation access',exact:true}).click();
       await expect(view.locator('main').getByRole('alert'),label).toContainText('Complete the required fields');
@@ -774,12 +774,12 @@ try {
     await view.goto(base+'/en/register');await view.waitForLoadState('networkidle');await fill(view,'edge@example.test','a'.repeat(12));
     await view.getByRole('button',{name:'Request organisation access',exact:true}).click();
     await expect(view.getByText('confirm your email',{exact:false}).first()).toBeVisible();
-    await view.goto(base+'/en/login');await view.waitForLoadState('networkidle');await unlock();await view.getByLabel('Work email',{exact:true}).fill('owner1@example.test');await view.locator('#account-password').fill('a'.repeat(129));
+    await view.goto(base+'/en/login');await view.waitForLoadState('networkidle');await unlock();await view.getByLabel('Work email',{exact:true}).fill('owner1@example.test');await view.getByLabel('Password',{exact:true}).fill('a'.repeat(129));
     await view.getByRole('button',{name:'Sign in',exact:true}).click();
     await expect(view.locator('main').getByRole('alert'),'a 129-character password at sign-in').toBeVisible();await expect(view).toHaveURL(/\/en\/login$/);
     for(const email of ['not-an-email','a@b','@example.test','a b@example.test','x'.repeat(250)+'@example.test','']) {
       await view.goto(base+'/en/login');await view.waitForLoadState('networkidle');await view.getByRole('form',{name:'Sign in'}).evaluate(form=>{form.noValidate=true;form.querySelectorAll('[maxlength]').forEach(input=>input.removeAttribute('maxlength'));});
-      await view.getByLabel('Work email',{exact:true}).fill(email);await view.locator('#account-password').fill('Fixture-only-passphrase-123');
+      await view.getByLabel('Work email',{exact:true}).fill(email);await view.getByLabel('Password',{exact:true}).fill('Fixture-only-passphrase-123');
       await view.getByRole('button',{name:'Sign in',exact:true}).click();
       await expect(view.locator('main').getByRole('alert'),`an email address like “${email.slice(0,20)}”`).toBeVisible();
       await expect(view).toHaveURL(/\/en\/login$/);
@@ -789,7 +789,7 @@ try {
   await check('a wrong password and an unknown email give the same answer',async()=>{
     const {context,view}=await newContext();
     const attempt=async(email,password)=>{
-      await view.goto(base+'/en/login');await view.waitForLoadState('networkidle');await view.getByLabel('Work email',{exact:true}).fill(email);await view.locator('#account-password').fill(password);
+      await view.goto(base+'/en/login');await view.waitForLoadState('networkidle');await view.getByLabel('Work email',{exact:true}).fill(email);await view.getByLabel('Password',{exact:true}).fill(password);
       await view.getByRole('button',{name:'Sign in',exact:true}).click();const alert=view.locator('main').getByRole('alert');await expect(alert).toBeVisible();return (await alert.textContent()).trim();
     };
     const wrongPassword=await attempt('owner1@example.test','not-the-right-password');

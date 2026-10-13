@@ -37,11 +37,15 @@ test.describe('the deployed site', () => {
       await page.goto(`${site}${path}`);
       await expect(page.getByText('is being activated', { exact: false }), path).toHaveCount(0);
       await expect(page.getByText('Registration is not active yet', { exact: false }), path).toHaveCount(0);
-      await expect(page.locator('main fieldset[disabled]'), `${path}: form is disabled`).toHaveCount(0);
     }
+    // Found by the words a person sees, and required to be usable: a greyed-out form fails here.
     await page.goto(`${site}/en/register`);
+    await expect(page.getByLabel('Organisation name', { exact: true })).toBeEnabled();
+    await expect(page.getByLabel('Password', { exact: true })).toBeEnabled();
     await expect(page.getByRole('button', { name: 'Request organisation access', exact: true })).toBeEnabled();
     await page.goto(`${site}/en/login`);
+    await expect(page.getByLabel('Work email', { exact: true })).toBeEnabled();
+    await expect(page.getByLabel('Password', { exact: true })).toBeEnabled();
     await expect(page.getByRole('button', { name: 'Sign in', exact: true })).toBeEnabled();
   });
 

@@ -321,6 +321,21 @@ Each is worth a decision. "Why" says what stops it being automated today.
 - [ ] **Very large organisations**: 50+ memberships (the page asks for 50), 100 places, all with photos. The dashboard lists
   50 organisations at most; nothing tests the 51st.
 
+### Older tests that don't yet bind the words to the locator
+
+The rule is in [TESTING.md](TESTING.md#finding-elements-the-words-always-travel-with-the-locator): a control is found by
+its words, or by a test id that is always checked together with them. Test ids are enforced
+(`tests/unit/test-conventions.test.ts`). Finding by a CSS class or bare id is not enforced yet, and the older tests do it in
+about **127 places**: `scripts/test-workspace.mjs` 49, `platform.spec.ts` 17, `reading-accessibility.spec.ts` 15,
+`demo-workspace.spec.ts` 12, `read-aloud.spec.ts` 11, `guide-example.spec.ts` 10, `top-bar.spec.ts` 9,
+`theme-follows-device.spec.ts` 4.
+
+- [ ] Retrofit them one file at a time, each as its own small pull request. For every `locator('.class')` either switch to a
+  role or label, or add a `data-testid` and use `button()` / `field()` / `message()` from `tests/support/bound.ts`. Many of
+  them already assert text on the next line; those are the quick ones.
+- [ ] When the retrofit is done, extend `test-conventions.test.ts` to fail on `locator('.` and `locator('#` outside a short,
+  explained allow-list (layout checks that measure a class on purpose, such as the top-bar heights).
+
 ### Edge cases found while writing the tests (decisions, not bugs)
 
 Each of these is **written down as a test that documents today's behaviour**, so changing it is a deliberate act.
