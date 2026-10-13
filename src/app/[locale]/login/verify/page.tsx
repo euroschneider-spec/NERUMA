@@ -5,10 +5,10 @@ import { landingPath } from '@/lib/roles';
 import { authConfigured } from '@/lib/supabase/config';
 import { confirmedUser, createClient } from '@/lib/supabase/server';
 import { getTwoFactorCopy, twoFactorStep } from '@/lib/two-factor';
-import { getTwoFactorStatus, twoFactorPath } from '@/lib/two-factor-server';
+import { getBackupCodes, getTwoFactorStatus, twoFactorPath } from '@/lib/two-factor-server';
 import { getViewer } from '@/lib/viewer-server';
 import { signOut } from '@/app/auth/actions';
-import { TwoFactorVerify } from '@/components/two-factor-verify';
+import { BackupCodeVerify, TwoFactorVerify } from '@/components/two-factor-verify';
 
 export const dynamic = 'force-dynamic';
 export const metadata = { title: 'Two-factor sign-in', robots: { index: false, follow: false } };
@@ -29,6 +29,7 @@ export default async function VerifySecondFactor({ params }: { params: Promise<{
     redirect(viewer ? landingPath(viewer, locale) : `/${locale}/account`);
   }
   const t = getTwoFactorCopy(locale);
+  const backup = await getBackupCodes(supabase);
   return (
     <main id="main-content" className="container">
       <div className="page-heading">
@@ -38,6 +39,7 @@ export default async function VerifySecondFactor({ params }: { params: Promise<{
       </div>
       <div className="content-body">
         <TwoFactorVerify locale={locale} />
+        {backup.state === 'some' && backup.remaining > 0 && <BackupCodeVerify locale={locale} />}
         <p>{t.lost}</p>
         <form action={signOut.bind(null, locale)}>
           <button className="text-button" type="submit">{getOrganisationCopy(locale).signOut}</button>

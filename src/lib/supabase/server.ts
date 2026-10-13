@@ -8,7 +8,9 @@ export async function createClient() {
   const cookieStore = await cookies();
   return createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!,
-    { cookies: {
+    // Backup codes for two-factor sign-in are Supabase's own, still marked experimental in this version. The project
+    // may not have them switched on; the app then hides them (getBackupCodes answers 'off').
+    { auth: { experimental: { recoveryCodes: true } }, cookies: {
       getAll() { return cookieStore.getAll(); },
       setAll(values) {
         try { values.forEach(({ name, value, options }) => cookieStore.set(name, value, options)); }

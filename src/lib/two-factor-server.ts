@@ -2,7 +2,7 @@ import 'server-only';
 import { redirect } from 'next/navigation';
 import type { Locale } from './i18n';
 import type { SupabaseClient } from './supabase/server';
-import { parseTwoFactorStatus, twoFactorStep, type TwoFactorStatus } from './two-factor';
+import { parseTwoFactorStatus, twoFactorStep, type BackupCodes, type TwoFactorStatus } from './two-factor';
 import { twoFactorReady } from './verification-server';
 
 // Before the migration nothing is required, and the database doesn't ask for a second factor either.
@@ -28,4 +28,27 @@ export async function requireSecondFactor(supabase: SupabaseClient, locale: Loca
   const step = twoFactorStep(status);
   if (step) redirect(twoFactorPath(step, locale));
   return status;
+}
+
+/** The account's backup codes. Anything but a clear answer reads as 'off', so the app shows no backup-code controls. */
+export async function getBackupCodes(supabase: SupabaseClient): Promise<BackupCodes> {
+  try {
+    const { data, error } = await supabase.auth.mfa.recoveryCodes.getStatus();
+    if (error) return { state: error.code === 'mfa_factor_not_found' ? 'none' : 'off' };
+    return { state: 'some', total: data.total, remaining: data.remaining };
+  } catch {
+    return { state: 'off' };
+  }
+}
+
+/** A new set of backup codes for a session that has passed the second factor, or null when Supabase didn't make one. */
+export async function newBackupCodes(supabase: SupabaseClient, replace: boolean): Promise<string[] | null> {
+  try {
+    const { data, error } = replace
+      ? await supabase.auth.mfa.recoveryCodes.regenerate()
+      : await supabase.auth.mfa.recoveryCodes.generate({ friendlyName: 'NERUMA backup codes' });
+    return error ? null : data.codes;
+  } catch {
+    return null;
+  }
 }

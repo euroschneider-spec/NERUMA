@@ -591,6 +591,7 @@ try {
     } finally {await fetch('http://127.0.0.1:3012/__fixture/verification-mode',{method:'POST',body:JSON.stringify({enabled:true})});}
   });
   // Two-factor sign-in (brief docs/briefs/2026-10-13-two-factor-sign-in.md).
+  const backupPattern=/^[a-z0-9]{4} [a-z0-9]{4} [a-z0-9]{4} [a-z0-9]{4}$/;let backupCodes=[];
   const deadline=from=>fetch('http://127.0.0.1:3012/__fixture/two-factor-deadline',{method:'POST',body:JSON.stringify({from})});
   await check('an owner without two-factor sees the date it becomes required',async()=>{
     const view=await (await browser.newContext({colorScheme:'dark'})).newPage();await login(view,1);await expect(view).toHaveURL(/\/en\/workspace$/);
@@ -613,6 +614,11 @@ try {
     await expect(view.locator('main').getByRole('alert')).toContainText('That code didn’t work.');
     await code.fill(totp(secret));await view.getByRole('button',{name:'Turn on two-factor sign-in',exact:true}).click();
     await expect(view.getByText('Two-factor sign-in is on.',{exact:true})).toBeVisible();authenticators[2]=secret;
+    await expect(view.getByRole('heading',{name:'Backup codes',level:3})).toBeFocused();
+    backupCodes=(await view.getByText(backupPattern).allTextContents());assert.equal(backupCodes.length,10);
+    const codesAudit=await new AxeBuilder({page:view}).withTags(['wcag2a','wcag2aa','wcag21a','wcag21aa','wcag22aa']).analyze();assert.deepEqual(codesAudit.violations.map(v=>v.id),[],'backup codes');
+    await expect(view.getByRole('link',{name:'Download the codes',exact:true})).toHaveAttribute('download','neruma-backup-codes.txt');
+    await view.getByRole('link',{name:'I’ve saved them, continue',exact:true}).click();await expect(view).toHaveURL(/\/en\/workspace$/);
     await view.getByRole('button',{name:'Sign out',exact:true}).click();await expect(view).toHaveURL(/\/en\/login$/);
     await signInWithPassword(view,2);await expect(view).toHaveURL(/\/en\/login\/verify$/);
     await expect(view.getByRole('heading',{name:'Enter your code',level:1})).toBeVisible();
@@ -622,6 +628,31 @@ try {
     await enterCode(view,totp(secret));await expect(view).toHaveURL(/\/en\/workspace$/);
     await expect(view.getByRole('complementary').getByText('Fixture museum 2',{exact:true})).toBeVisible();
     await expect(view.getByText('must use two-factor sign-in',{exact:false})).toHaveCount(0);
+    await view.context().close();
+  });
+  await check('a backup code signs in once without the phone; a new set cancels the old codes',async()=>{
+    const view=await (await browser.newContext({colorScheme:'dark'})).newPage();
+    const useBackup=async code=>{
+      await signInWithPassword(view,2);await expect(view).toHaveURL(/\/en\/login\/verify$/);
+      await view.getByText('Use a backup code instead',{exact:true}).click();
+      await view.getByLabel('Backup code',{exact:true}).fill(code);await view.getByRole('button',{name:'Use this backup code',exact:true}).click();
+    };
+    const refused=()=>expect(view.locator('main').getByRole('alert')).toContainText('That backup code didn’t work.');
+    const signOut=()=>view.getByRole('button',{name:'Sign out',exact:true}).click();
+    await useBackup('aaaa bbbb cccc dddd');await refused();
+    await view.getByLabel('Backup code',{exact:true}).fill(backupCodes[0].toUpperCase().replace(/ /g,'-'));await view.getByRole('button',{name:'Use this backup code',exact:true}).click();
+    await expect(view).toHaveURL(/\/en\/workspace$/);await signOut();
+    await useBackup(backupCodes[0]);await refused();
+    await view.getByLabel('Backup code',{exact:true}).fill(backupCodes[1]);await view.getByRole('button',{name:'Use this backup code',exact:true}).click();await expect(view).toHaveURL(/\/en\/workspace$/);
+    await view.goto(`${base}/en/account`);await expect(view.getByText('8 of 10 backup codes left.',{exact:true})).toBeVisible();
+    const make=view.getByRole('button',{name:'Make new backup codes',exact:true});await make.click();
+    const dialog=view.getByRole('dialog',{name:'Make new backup codes?'});await expect(dialog).toBeVisible();
+    await expect(dialog.getByRole('button',{name:'Cancel',exact:true})).toBeFocused();await view.keyboard.press('Escape');await expect(dialog).toBeHidden();
+    await make.click();await dialog.getByRole('button',{name:'Make new codes',exact:true}).click();
+    await expect(view.getByRole('heading',{name:'Backup codes',level:3})).toBeFocused();
+    const fresh=await view.getByText(backupPattern).allTextContents();assert.equal(fresh.length,10);assert.ok(!fresh.includes(backupCodes[2]));
+    await signOut();await useBackup(backupCodes[2]);await refused();
+    await view.getByLabel('Backup code',{exact:true}).fill(fresh[0]);await view.getByRole('button',{name:'Use this backup code',exact:true}).click();await expect(view).toHaveURL(/\/en\/workspace$/);
     await view.context().close();
   });
   await check('after the deadline, an owner without two-factor is sent to setup and the workspace stays closed',async()=>{

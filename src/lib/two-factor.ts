@@ -13,6 +13,9 @@ export function parseTwoFactorStatus(value: unknown): TwoFactorStatus | null {
   return { enrolled: row.enrolled, required: row.required, deadline, passed: row.passed };
 }
 
+// Backup codes as Supabase reports them: switched off on the project, none made yet, or how many are left.
+export type BackupCodes = { state: 'off' } | { state: 'none' } | { state: 'some'; total: number; remaining: number };
+
 // Where a session that hasn't passed has to go: the code step when an app is set up, otherwise setup on the account page.
 export function twoFactorStep(status: TwoFactorStatus): 'verify' | 'setup' | null {
   if (status.passed) return null;
@@ -25,7 +28,13 @@ export function secondFactorCode(value: string): string | null {
   return /^\d{6}$/.test(code) ? code : null;
 }
 
-// The setup key, in groups of four so it can be read and typed.
+// Backup codes are letters and digits; people may type them with spaces, dashes or capitals, which Supabase ignores.
+export function backupCode(value: string): string | null {
+  const code = value.replace(/[\s-]/g, '');
+  return /^[a-z0-9]{8,32}$/i.test(code) ? code : null;
+}
+
+// The setup key and backup codes, in groups of four so they can be read and typed.
 export const groupedKey = (secret: string) => secret.replace(/\s/g, '').match(/.{1,4}/g)?.join(' ') ?? '';
 
 // A banner date is shown only while the deadline is still ahead.
@@ -56,6 +65,24 @@ const copy = {
     banner: 'From {date}, organisation owners and admins must use two-factor sign-in.',
     bannerLink: 'Set it up now',
     working: 'Checking…',
+    backupTitle: 'Backup codes',
+    backupIntro: 'If you don’t have your phone, each of these codes lets you sign in once. Save them somewhere safe now, for example printed or in a password manager: they are shown only this once.',
+    backupDownload: 'Download the codes',
+    continue: 'I’ve saved them, continue',
+    continuePlain: 'Continue',
+    backupLeft: '{left} of {total} backup codes left.',
+    backupNone: 'You have no backup codes yet.',
+    backupCreate: 'Create backup codes',
+    backupNew: 'Make new backup codes',
+    backupNewTitle: 'Make new backup codes?',
+    backupNewBody: 'Your current backup codes stop working straight away.',
+    backupNewConfirm: 'Make new codes',
+    cancel: 'Cancel',
+    useBackup: 'Use a backup code instead',
+    backupCode: 'Backup code',
+    backupSubmit: 'Use this backup code',
+    backupWrong: 'That backup code didn’t work. Each code works only once.',
+    backupLocked: 'Too many wrong codes. Wait a few minutes and try again.',
   },
   ro: {
     title: 'Autentificare în doi pași',
@@ -78,6 +105,24 @@ const copy = {
     banner: 'De la {date}, proprietarii și administratorii organizațiilor trebuie să folosească autentificarea în doi pași.',
     bannerLink: 'Configurați acum',
     working: 'Se verifică…',
+    backupTitle: 'Coduri de rezervă',
+    backupIntro: 'Dacă nu aveți telefonul la îndemână, fiecare dintre aceste coduri vă permite să intrați în cont o singură dată. Salvați-le acum într-un loc sigur, de exemplu tipărite sau într-un manager de parole: sunt afișate doar acum.',
+    backupDownload: 'Descărcați codurile',
+    continue: 'Le-am salvat, continuați',
+    continuePlain: 'Continuați',
+    backupLeft: 'Mai aveți {left} din {total} coduri de rezervă.',
+    backupNone: 'Nu aveți încă coduri de rezervă.',
+    backupCreate: 'Creați coduri de rezervă',
+    backupNew: 'Generați coduri de rezervă noi',
+    backupNewTitle: 'Generați coduri de rezervă noi?',
+    backupNewBody: 'Codurile de rezervă actuale nu vor mai funcționa de îndată.',
+    backupNewConfirm: 'Generați coduri noi',
+    cancel: 'Anulați',
+    useBackup: 'Folosiți un cod de rezervă',
+    backupCode: 'Cod de rezervă',
+    backupSubmit: 'Folosiți acest cod',
+    backupWrong: 'Codul de rezervă nu este corect. Fiecare cod funcționează o singură dată.',
+    backupLocked: 'Prea multe coduri greșite. Așteptați câteva minute și încercați din nou.',
   },
   de: {
     title: 'Zwei-Faktor-Anmeldung',
@@ -100,6 +145,24 @@ const copy = {
     banner: 'Ab dem {date} müssen Inhaber und Administratoren von Organisationen die Zwei-Faktor-Anmeldung verwenden.',
     bannerLink: 'Jetzt einrichten',
     working: 'Wird geprüft…',
+    backupTitle: 'Ersatzcodes',
+    backupIntro: 'Wenn Sie Ihr Telefon nicht zur Hand haben, können Sie sich mit jedem dieser Codes einmal anmelden. Speichern Sie sie jetzt an einem sicheren Ort, zum Beispiel ausgedruckt oder in einem Passwortmanager: Sie werden nur dieses eine Mal angezeigt.',
+    backupDownload: 'Codes herunterladen',
+    continue: 'Gespeichert, weiter',
+    continuePlain: 'Weiter',
+    backupLeft: 'Noch {left} von {total} Ersatzcodes übrig.',
+    backupNone: 'Sie haben noch keine Ersatzcodes.',
+    backupCreate: 'Ersatzcodes erstellen',
+    backupNew: 'Neue Ersatzcodes erstellen',
+    backupNewTitle: 'Neue Ersatzcodes erstellen?',
+    backupNewBody: 'Ihre bisherigen Ersatzcodes funktionieren dann sofort nicht mehr.',
+    backupNewConfirm: 'Neue Codes erstellen',
+    cancel: 'Abbrechen',
+    useBackup: 'Stattdessen einen Ersatzcode verwenden',
+    backupCode: 'Ersatzcode',
+    backupSubmit: 'Diesen Code verwenden',
+    backupWrong: 'Dieser Ersatzcode funktioniert nicht. Jeder Code gilt nur einmal.',
+    backupLocked: 'Zu viele falsche Codes. Warten Sie einige Minuten und versuchen Sie es erneut.',
   },
 } satisfies Record<Locale, Record<string, string>>;
 
