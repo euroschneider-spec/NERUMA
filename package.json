@@ -12,9 +12,11 @@
     "test:unit": "vitest run",
     "test:e2e": "playwright test",
     "test:db": "node scripts/test-database.mjs",
-    "check": "npm run typecheck && npm run lint && npm run test:unit && npm run test:db && npm run check:deployment && npm run build",
+    "test:data": "node scripts/test-synthetic-data.mjs",
+    "check": "npm run typecheck && npm run lint && npm run test:unit && npm run test:db && npm run test:data && npm run check:deployment && npm run build",
     "check:deployment": "node scripts/check-deployment-files.mjs",
-    "test:workspace": "node scripts/test-workspace.mjs"
+    "test:workspace": "node scripts/test-workspace.mjs",
+    "test:smoke": "playwright test tests/smoke.spec.ts"
   },
   "dependencies": {
     "@supabase/ssr": "0.12.7",

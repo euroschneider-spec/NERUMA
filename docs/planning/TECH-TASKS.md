@@ -13,13 +13,14 @@ workspace saves to the browser, not to the database.
 - [x] **Started (no Docker needed):** `npm run dev:mock` runs the site against the test fixture with five mock
   users (platform administrator, two organisation owners, two users without an organisation); see
   `docs/guides/TESTING.md`. It now has the Willow Museum (five zones) and one request waiting for review.
-  Still missing: photos, organisations in other states (needs information, suspended), several places.
-- [ ] Seed script for a **local** Supabase (`supabase start`) that creates one user per state:
-  platform administrator, organisation owner, organisation admin, applicant waiting for review,
-  applicant asked for more information, suspended organisation.
-- [ ] Several organisations and places in different statuses (draft, pending, approved, suspended),
-  cities, countries and categories, so the dashboards, the admin queue and the Explore filters have
-  something to show.
+  Photos, organisations in other states and several places are now there (synthetic data, §1 below).
+- [x] A user for every state in the fake Supabase (`dev:mock`): platform administrators, owners, an organisation admin, applicants
+  waiting / asked for more information / rejected, a suspended organisation, an unconfirmed account. Still open: the same for a
+  **local** Supabase (`supabase start`, needs Docker) and for `neruma-dev`.
+- [x] Several organisations and places in different statuses (draft, pending, approved, suspended, taken down, edited after
+  publishing), cities, countries and categories, so the dashboards, the admin queue and the Explore filters have something to
+  show. Done for `dev:mock`: `scripts/synthetic-data.mjs`, checked by `npm run test:data`. Still open: loading it into the hosted
+  `neruma-dev` project (a SQL file you paste, with a guard that refuses anything but a dev project).
 - [ ] Fictional names and `@example.test` emails only. Document the shared local password in the
   script itself, never in a real environment.
 - [ ] A guard that refuses to run unless the database URL is local, so it can never hit production.
@@ -55,11 +56,13 @@ Under the EU ePrivacy rules (Romania: Law 506/2004; Germany: TDDDG §25), storag
 necessary for something the user asked for needs no consent. Sign-in sessions and settings the visitor
 chose fall under that. **So no cookie banner is needed as things stand.**
 
-- [ ] The privacy page doesn't mention device storage at all. Add a short section listing the sign-in
-  cookies and the preference storage: what each is for and how long it lasts. GDPR requires this
-  information even without consent.
-- [ ] Rule for later: adding analytics, embedded maps or videos, or any third-party script means
-  re-checking consent before it ships.
+- [x] The privacy page lists everything stored on the device (sign-in cookies, `neruma_device`, reading settings, sidebar,
+  demo) in EN/RO/DE, with what each is for and how long it lasts. `tests/unit/storage-disclosure.test.ts` fails when code
+  starts storing something that isn't disclosed. Still open: the privacy page's older intro says it describes "the
+  demonstration, before live accounts", and the data-controller, retention and processor details wait for the owner.
+- [x] Rule for later: adding analytics, embedded maps or videos, or any third-party script means
+  re-checking consent before it ships. `storage-disclosure.test.ts` fails on known analytics and embed hosts and on
+  `next/script`; a deliberate addition changes that test in the same pull request.
 
 ## 4. Email
 
@@ -278,8 +281,10 @@ locally is in `docs/guides/TESTING.md`.
 - [ ] No visual regression tests. A few full-page screenshot comparisons (home, guide, login at 390 and
   1280px) would catch the kind of alignment bugs found in the design review, at the cost of updating
   baselines when the design changes on purpose.
-- [ ] No test runs against the deployed Vercel preview. After the first real organisation pilot, add a
-  small smoke test (home loads, example guide opens, sign-in page loads) that runs after each deployment.
+- [x] A smoke test for a deployed site exists (`tests/smoke.spec.ts`, `npm run test:smoke`): the pages open, sign-in and
+  registration are enabled, headers, and with the public key what an anonymous visitor can do to the database. Still open:
+  running it automatically after each Vercel deployment. The full list of manual and open test cases is in
+  `docs/guides/TEST-PLAN.md`.
 
 ## 12. Organisation app: what the dashboard work left open
 
@@ -406,7 +411,9 @@ Each step is its own small pull request. When it is merged, remove its task from
 1. [ ] **Password rules in the hosted projects** (the owner's steps, no code; also section 7). Minimum 12 characters and, if
    the plan offers it, *Prevent use of leaked passwords*, on `neruma-dev` first, then production (the friend's project
    access). Also set the minimum in `supabase/config.toml` so local matches.
-3. [ ] **Delete my account and export my data.** A documented path (GDPR). Start as an administrator action with the steps
+3. [ ] **Delete my account and export my data.** *Start from `docs/guides/PERSONAL-DATA.md`: a user can't be deleted today (15 foreign
+   keys with "no action"), the same data is copied in several tables, and some records are immutable by design. Each blocking row needs
+   a decision: delete, anonymise or keep (owner and lawyer, D4).* A documented path (GDPR). Start as an administrator action with the steps
    written down; decide what happens to an organisation's published guides when its only owner is deleted (they go down;
    the QR codes stay and show the "isn't available" notice).
 4. [ ] **A preferred language saved on the account**, for the emails the app sends later (section 4). Optional; defaults to

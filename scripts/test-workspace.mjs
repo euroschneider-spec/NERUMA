@@ -687,6 +687,116 @@ try {
       await view.context().close();
     } finally {await deadline(new Date(Date.now()+30*86400000).toISOString());}
   });
+  // Edge cases and abuse. Nothing here is mocked beyond the Supabase HTTP layer the whole suite shares.
+  const newContext=async()=>{const context=await browser.newContext({colorScheme:'dark'});return {context,view:await context.newPage()};};
+  await check('signed-out visitors are sent to sign-in from the code step and from the admin pages, and see no data',async()=>{
+    const {context,view}=await newContext();
+    for(const path of ['/en/login/verify','/en/admin/organisations','/en/admin/reports','/en/workspace','/en/account','/ro/login/verify','/de/admin/reports']) {
+      await view.goto(base+path);await expect(view,path).toHaveURL(new RegExp(`/(en|ro|de)/login$`));
+    }
+    for(const path of ['/api/workspace/photos?key=x','/api/verification/documents?id=00000000-0000-4000-8000-000000000001']) assert.ok([401,403,404].includes((await context.request.get(base+path,{maxRedirects:0})).status()),path);
+    await context.close();
+  });
+  await check('pages behind sign-in are never cached, and sign-in and sign-out leave no cookie behind',async()=>{
+    const {context,view}=await newContext();
+    assert.equal((await context.cookies()).length,0);
+    await login(view,1);
+    const names=(await context.cookies()).map(c=>c.name);assert.ok(names.length>0 && names.every(name=>/^sb-.*-auth-token(\.\d+)?$/.test(name)),`sign-in cookies: ${names}`);
+    for(const path of ['/en/account','/en/workspace','/en/login']) {const response=await view.goto(base+path);assert.match(response.headers()['cache-control']||'',/no-store/,path);}
+    await view.goto(base+'/en/workspace');await view.getByRole('button',{name:'Sign out',exact:true}).click();await expect(view).toHaveURL(/\/en\/login$/);
+    assert.deepEqual((await context.cookies()).filter(c=>c.name.startsWith('sb-')),[]);
+    await view.goto(base+'/en/workspace');await expect(view).toHaveURL(/\/en\/login$/);
+    await view.goBack();await view.goBack().catch(()=>{});await expect(view).not.toHaveURL(/\/en\/workspace$/);
+    await context.close();
+  });
+  await check('a forged or broken remembered-device cookie changes nothing and is thrown away',async()=>{
+    for(const forged of ['garbage','0'.repeat(64),'f'.repeat(64),'a'.repeat(3500),'..%2F..%2Fetc%2Fpasswd','%3Cscript%3Ealert(1)%3C%2Fscript%3E','0'.repeat(63)+'g']) {
+      const {context,view}=await newContext();
+      await context.addCookies([{name:'neruma_device',value:forged,url:base}]);
+      await signInWithPassword(view,2);await expect(view,forged.slice(0,12)).toHaveURL(/\/en\/login\/verify$/);
+      await view.goto(base+'/en/workspace');await expect(view).toHaveURL(/\/en\/login\/verify$/);
+      assert.equal((await context.cookies()).some(c=>c.name==='neruma_device' && c.value===forged),false,'a token that does not work is dropped');
+      await context.close();
+    }
+  });
+  await check('the code step stays closed for a wrong code, an empty one and one with letters, and never opens the workspace',async()=>{
+    const {context,view}=await newContext();
+    await signInWithPassword(view,2);await expect(view).toHaveURL(/\/en\/login\/verify$/);
+    for(const attempt of ['000000','123456','12345a','１２３４５６','      ']) {
+      await view.getByLabel('6-digit code from the app',{exact:true}).fill(attempt);await view.getByRole('button',{name:'Confirm',exact:true}).click();
+      await expect(view.locator('main').getByRole('alert'),attempt).toBeVisible();await expect(view).toHaveURL(/\/en\/login\/verify$/);
+    }
+    await view.goto(base+'/en/workspace');await expect(view).toHaveURL(/\/en\/login\/verify$/);
+    await context.close();
+  });
+  await check('a signed-in person who already passed is not sent round in circles from the code step or setup',async()=>{
+    const {context,view}=await newContext();
+    await login(view,2);await expect(view).toHaveURL(/\/en\/workspace$/);
+    await view.goto(base+'/en/login/verify');await expect(view).toHaveURL(/\/en\/workspace$/);
+    await view.goto(base+'/en/account');await expect(view.getByText('Two-factor sign-in is on.',{exact:true})).toBeVisible();
+    await context.close();
+  });
+  await check('the code step and setup read and pass the checks in Romanian and German too',async()=>{
+    const {context,view}=await newContext();
+    await signInWithPassword(view,2);
+    for(const [locale,heading,button] of [['ro','Introduceți codul','Confirmați'],['de','Code eingeben','Bestätigen']]) {
+      await view.goto(`${base}/${locale}/login/verify`);
+      await expect(view.getByRole('heading',{name:heading,level:1})).toBeVisible();await expect(view.getByRole('button',{name:button,exact:true})).toBeVisible();
+      await expect(view.locator('html')).toHaveAttribute('lang',locale);
+      const audit=await new AxeBuilder({page:view}).withTags(['wcag2a','wcag2aa','wcag21a','wcag21aa','wcag22aa']).analyze();assert.deepEqual(audit.violations.map(v=>v.id),[],`${locale} code step`);
+    }
+    await view.goto(`${base}/en/login/verify`);await enterCode(view,totp(authenticators[2]));await expect(view).toHaveURL(/\/en\/workspace$/);
+    for(const [locale,title] of [['ro','Autentificare în doi pași'],['de','Zwei-Faktor-Anmeldung']]) {
+      await view.goto(`${base}/${locale}/account`);
+      await expect(view.getByRole('heading',{name:title,level:2})).toBeVisible();
+      const audit=await new AxeBuilder({page:view}).withTags(['wcag2a','wcag2aa','wcag21a','wcag21aa','wcag22aa']).analyze();assert.deepEqual(audit.violations.map(v=>v.id),[],`${locale} account two-factor`);
+    }
+    await context.close();
+  });
+  await check('password limits are applied by the server, not only by the form',async()=>{
+    const {context,view}=await newContext();
+    const unlock=()=>view.getByLabel('Password',{exact:true}).evaluate(input=>{input.removeAttribute('minlength');input.removeAttribute('maxlength');});
+    const fill=async(page,email,password)=>{
+      await page.getByLabel('Organisation name',{exact:true}).fill('Edge fixture museum');await page.getByLabel('Responsible representative',{exact:true}).fill('Fixture director');
+      await page.getByLabel('Official website (https://)',{exact:true}).fill('https://museum.example.test');await page.getByLabel('Country code (two letters)',{exact:true}).fill('DE');
+      await page.getByLabel('Your role in the organisation',{exact:true}).fill('Director');
+      await page.getByLabel('How can your authority to represent the organisation be confirmed?',{exact:true}).fill('The registered office can independently confirm the director’s written mandate.');
+      for(const checkbox of await page.locator('.organisation-form').getByRole('checkbox').all()) await checkbox.check();
+      await page.getByLabel('Work email',{exact:true}).fill(email);await page.locator('#account-password').fill(password);
+    };
+    for(const [label,password] of [['11 characters','a'.repeat(11)],['129 characters','a'.repeat(129)],['empty','']]) {
+      await view.goto(base+'/en/register');await view.waitForLoadState('networkidle');await unlock();await view.getByLabel('Password',{exact:true}).evaluate(input=>{input.removeAttribute('required');});
+      await fill(view,'edge@example.test',password);
+      await view.getByRole('button',{name:'Request organisation access',exact:true}).click();
+      await expect(view.locator('main').getByRole('alert'),label).toContainText('Complete the required fields');
+      await expect(view.getByText('If this address is eligible',{exact:false}),label).toHaveCount(0);
+    }
+    await view.goto(base+'/en/register');await view.waitForLoadState('networkidle');await fill(view,'edge@example.test','a'.repeat(12));
+    await view.getByRole('button',{name:'Request organisation access',exact:true}).click();
+    await expect(view.getByText('confirm your email',{exact:false}).first()).toBeVisible();
+    await view.goto(base+'/en/login');await view.waitForLoadState('networkidle');await unlock();await view.getByLabel('Work email',{exact:true}).fill('owner1@example.test');await view.getByLabel('Password',{exact:true}).fill('a'.repeat(129));
+    await view.getByRole('button',{name:'Sign in',exact:true}).click();
+    await expect(view.locator('main').getByRole('alert'),'a 129-character password at sign-in').toBeVisible();await expect(view).toHaveURL(/\/en\/login$/);
+    for(const email of ['not-an-email','a@b','@example.test','a b@example.test','x'.repeat(250)+'@example.test','']) {
+      await view.goto(base+'/en/login');await view.waitForLoadState('networkidle');await view.getByRole('form',{name:'Sign in'}).evaluate(form=>{form.noValidate=true;form.querySelectorAll('[maxlength]').forEach(input=>input.removeAttribute('maxlength'));});
+      await view.getByLabel('Work email',{exact:true}).fill(email);await view.getByLabel('Password',{exact:true}).fill('Fixture-only-passphrase-123');
+      await view.getByRole('button',{name:'Sign in',exact:true}).click();
+      await expect(view.locator('main').getByRole('alert'),`an email address like “${email.slice(0,20)}”`).toBeVisible();
+      await expect(view).toHaveURL(/\/en\/login$/);
+    }
+    await context.close();
+  });
+  await check('a wrong password and an unknown email give the same answer',async()=>{
+    const {context,view}=await newContext();
+    const attempt=async(email,password)=>{
+      await view.goto(base+'/en/login');await view.waitForLoadState('networkidle');await view.getByLabel('Work email',{exact:true}).fill(email);await view.getByLabel('Password',{exact:true}).fill(password);
+      await view.getByRole('button',{name:'Sign in',exact:true}).click();const alert=view.locator('main').getByRole('alert');await expect(alert).toBeVisible();return (await alert.textContent()).trim();
+    };
+    const wrongPassword=await attempt('owner1@example.test','not-the-right-password');
+    const unknownEmail=await attempt('nobody-here@example.test','not-the-right-password');
+    assert.equal(wrongPassword,unknownEmail);assert.ok(!/owner1|nobody|exist|no account|not found/i.test(wrongPassword));
+    await context.close();
+  });
   console.log(`${checks} online workspace checks passed (real migrations; simulated Auth/Storage HTTP).`);
 } finally {
   if(browser) await browser.close();for(const child of children) if(child.exitCode===null) child.kill('SIGTERM');

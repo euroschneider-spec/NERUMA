@@ -15,6 +15,12 @@ command writes one). Read the brief before building, and check "Done when" befor
 `docs/planning/DECISIONS.md` records why things are the way they are; don't re-open an entry without the
 owner saying what changed. Write a new entry when the owner makes a deliberate choice.
 
+## What the product does
+
+`docs/PRODUCT.md` describes, functionality only, what every kind of person can do today. A change that adds, removes or alters
+something a person can do updates it in the same pull request. Personal data that is stored anywhere new goes into
+`docs/guides/PERSONAL-DATA.md` (the database tests enforce the column list).
+
 ## Prefer reuse over new code
 
 Before writing anything new, in this order:

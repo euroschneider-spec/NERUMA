@@ -38,10 +38,11 @@ create trigger places_publication before update on public.places for each row ex
 
 -- `The Willow Museum` in `Cluj` becomes `the-willow-museum-cluj`: plain letters, digits and single hyphens.
 create function private.slug_text(value text) returns text language sql immutable set search_path='' as $$
- select coalesce(nullif(left(btrim(regexp_replace(
+ -- Cut to 60 first, then trim again: a cut can land just after a hyphen, and an address that ends in one can't be opened.
+ select coalesce(nullif(btrim(left(btrim(regexp_replace(
   translate(replace(replace(replace(replace(lower(coalesce(value,'')),'ß','ss'),'ä','ae'),'ö','oe'),'ü','ue'),
    'ăâîșşțţáàéèêíóôúçñ','aaissttaaeeeiooucn'),
-  '[^a-z0-9]+','-','g'),'-'),60),''),'guide');
+  '[^a-z0-9]+','-','g'),'-'),60),'-'),''),'guide');
 $$;
 revoke all on function private.slug_text(text) from public;
 grant execute on function private.slug_text(text) to authenticated;
@@ -154,10 +155,13 @@ begin
   select pt.name into title from public.place_translations pt
    where pt.place_id=place and pt.locale=case when 'en'=any(live) then 'en' else live[1] end;
   base:=private.slug_text(title||' '||town);
+  -- `place-…` is the address every unpublished location carries, and visitors are never served one: a name that begins that way
+  -- ("Place des Arts") would be published and unreachable.
+  if base ~ '^place-' or base='place' then base:=left('the-'||base,60); base:=btrim(base,'-'); end if;
   v_address:=base;
   while private.slug_taken(v_address,place) loop
    suffix:=suffix+1;
-   v_address:=left(base,55)||'-'||suffix;
+   v_address:=btrim(left(base,55),'-')||'-'||suffix;
   end loop;
  end if;
  update public.places set slug=v_address,status='published',published_revision=current_revision where id=place and organization_id=org;
