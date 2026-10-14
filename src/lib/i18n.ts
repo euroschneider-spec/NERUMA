@@ -2,6 +2,9 @@ export const locales = ['en', 'ro', 'de'] as const;
 export type Locale = (typeof locales)[number];
 export const localeNames: Record<Locale, string> = { en: 'English', ro: 'Română', de: 'Deutsch' };
 export function isLocale(value: string): value is Locale { return locales.includes(value as Locale); }
+/** "12 November 2026", in the reader's language and NERUMA's time zone. English is written the British way, like the rest of the site. */
+export const longDate = (value: string | Date, locale: Locale) =>
+  new Date(value).toLocaleDateString(locale === 'en' ? 'en-GB' : locale, { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'Europe/Berlin' });
 export type Copy = typeof dictionaries.en;
 export const dictionaries = {
   en: {

@@ -1,6 +1,7 @@
 # Personal data: what NERUMA holds, where, and what is still undecided
 
-Written 2026-10-13 from the migrations and the code, not from memory. It is the **input** for three things: the privacy
+Written 2026-10-13 from the migrations and the code, not from memory. Updated 2026-10-14: deleting an account exists now
+(`docs/guides/ACCOUNT-DELETION.md`); the "Blocks deleting the user" column describes the tables, and `erase_account` handles each of them. It is the **input** for three things: the privacy
 notice (to be drafted with a lawyer), "Delete my account and export my data" (TECH-TASKS §13 step 3), and the terms
 acceptance (§13).
 
@@ -63,7 +64,8 @@ Whose data: the **applicant or member** (the person who registers), the **admini
 
 ## 2. Findings that change decisions
 
-1. **A user cannot be deleted today.** 15 foreign keys in 14 of our tables point at `auth.users` with "no action", so deleting an account that has
+1. *Resolved by `20261016090000_account_deletion.sql` (`erase_account`, checked in `test:db` by scanning every column for the person's id
+   and email afterwards). Kept for the record:* **A user could not be deleted.** 15 foreign keys in 14 of our tables point at `auth.users` with "no action", so deleting an account that has
    registered, filed a report, been reviewed or published a guide **fails**. The list is the "Blocks deleting the user" column
    above. Only an account that never did anything (an unconfirmed sign-up) can be removed, and Supabase's own "Delete user"
    button will fail for the rest. §13 step 3 therefore needs a design, not a button: for each row either **delete**,

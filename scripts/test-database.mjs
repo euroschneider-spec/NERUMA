@@ -584,6 +584,9 @@ await check('the export holds everything about the person, and nothing about any
  await assert.rejects(()=>db.query('select public.export_user_data($1)',[colleague]),/Platform administrator required/);
  await assert.rejects(()=>db.query('select public.export_files($1)',[colleague]),/Not allowed/);
  await as(platformAdmin);assert.equal((await db.query('select public.export_user_data($1) d',[leaver])).rows[0].d.account.email,leaverEmail);
+ // After the lock, the photos of the hidden organisation stay readable for the administrator's export, and only for them.
+ assert.equal((await db.query("select count(*)::int n from storage.objects where bucket_id='vianorae-private-photos' and name=$1",[photoD])).rows[0].n,1);
+ await as(colleague);assert.equal((await db.query("select count(*)::int n from storage.objects where bucket_id='vianorae-private-photos' and name=$1",[photoD])).rows[0].n,0);
 });
 await as(platformAdmin);
 await check('nothing is erased before the 30 days, by anyone but an administrator, or while files remain',async()=>{

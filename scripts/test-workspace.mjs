@@ -30,6 +30,11 @@ async function signInWithPassword(page,owner) {
   await page.getByRole('button',{name:'Sign in',exact:true}).click();
   await page.waitForURL(/\/en\/(account|workspace|admin\/organisations|login\/verify)$/);
 }
+async function signInWithPasswordExpectingRefusal(page,owner) {
+  await page.goto(`${base}/en/login`);await page.waitForLoadState('networkidle');await page.getByLabel('Work email',{exact:true}).fill(`owner${owner}@example.test`);
+  await page.getByLabel('Password',{exact:true}).fill('Fixture-only-passphrase-123');
+  await page.getByRole('button',{name:'Sign in',exact:true}).click();await expect(page.locator('main').getByRole('alert')).toBeVisible();
+}
 async function login(page,owner=1) {
   await signInWithPassword(page,owner);
   if(page.url().endsWith('/en/login/verify')) {await enterCode(page,totp(authenticators[owner]));await page.waitForURL(/\/en\/(account|workspace|admin\/organisations)$/);}
@@ -796,6 +801,95 @@ try {
     const unknownEmail=await attempt('nobody-here@example.test','not-the-right-password');
     assert.equal(wrongPassword,unknownEmail);assert.ok(!/owner1|nobody|exist|no account|not found/i.test(wrongPassword));
     await context.close();
+  });
+  // Deleting an account (docs/briefs/2026-10-13-delete-account.md). Last, because it removes owner1 for good.
+  const day30=new Date(Date.now()+30*86400000).toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric',timeZone:'Europe/Berlin'});
+  const fixtureUrl=link=>link.replace('https://vianorae-fixture.supabase.co','http://127.0.0.1:3012');
+  const unzip=bytes=>{const view=new DataView(bytes.buffer,bytes.byteOffset,bytes.byteLength);const end=bytes.length-22;assert.equal(view.getUint32(end,true),0x06054b50);
+    const files={};let at=view.getUint32(end+16,true);
+    for(let i=0;i<view.getUint16(end+10,true);i++){const size=view.getUint32(at+20,true);const nameLength=view.getUint16(at+28,true);const local=view.getUint32(at+42,true);
+      const name=Buffer.from(bytes.slice(at+46,at+46+nameLength)).toString();const start=local+30+view.getUint16(local+26,true);files[name]=Buffer.from(bytes.slice(start,start+size));at+=46+nameLength;}
+    return files;};
+  await check('a person deletes their own account: the date is named first, a wrong password changes nothing, then it is locked and their data is ready',async()=>{
+    const {context,view}=await newContext();await login(view,1);
+    await view.goto(`${base}/en/account`);await expect(view.getByRole('heading',{name:'Delete my account',level:2})).toBeVisible();
+    await view.getByRole('link',{name:'Delete my account…',exact:true}).click();await expect(view).toHaveURL(/\/en\/account\/delete$/);
+    await expect(view.getByRole('heading',{name:'Delete my account',level:1})).toBeVisible();
+    await expect(view.getByText(`deleted completely: your account`,{exact:false})).toContainText(day30);
+    await expect(view.getByText('“Fixture museum 1” has no other owner',{exact:false})).toBeVisible();
+    const audit=await new AxeBuilder({page:view}).withTags(['wcag2a','wcag2aa','wcag21a','wcag21aa','wcag22aa']).analyze();assert.deepEqual(audit.violations.map(v=>v.id),[],'delete page');
+    await view.waitForLoadState('networkidle');
+    await view.getByLabel('Your password',{exact:true}).fill('not-the-right-password');
+    await view.getByRole('checkbox',{name:`I understand that my account will be deleted completely on ${day30}.`}).check();
+    await view.getByRole('button',{name:'Delete my account',exact:true}).click();
+    await expect(view.locator('main').getByRole('alert')).toContainText('That password is not right. Nothing was deleted.');
+    await view.goto(`${base}/en/workspace`);await expect(view).toHaveURL(/\/en\/workspace$/);
+    await view.goto(`${base}/en/account/delete`);await view.waitForLoadState('networkidle');
+    await view.getByLabel('Your password',{exact:true}).fill('Fixture-only-passphrase-123');
+    await view.getByRole('checkbox',{name:`I understand that my account will be deleted completely on ${day30}.`}).check();
+    await view.getByRole('button',{name:'Delete my account',exact:true}).click();
+    await expect(view.getByRole('heading',{name:'Your account is locked',level:2})).toBeFocused({timeout:20000});
+    await expect(view.getByText(`It will be deleted completely on ${day30}.`,{exact:true})).toBeVisible();
+    const link=await view.getByRole('link',{name:'Download your data',exact:true}).getAttribute('href');
+    const files=unzip(new Uint8Array(await (await fetch(fixtureUrl(link))).arrayBuffer()));
+    assert.ok(files['README.txt'].toString().includes(day30),'the letter names the date');
+    const data=JSON.parse(files['data.json'].toString());assert.equal(data.account.email,'owner1@example.test');
+    assert.ok(data.memberships.some(m=>m.organisation==='Fixture museum 1'));assert.equal(data.organisations_you_own_alone[0].organisation,'Fixture museum 1');
+    // Every photo the data lists is in the archive, as a file of its own.
+    const listed=data.organisations_you_own_alone.flatMap(org=>org.places.flatMap(place=>place.photos.map(photo=>photo.file.split('/').at(-1))));
+    for(const file of listed) assert.ok(Object.keys(files).some(name=>name.startsWith('photos/') && name.endsWith(file)),`photo ${file} is in the archive`);
+    assert.ok(!JSON.stringify(data).includes('owner2@example.test'),'nothing about anyone else');
+    // Anywhere they go now, they are told the account is locked, and can sign out.
+    await view.goto(`${base}/en/workspace`);await expect(view).toHaveURL(/\/en\/account$/);
+    await expect(view.getByRole('heading',{name:'Your account is locked',level:2})).toBeVisible();
+    await view.getByRole('button',{name:'Sign out',exact:true}).click();await expect(view).toHaveURL(/\/en\/login$/);
+    await context.close();
+    const again=await newContext();await signInWithPasswordExpectingRefusal(again.view,1);
+    await expect(again.view.locator('main').getByRole('alert')).toContainText('This account is being deleted.');
+    await again.context.close();
+  });
+  await check('an administrator sees the deletion and restores it within the 30 days; the person signs in again',async()=>{
+    const {context,view}=await newContext();await login(view,3);
+    await view.goto(`${base}/en/admin/deletions`);await expect(view.getByRole('heading',{name:'Account deletions',level:1})).toBeVisible();
+    const entry=view.getByRole('listitem').filter({has:view.getByRole('heading',{name:'owner1@example.test',level:3})});
+    await expect(entry.getByText('Started by the person',{exact:false})).toBeVisible();
+    await expect(entry.getByText(`Can be erased from ${day30}`,{exact:true})).toBeVisible();
+    await expect(view.getByRole('heading',{name:'Fixture museum 1',level:3})).toBeVisible();
+    const audit=await new AxeBuilder({page:view}).withTags(['wcag2a','wcag2aa','wcag21a','wcag21aa','wcag22aa']).analyze();assert.deepEqual(audit.violations.map(v=>v.id),[],'admin deletions');
+    await entry.getByRole('button',{name:'Restore',exact:true}).click();
+    const dialog=view.getByRole('dialog',{name:'Restore this account?'});await expect(dialog.getByRole('button',{name:'Cancel',exact:true})).toBeFocused();
+    await dialog.getByRole('button',{name:'Restore',exact:true}).click();
+    await expect(view.getByText('No deletion in progress.',{exact:true})).toBeVisible();
+    await context.close();
+    const person=await newContext();await login(person.view,1);await expect(person.view).toHaveURL(/\/en\/workspace$/);await person.context.close();
+  });
+  await check('an administrator starts a deletion for someone who wrote in, downloads their data, and erases account and organisation after the 30 days',async()=>{
+    const {context,view}=await newContext();await login(view,3);
+    await view.goto(`${base}/en/admin/deletions`);await view.waitForLoadState('networkidle');
+    await view.getByLabel('Email of the account',{exact:true}).fill('owner1@example.test');
+    await view.getByRole('button',{name:'Start deletion',exact:true}).click();
+    await view.getByRole('dialog',{name:'Start deleting this account?'}).getByRole('button',{name:'Start deletion',exact:true}).click();
+    await expect(view.getByRole('status').filter({hasText:'Deletion started.'})).toBeVisible();
+    await view.reload();
+    const entry=view.getByRole('listitem').filter({has:view.getByRole('heading',{name:'owner1@example.test',level:3})});
+    await expect(entry.getByText('Started by an administrator',{exact:false})).toBeVisible();
+    const download=await context.request.get(base+await entry.getByRole('link',{name:'Download their data',exact:true}).getAttribute('href'));
+    assert.equal(download.status(),200);assert.equal(JSON.parse(unzip(new Uint8Array(await download.body()))['data.json'].toString()).account.email,'owner1@example.test');
+    const outsider=await newContext();await login(outsider.view,2);
+    assert.equal((await outsider.context.request.get(base+await entry.getByRole('link',{name:'Download their data',exact:true}).getAttribute('href'),{maxRedirects:0})).status(),403,'nobody else can download it');
+    await outsider.context.close();
+    await fetch('http://127.0.0.1:3012/__fixture/deletions-due',{method:'POST'});await view.reload();
+    await expect(entry.getByText('Due: can be erased now',{exact:true})).toBeVisible();
+    await entry.getByRole('button',{name:'Erase now',exact:true}).click();
+    await view.getByRole('dialog',{name:'Erase this account for good?'}).getByRole('button',{name:'Erase now',exact:true}).click();
+    await expect(view.getByText('No deletion in progress.',{exact:true})).toBeVisible();
+    const hold=view.getByRole('listitem').filter({has:view.getByRole('heading',{name:'Fixture museum 1',level:3})});
+    await hold.getByRole('button',{name:'Erase organisation',exact:true}).click();
+    await view.getByRole('dialog',{name:'Erase this organisation for good?'}).getByRole('button',{name:'Erase organisation',exact:true}).click();
+    await expect(view.getByRole('listitem').filter({hasText:'Erased on'})).toHaveCount(1);
+    await context.close();
+    const gone=await newContext();await signInWithPasswordExpectingRefusal(gone.view,1);
+    await expect(gone.view.locator('main').getByRole('alert')).not.toContainText('being deleted');await gone.context.close();
   });
   console.log(`${checks} online workspace checks passed (real migrations; simulated Auth/Storage HTTP).`);
 } finally {

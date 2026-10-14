@@ -1,7 +1,7 @@
 import { getAuthFeedback } from '@/lib/auth-feedback';
 import Link from 'next/link';
 import { notFound, redirect } from 'next/navigation';
-import { getCopy, isLocale } from '@/lib/i18n';
+import { getCopy, isLocale, longDate } from '@/lib/i18n';
 import { getOrganisationCopy } from '@/lib/organisation-copy';
 import { authConfigured } from '@/lib/supabase/config';
 import { confirmedUser, createClient } from '@/lib/supabase/server';
@@ -15,7 +15,8 @@ import { getEvidenceCopy, type MandateDocument } from '@/lib/mandate-evidence';
 import { evidenceReady, verificationReady } from '@/lib/verification-server';
 import { getVerificationCopy, type OrganizationApplication } from '@/lib/verification';
 import { getViewer } from '@/lib/viewer-server';
-import { twoFactorReady } from '@/lib/verification-server';
+import { accountDeletionReady, twoFactorReady } from '@/lib/verification-server';
+import { fill, getDeletionCopy } from '@/lib/account-deletion';
 import { getBackupCodes, getRememberedDevices, getTwoFactorStatus } from '@/lib/two-factor-server';
 import { RememberedDevices } from '@/components/remembered-devices';
 import { twoFactorStep } from '@/lib/two-factor';
@@ -31,6 +32,9 @@ export default async function Account({ params }: { params: Promise<{ locale: st
   const supabase=await createClient();const user=await confirmedUser(supabase);
   if(!user) redirect(`/${locale}/login`);
   if(!await verificationReady(supabase)) return <main id="main-content" className="container verification-page"><div className="page-heading"><h1>{t.account}</h1></div><p className="notice" role="status">{v.setup}</p><form action={signOut.bind(null,locale)}><button className="text-button">{t.signOut}</button></form></main>;
+  // A locked account (deletion in progress) can do nothing here any more: it is told when it will be deleted, and can sign out.
+  const deletion=await accountDeletionReady(supabase) ? (await supabase.rpc('my_account_deletion')).data as {delete_after?:string}|null : null;
+  if(deletion?.delete_after){const d=getDeletionCopy(locale);const day=longDate(deletion.delete_after,locale);return <main id="main-content" className="container verification-page"><div className="page-heading"><h1>{t.account}</h1></div><div className="content-body"><section className="notice" aria-labelledby="account-locked"><h2 id="account-locked">{d.doneTitle}</h2><p>{fill(d.doneDate,{date:day})}</p><p>{fill(d.lostLink,{date:day})}</p><p>{fill(d.doneRestore,{date:day})}</p></section><form action={signOut.bind(null,locale)}><button className="text-button" type="submit">{t.signOut}</button></form></div></main>;}
   // An account with an authenticator app enters its code first; one that still has to set it up does that here.
   const twoFactor=await getTwoFactorStatus(supabase);
   // Until then the database hides the account's organisation, so the rest of the page would be misleading.
@@ -69,6 +73,7 @@ export default async function Account({ params }: { params: Promise<{ locale: st
     {ownOrganizations.length ? <><ul>{ownOrganizations.map(org=><li key={org.id}>{org.name}</li>)}</ul>{workspaceConfigured() ? <><p className="notice">{getWorkspaceCopy(locale).boundary}</p><Link className="button" href={`/${locale}/workspace`}>{getWorkspaceCopy(locale).workspace}</Link></> : <p className="notice">{t.liveBoundary}</p>}</> : null}
     {(!application || ['needs_information','rejected'].includes(application.status)) && !ownOrganizations.length && <OrganisationForm key={application?.revision || 'new'} locale={locale} mode="onboard" enabled={documentsEnabled && !documentsResult?.error} initial={initial} initialDocuments={initialDocuments}/>}
     {await twoFactorReady(supabase) && <TwoFactorSetup locale={locale} enrolled={twoFactor.enrolled} required={false}>{backup.state!=='off' && <BackupCodesPanel locale={locale} backup={backup}/>}{devices && <RememberedDevices locale={locale} devices={devices}/>}</TwoFactorSetup>}
+    {await accountDeletionReady(supabase) && <section className="notice" aria-labelledby="delete-account"><h2 id="delete-account">{getDeletionCopy(locale).sectionTitle}</h2><p>{getDeletionCopy(locale).sectionIntro}</p><p><Link className="quiet-link" href={`/${locale}/account/delete`}>{getDeletionCopy(locale).sectionLink}</Link></p></section>}
     <p><Link className="quiet-link" href={`/${locale}/demo`}>{getCopy(locale).openWorkspace}</Link></p>
     <form action={signOut.bind(null,locale)}><button className="text-button" type="submit">{t.signOut}</button></form>
   </div></main>;

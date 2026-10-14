@@ -370,8 +370,13 @@ controls until each is installed, so nothing breaks while they wait). Needs acce
   `docs/guides/TWO-FACTOR.md`.
 - [ ] **5. Remember this device** (`supabase/migrations/20261015090000_remember_device.sql`), right after 4: adds the
   *Remember this device for 30 days* box on the code step for organisation owners and admins.
+- [ ] **6. Account deletion** (`supabase/migrations/20261016090000_account_deletion.sql`), after 5: adds *Delete my account* and the
+  administrators' *Account deletions* page. **Try it on `neruma-dev` first with a test account**: it adds the first functions that
+  change `auth.users` (to lock an account) and delete from it (to erase one). Installing changes nothing; the first deletion shows
+  whether Supabase allows it. If *Delete my account* or *Erase now* reports an error, nothing was locked or erased (each runs as one
+  transaction); tell the owner.
 
-How, for each file, in this order (1 to 5):
+How, for each file, in this order (1 to 6):
 
 1. Open the project in Supabase, then **SQL Editor → New query**.
 2. Paste the whole file and press **Run**. Each file starts with a check and stops with a "STOP: … must already be
@@ -380,7 +385,8 @@ How, for each file, in this order (1 to 5):
 4. Check it worked: run `select public.step_fields_schema_version(), public.problem_reports_schema_version(), public.publishing_schema_version();`
    (it only works after all three files are installed; before that it names the missing function). The result should be
    `1 | 1 | 1`. After files 4 and 5, also
-   `select public.two_factor_schema_version(), public.remember_device_schema_version();` should give `1 | 1`.
+   `select public.two_factor_schema_version(), public.remember_device_schema_version(), public.account_deletion_schema_version();`
+   should give `1 | 1 | 1`.
 5. Tell the owner. On the live site the sidebar then shows *Report a problem* for organisation owners, and step
    cards show *Add a field*.
 
@@ -411,7 +417,8 @@ Each step is its own small pull request. When it is merged, remove its task from
 1. [ ] **Password rules in the hosted projects** (the owner's steps, no code; also section 7). Minimum 12 characters and, if
    the plan offers it, *Prevent use of leaked passwords*, on `neruma-dev` first, then production (the friend's project
    access). Also set the minimum in `supabase/config.toml` so local matches.
-3. [ ] **Delete my account and export my data.** *Start from `docs/guides/PERSONAL-DATA.md`: a user can't be deleted today (15 foreign
+3. [ ] **Delete my account and export my data.** *Step 1 built (delete, export, restore, erase; `docs/guides/ACCOUNT-DELETION.md`).
+   Left: hand an organisation to a verified colleague, and the emails.* *Start from `docs/guides/PERSONAL-DATA.md`: a user can't be deleted today (15 foreign
    keys with "no action"), the same data is copied in several tables, and some records are immutable by design. Each blocking row needs
    a decision: delete, anonymise or keep (owner and lawyer, D4).* A documented path (GDPR). Start as an administrator action with the steps
    written down; decide what happens to an organisation's published guides when its only owner is deleted (they go down;

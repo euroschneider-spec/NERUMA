@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { GuestGuide } from '@/components/guest-guide';
-import { getCopy, isLocale, localeNames } from '@/lib/i18n';
+import { getCopy, isLocale, localeNames, longDate } from '@/lib/i18n';
 import { fill, getPublishingCopy, guideFromPublished, slugPattern } from '@/lib/publishing';
 import { getPublishedGuide } from '@/lib/published-server';
 
@@ -48,7 +48,7 @@ export default async function PlaceGuide({ params }: { params: Promise<{ locale:
   );
   const { content } = guide;
   const published = guideFromPublished(content);
-  const date = guide.publishedAt ? new Date(guide.publishedAt).toLocaleDateString(locale, { dateStyle: 'long' }) : '';
+  const date = guide.publishedAt ? longDate(guide.publishedAt, locale) : '';
   return (
     <main id="main-content" className="container">
       <div className="page-heading">

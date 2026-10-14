@@ -11,6 +11,7 @@ import { confirmedUser, createClient } from '@/lib/supabase/server';
 import { authConfigured } from '@/lib/supabase/config';
 import { OrganisationReviewForm } from '@/components/organisation-review-form';
 import { requireSecondFactor } from '@/lib/two-factor-server';
+import { getDeletionCopy } from '@/lib/account-deletion';
 
 export const dynamic='force-dynamic';
 export const metadata={title:'Organisation verification · NERUMA',robots:{index:false,follow:false}};
@@ -34,7 +35,7 @@ export default async function ReviewQueue({params,searchParams}:{params:Promise<
   const documents=documentResults.flatMap(result=>result.data||[]) as MandateDocument[];
   const base=`/${locale}/admin/organisations`;
   return <main id="main-content" className="container verification-page"><div className="page-heading"><h1>{v.admin}</h1><p className="lead">{v.adminIntro}</p></div><div className="content-body">
-    <nav aria-label={v.title} className="button-row"><Link className="quiet-link" href={base}>{v.statuses.pending}</Link><Link className="quiet-link" href={`${base}?history=1`}>{v.history}</Link><Link className="quiet-link" href={`/${locale}/admin/reports`}>{getWorkspaceCopy(locale).reportsAdmin}</Link><Link className="quiet-link" href={`/${locale}/account`}>{t.account}</Link></nav>
+    <nav aria-label={v.title} className="button-row"><Link className="quiet-link" href={base}>{v.statuses.pending}</Link><Link className="quiet-link" href={`${base}?history=1`}>{v.history}</Link><Link className="quiet-link" href={`/${locale}/admin/reports`}>{getWorkspaceCopy(locale).reportsAdmin}</Link><Link className="quiet-link" href={`/${locale}/admin/deletions`}>{getDeletionCopy(locale).adminTitle}</Link><Link className="quiet-link" href={`/${locale}/account`}>{t.account}</Link></nav>
     {!documentsEnabled && <p className="notice">{getEvidenceCopy(locale).setup}</p>}
     {!requests.length && <p className="notice">{v.empty}</p>}
     {requests.map(request=><section key={request.id} className="verification-request" aria-labelledby={`request-${request.id}`}>

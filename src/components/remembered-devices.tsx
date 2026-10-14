@@ -1,9 +1,8 @@
 import { forgetRememberedDevices } from '@/app/auth/two-factor-actions';
-import type { Locale } from '@/lib/i18n';
+import { longDate, type Locale } from '@/lib/i18n';
 import { getTwoFactorCopy, type RememberedDevice } from '@/lib/two-factor';
 
-const day = (value: string, locale: Locale) =>
-  new Date(value).toLocaleDateString(locale, { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'Europe/Berlin' });
+const day = longDate;
 
 /** The devices that skip the code, by date only, each with Forget; forgetting asks nothing, as the cost is one more code. */
 export function RememberedDevices({ locale, devices }: { locale: Locale; devices: RememberedDevice[] }) {

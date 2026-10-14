@@ -209,6 +209,13 @@ end $$;
 revoke all on function public.request_account_deletion_for(text) from public,anon;
 grant execute on function public.request_account_deletion_for(text) to authenticated;
 
+-- What a locked account may still ask: when it will be deleted (so every page can say so).
+create function public.my_account_deletion() returns jsonb language sql stable security definer set search_path='' as $$
+ select jsonb_build_object('requested_at',d.requested_at,'delete_after',d.delete_after) from private.account_deletions d where d.user_id=(select auth.uid());
+$$;
+revoke all on function public.my_account_deletion() from public,anon;
+grant execute on function public.my_account_deletion() to authenticated;
+
 -- 6. Restoring, within the 30 days.
 create function public.restore_account(p_user uuid) returns boolean
 language plpgsql security definer set search_path='' as $$
@@ -294,6 +301,16 @@ create policy vianorae_erasure_delete on storage.objects for delete to authentic
 -- Removing a file also needs seeing it (Storage looks it up first), and a hidden organisation's photos are otherwise invisible.
 create policy vianorae_erasure_read on storage.objects for select to authenticated
  using(bucket_id in ('vianorae-mandate-evidence','vianorae-account-exports','vianorae-private-photos') and private.erasable_object(bucket_id,name));
+
+-- An administrator exporting the data of someone who wrote in (after the lock) can read the photos of the organisation it hid.
+create function private.held_photo(p_name text) returns boolean language sql stable security definer set search_path='' as $$
+ select private.is_platform_admin() and exists(select 1 from private.organisation_holds h
+  where h.organization_id::text=split_part(p_name,'/',1) and h.erased_at is null);
+$$;
+revoke all on function private.held_photo(text) from public,anon;
+grant execute on function private.held_photo(text) to authenticated;
+create policy vianorae_hold_photo_read on storage.objects for select to authenticated
+ using(bucket_id='vianorae-private-photos' and private.held_photo(name));
 
 -- 9. Erasing a person, after the 30 days.
 create function public.erase_account(p_user uuid) returns jsonb
