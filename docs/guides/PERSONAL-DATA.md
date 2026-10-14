@@ -42,6 +42,9 @@ Whose data: the **applicant or member** (the person who registers), the **admini
 | `public.guide_versions.created_by` | Who published each version. Published versions are immutable. | The organisation | The version is public; the author is not | **Yes** |
 | `private.platform_admins` | Who is an administrator | Nobody by the app | No | **Yes** |
 | `private.remembered_devices`, `private.trusted_sessions` | A hash of a remembered-device token, and dates. No device name, browser or IP. | The account holder (dates only) | No | No: removed with the user |
+| `private.account_deletions`, `private.deletion_takedowns` | A deletion in progress: who, when asked, when due, which administrator started it, which guides went down | Platform administrators | No | No: removed with the user |
+| `private.organisation_holds` | An organisation hidden after its only owner asked to be deleted, and who that was | Platform administrators | No | No: `former_owner` is emptied with the user |
+| Bucket `vianorae-account-exports` | A person's own export (a ZIP), kept for the 7 days its link works | The person, through the private link | No | Yes (removed before the erase) |
 | Pilot tables: `assessors`, `assessment_assignments`, `assessments`, `reviews` | User ids and reviewers' notes. **Not used by the app today.** | Staff of the organisation | No | **Yes** |
 
 ### Organisation-written content (may name or show third parties by mistake)
@@ -102,6 +105,10 @@ email, a name, a note, a file name, a free-text message or a snapshot) is **miss
 longer exists. A new table with personal data therefore can't be added without being written down here, and then in §1.
 
 <!-- personal-data-columns:start -->
+private.account_deletions.requested_by
+private.account_deletions.user_id
+private.deletion_takedowns.user_id
+private.organisation_holds.former_owner
 private.platform_admins.user_id
 private.remembered_devices.token_hash
 private.remembered_devices.user_id

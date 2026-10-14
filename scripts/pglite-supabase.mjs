@@ -12,7 +12,7 @@ export const testDatabase = Symbol.for('vianorae.in-memory-test-database');
 export async function createSupabaseLikeDatabase() {
   const db = new PGlite();
   db[testDatabase] = true;
-  await db.exec(`create role anon;create role authenticated;create role service_role bypassrls;create schema auth;create table auth.users(id uuid primary key,email_confirmed_at timestamptz default now(),is_anonymous boolean not null default false,email text default 'fixture@example.test',encrypted_password text);
+  await db.exec(`create role anon;create role authenticated;create role service_role bypassrls;create schema auth;create table auth.users(id uuid primary key,email_confirmed_at timestamptz default now(),is_anonymous boolean not null default false,email text default 'fixture@example.test',encrypted_password text,banned_until timestamptz);
 create function auth.uid() returns uuid language sql stable as $$select nullif(current_setting('request.jwt.claim.sub',true),'')::uuid$$;
 create function auth.jwt() returns jsonb language sql stable as $$select coalesce(nullif(current_setting('request.jwt.claims',true),''),'{}')::jsonb$$;
 create table auth.mfa_factors(id uuid primary key default gen_random_uuid(),user_id uuid not null references auth.users(id),friendly_name text,factor_type text not null default 'totp',status text not null default 'unverified',secret text,created_at timestamptz not null default now(),updated_at timestamptz not null default now());
