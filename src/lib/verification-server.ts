@@ -26,6 +26,8 @@ export const publishingReady=(supabase:SupabaseClient)=>schemaVersionIsOne(supab
 export const twoFactorReady=(supabase:SupabaseClient)=>schemaVersionIsOne(supabase,'two_factor_schema_version');
 // Remembered devices exist only after the 2026-10-15 migration; before it, the option isn't offered.
 export const rememberDeviceReady=(supabase:SupabaseClient)=>schemaVersionIsOne(supabase,'remember_device_schema_version');
+// Deleting an account exists only after the 2026-10-16 migration; before it, the account page offers no button.
+export const accountDeletionReady=(supabase:SupabaseClient)=>schemaVersionIsOne(supabase,'account_deletion_schema_version');
 export const evidenceReady=(supabase:SupabaseClient)=>schemaVersionIsOne(supabase,'mandate_evidence_schema_version');
 
 export async function approvedOrganization(supabase:SupabaseClient,org:string):Promise<boolean> {

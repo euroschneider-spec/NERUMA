@@ -13,7 +13,7 @@ const db = await createSupabaseLikeDatabase();
 const id = n => `00000000-0000-4000-8000-${String(n).padStart(12,'0')}`;
 const users = [1,2,3,4,5].map(n => ({id:id(n),aud:'authenticated',role:'authenticated',email:`owner${n}@example.test`,email_confirmed_at:'2026-10-01T12:00:00Z',is_anonymous:false,app_metadata:{provider:'email'},user_metadata:{},created_at:'2026-10-01T12:00:00Z'}));
 let verificationEnabled=true;let evidenceEnabled=true;
-const files = new Map(); const tokens = new Map(); const levels = new Map(); const sessionIds = new Map(); const challenges = new Map(); const backupSets = new Map(); let tail = Promise.resolve();
+const files = new Map(); const tokens = new Map(); const levels = new Map(); const sessionIds = new Map(); const signedAt = new Map(); const signedLinks = new Map(); const challenges = new Map(); const backupSets = new Map(); let tail = Promise.resolve();
 const locked = fn => {const result=tail.then(fn);tail=result.catch(()=>{});return result;};
 // Browsing data (Willow Museum, a waiting request, and the synthetic world) is for npm run dev:mock only; the test suite never
 // sets it, so its starting state is unchanged.
@@ -39,17 +39,32 @@ function session(user,aal='aal1',sessionId=randomUUID()) {
   const encode=value=>Buffer.from(JSON.stringify(value)).toString('base64url');
   const unsigned=`${encode({alg:'HS256',typ:'JWT'})}.${encode({sub:user.id,aud:'authenticated',role:'authenticated',iss:'https://vianorae-fixture.supabase.co/auth/v1',iat:now,exp:now+3600,email:user.email,is_anonymous:false,aal,session_id:sessionId,amr:[{method:'password',timestamp:now},...(aal==='aal2'?[{method:'totp',timestamp:now}]:[])]})}`;
   const access=`${unsigned}.${createHmac('sha256','fixture-only-key').update(unsigned).digest('base64url')}`;
-  const refresh=randomUUID();tokens.set(access,user);tokens.set(refresh,user);levels.set(access,aal);levels.set(refresh,aal);sessionIds.set(access,sessionId);sessionIds.set(refresh,sessionId);
+  const refresh=randomUUID();tokens.set(access,user);tokens.set(refresh,user);levels.set(access,aal);levels.set(refresh,aal);sessionIds.set(access,sessionId);sessionIds.set(refresh,sessionId);signedAt.set(access,now);
   return {access_token:access,refresh_token:refresh,token_type:'bearer',expires_in:3600,expires_at:now+3600,user};
 }
 const send=(res,status,value,headers={})=>{res.writeHead(status,{'Content-Type':'application/json',...headers});res.end(JSON.stringify(value));};
 const safe=value=>{if(!/^[a-z_]+$/.test(value)) throw new Error('Unsafe identifier');return value;};
+// Functions whose JSON body maps straight onto their named parameters.
+const simpleRpcs={my_account_deletion:[],request_account_deletion:[],request_account_deletion_for:['p_email'],restore_account:['p_user'],account_deletions:[],organisation_holds:[],
+  account_erasure_files:['p_user'],organisation_erasure_files:['p_org'],erase_account:['p_user'],erase_held_organisation:['p_org'],export_my_data:[],
+  export_user_data:['p_user'],export_files:['p_user'],delete_problem_report:['p_report'],account_deletion_schema_version:[]};
 const tables=new Set(['organizations','organization_members','places','place_translations','zones','zone_translations','zone_fields','zone_field_translations','sensory_profiles','media_assets','guides','guide_steps','organization_applications','organization_review_events','organization_evidence_documents','problem_reports']);
 createServer(async(req,res)=>{
   try {
     const url=new URL(req.url,'http://127.0.0.1:3012');const chunks=[];for await(const chunk of req) chunks.push(chunk);const body=Buffer.concat(chunks);
     if(url.pathname==='/__fixture/verification-mode' && req.method==='POST') {verificationEnabled=JSON.parse(body.toString()).enabled;return send(res,200,{verificationEnabled});}
     if(url.pathname==='/__fixture/evidence-mode' && req.method==='POST') {evidenceEnabled=JSON.parse(body.toString()).enabled;return send(res,200,{evidenceEnabled});}
+    // Test-only: make every deletion and hold due now, instead of waiting 30 days.
+    if(url.pathname==='/__fixture/deletions-due' && req.method==='POST') {
+      await locked(async()=>{await db.query("update private.account_deletions set delete_after=now()-interval '1 minute'");await db.query("update private.organisation_holds set delete_after=now()-interval '1 minute' where erased_at is null");});
+      return send(res,200,{due:true});
+    }
+    // A private download link (Storage's signed URL): works without signing in until it expires.
+    if(req.method==='GET' && url.pathname.startsWith('/storage/v1/object/sign/')) {
+      const link=signedLinks.get(url.searchParams.get('token')||'');
+      if(!link || link.expires<Date.now() || !files.has(link.key)) return send(res,400,{message:'Invalid or expired link'});
+      res.writeHead(200,{'Content-Type':link.key.endsWith('.zip')?'application/zip':'application/octet-stream'});return res.end(files.get(link.key));
+    }
     if(url.pathname==='/__fixture/two-factor-deadline' && req.method==='POST') {
       const from=JSON.parse(body.toString()).from;
       await locked(()=>db.query('update private.two_factor_policy set organisations_from=$1',[from]));return send(res,200,{from});
@@ -66,6 +81,10 @@ createServer(async(req,res)=>{
       const payload=JSON.parse(body.toString());const refreshing=url.searchParams.get('grant_type')==='refresh_token';
       const user=refreshing?tokens.get(payload.refresh_token):users.find(u=>u.email===payload.email && payload.password===FIXTURE_PASSWORD);
       if(!user) return send(res,400,{error:'invalid_grant',error_description:'Invalid fixture credentials'});
+      // As Supabase Auth: an erased account is unknown, and a banned one (deletion in progress) is refused, also on refresh.
+      const account=(await locked(async()=>(await db.query('select banned_until from auth.users where id=$1',[user.id])).rows))[0];
+      if(!account) return send(res,400,{error:'invalid_grant',error_description:'Invalid fixture credentials'});
+      if(account.banned_until && new Date(account.banned_until)>new Date()) return send(res,400,{error_code:'user_banned',msg:'User is banned'});
       // As Supabase Auth refuses an account whose email was never confirmed.
       if(!refreshing && !user.email_confirmed_at) return send(res,400,{error_code:'email_not_confirmed',msg:'Email not confirmed'});
       const fresh=refreshing?session(await withFactors(user),levels.get(payload.refresh_token),sessionIds.get(payload.refresh_token)):session(await withFactors(user));return send(res,200,fresh);
@@ -123,14 +142,14 @@ createServer(async(req,res)=>{
     }
     if (url.pathname==='/auth/v1/logout') {tokens.delete(token);res.writeHead(204);return res.end();}
     // What a visitor may ask without signing in: schema checks, and the functions that return published data only.
-    const anonymousRpc=['workspace_schema_version','organization_verification_schema_version','mandate_evidence_schema_version','publishing_schema_version','two_factor_schema_version','remember_device_schema_version','published_guide','published_places','resolve_qr'].map(name=>`/rest/v1/rpc/${name}`);
+    const anonymousRpc=['workspace_schema_version','organization_verification_schema_version','mandate_evidence_schema_version','publishing_schema_version','two_factor_schema_version','remember_device_schema_version','account_deletion_schema_version','published_guide','published_places','resolve_qr'].map(name=>`/rest/v1/rpc/${name}`);
     if (!user && !anonymousRpc.includes(url.pathname) && !(req.method==='GET' && url.pathname.startsWith('/storage/v1/object/'))) return send(res,401,{code:'42501',message:'Sign in required'});
     await locked(async()=>{
       await db.exec('begin');
       try {
         await db.exec(`set local role ${user?'authenticated':'anon'}`);
         await db.query("select set_config('request.jwt.claim.sub',$1,true)",[user?.id || '']);
-        await db.query("select set_config('request.jwt.claims',$1,true)",[user?JSON.stringify({sub:user.id,aal:levels.get(token)||'aal1',session_id:sessionIds.get(token)}):'']);
+        await db.query("select set_config('request.jwt.claims',$1,true)",[user?JSON.stringify({sub:user.id,aal:levels.get(token)||'aal1',session_id:sessionIds.get(token),iat:signedAt.get(token)}):'']);
         if (url.pathname.startsWith('/rest/v1/rpc/')) {
           const rpc=url.pathname.split('/').at(-1);let result;
           if(rpc==='workspace_schema_version') result=(await db.query('select public.workspace_schema_version() value')).rows[0].value;
@@ -162,6 +181,9 @@ createServer(async(req,res)=>{
           else if(rpc==='save_place_draft') {
             const p=JSON.parse(body.toString());
             result=(await db.query('select public.save_place_draft($1,$2,$3,$4,$5::jsonb) value',[p.org,p.place,p.expected_revision,p.content_locale,JSON.stringify(p.draft)])).rows[0].value;
+          } else if(simpleRpcs[rpc]) {
+            const p=body.length?JSON.parse(body.toString()):{};const names=simpleRpcs[rpc];
+            result=(await db.query(`select public.${rpc}(${names.map((_,i)=>`$${i+1}`).join(',')}) value`,names.map(name=>p[name]??null))).rows[0].value;
           } else throw new Error('Unsupported RPC');
           await db.exec('commit');return send(res,200,result);
         }
@@ -186,8 +208,23 @@ createServer(async(req,res)=>{
           return send(res,200,rows);
         }
         if(url.pathname.startsWith('/storage/v1/object/')) {
-          const rest=url.pathname.slice('/storage/v1/object/'.length).replace(/^authenticated\//,'');const [bucket,...parts]=rest.split('/');const key=decodeURIComponent(parts.join('/'));
-          if(!['vianorae-private-photos','vianorae-mandate-evidence'].includes(bucket)) throw new Error('Unsupported bucket');
+          const signing=url.pathname.startsWith('/storage/v1/object/sign/');
+          const rest=url.pathname.slice((signing?'/storage/v1/object/sign/':'/storage/v1/object/').length).replace(/^authenticated\//,'');const [bucket,...parts]=rest.split('/');const key=decodeURIComponent(parts.join('/'));
+          if(!['vianorae-private-photos','vianorae-mandate-evidence','vianorae-account-exports'].includes(bucket)) throw new Error('Unsupported bucket');
+          if(signing && req.method==='POST') {
+            const visible=(await db.query('select name from storage.objects where bucket_id=$1 and name=$2',[bucket,key])).rows.length;
+            await db.exec('commit');if(!visible) return send(res,400,{message:'Object not found'});
+            const linkToken=randomUUID();const expiresIn=Number(JSON.parse(body.toString()||'{}').expiresIn)||60;
+            signedLinks.set(linkToken,{key,expires:Date.now()+expiresIn*1000});
+            return send(res,200,{signedURL:`/object/sign/${bucket}/${key}?token=${linkToken}`});
+          }
+          // Removing files: Storage looks them up and deletes them with the caller's rights.
+          if(req.method==='DELETE' && !parts.length) {
+            const names=JSON.parse(body.toString()||'{}').prefixes||[];
+            const removed=(await db.query('delete from storage.objects where bucket_id=$1 and name=any($2::text[]) returning name',[bucket,names])).rows;
+            await db.exec('commit');for(const row of removed) files.delete(row.name);
+            return send(res,200,removed.map(row=>({name:row.name,bucket_id:bucket})));
+          }
           if(req.method==='POST') {
             await db.query('insert into storage.objects(bucket_id,name) values($1,$2)',[bucket,key]);files.set(key,body);
             await db.exec('commit');return send(res,200,{Key:`${bucket}/${key}`,Id:randomUUID()});

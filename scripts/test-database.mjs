@@ -8,7 +8,8 @@ const orgA=id(101),orgB=id(102),placeA=id(201),placeB=id(202),guideA=id(301),gui
 async function check(name,fn){await fn();checks++;console.log(`PASS ${name}`);}
 // Sessions are fully signed in (aal2) unless a check says otherwise, as after a password and an authenticator code.
 // Each user has one default session id unless a check names another (remembered devices trust one session at a time).
-async function as(user,role='authenticated',aal='aal2',session=user){await db.exec(`reset role; set role ${role}; select set_config('request.jwt.claim.sub','${user||''}',false); select set_config('request.jwt.claims','${user?JSON.stringify({sub:user,aal,session_id:session}):''}',false);`);}
+// iat: when the session was signed in (now, unless a check pretends otherwise; deleting an account needs a fresh sign-in).
+async function as(user,role='authenticated',aal='aal2',session=user,iat=Math.floor(Date.now()/1000)){await db.exec(`reset role; set role ${role}; select set_config('request.jwt.claim.sub','${user||''}',false); select set_config('request.jwt.claims','${user?JSON.stringify({sub:user,aal,session_id:session,iat}):''}',false);`);}
 async function count(table){return (await db.query(`select count(*)::int as n from public.${table}`)).rows[0].n;}
 async function denied(sql){await assert.rejects(()=>db.exec(sql));}
 await check('all 30 public tables use RLS',async()=>{const result=await db.query("select tablename from pg_tables where schemaname='public' and not rowsecurity");assert.deepEqual(result.rows,[]);assert.equal((await db.query("select count(*)::int n from pg_tables where schemaname='public'")).rows[0].n,30);});
@@ -481,6 +482,170 @@ await check('an administrator\'s reset of the authenticator app forgets every re
  await as(newOwner,'authenticated','aal1',sessionC);assert.equal(await trust(token),false);
  await db.exec('reset role');await db.query('delete from auth.mfa_factors where user_id=any($1)',[[newOwner,platformAdmin]]);
 });
+
+// Deleting an account (brief docs/briefs/2026-10-13-delete-account.md). One person owns organisation D alone and organisation E with
+// a colleague, published in both, applied with a document, sent a report and remembered a device. Nothing of them may be left.
+const leaver=id(1601),colleague=id(1602),orgD=id(1611),orgE=id(1612),placeD=id(1621),placeE=id(1622),placeE2=id(1623);
+const leaverEmail='leaver@example.test',leaverDoc=id(1631),leaverApplication=id(1632),leaverDocKey=`${leaver}/${leaverDoc}.pdf`,photoD=`${orgD}/${placeD}/${id(1641)}/${id(1651)}.webp`;
+const threeSteps=(base,name)=>({...draft,name,zones:[step(id(base),'One'),step(id(base+1),'Two'),step(id(base+2),'Three')]});
+await db.exec('reset role');
+await db.query("insert into auth.users(id,email) values($1,$2),($3,'colleague@example.test')",[leaver,leaverEmail,colleague]);
+await db.query("insert into public.organizations(id,name,approval_status) values($1,'Leaver alone museum','approved'),($2,'Shared museum','approved')",[orgD,orgE]);
+await db.query("insert into public.organization_members(organization_id,user_id,role) values($1,$3,'owner'),($2,$3,'owner'),($2,$4,'owner')",[orgD,orgE,leaver,colleague]);
+await db.query("insert into public.users(id,display_name) values($1,'Lea Ver')",[leaver]);
+await db.query(`insert into public.organization_applications(id,applicant_id,applicant_email,organization_name,organization_type,country_code,official_website,registry_reference,representative_name,representative_role,authorization_description,statement_version,statement_locale,organization_id,status)
+ values($1,$2,$3,'Leaver alone museum','museum','RO','https://leaver.example.test','REG-1','Lea Ver','Director','The registered office can confirm the appointment.','2026-10-07-v1','en',$4,'approved')`,[leaverApplication,leaver,leaverEmail,orgD]);
+await db.query("insert into public.organization_evidence_documents(id,applicant_id,application_id,storage_key,filename,mime_type,byte_size,sha256,uploaded_at) values($1,$2,$3,$4,'mandate.pdf','application/pdf',10,repeat('b',64),now())",[leaverDoc,leaver,leaverApplication,leaverDocKey]);
+await db.query("insert into storage.objects(bucket_id,name) values('vianorae-mandate-evidence',$1),('vianorae-private-photos',$2)",[leaverDocKey,photoD]);
+await db.query("insert into public.organization_review_events(application_id,actor_id,decision,application_revision,application_snapshot,entity_confirmed,mandate_confirmed,verified_source,evidence_reference,applicant_note) values($1,$2,'approved',1,jsonb_build_object('representative','Lea Ver','email',$3::text),true,true,'Registry checked','Called the office','Welcome')",[leaverApplication,platformAdmin,leaverEmail]);
+await db.query("insert into public.organization_acknowledgements(organization_id,user_id,representative_name,statement_version,statement_locale) values($1,$2,'Lea Ver','2026-10-07-v1','en')",[orgD,leaver]);
+await db.query("insert into auth.mfa_factors(user_id,factor_type,status) values($1,'totp','verified')",[leaver]);
+await as(leaver);
+const leaverRevD=await saveDraft(orgD,placeD,0,'en',threeSteps(1661,'Leaver museum'));
+const leaverPublishedD=await publish(placeD,leaverRevD,orgD);
+const leaverRevE=await saveDraft(orgE,placeE,0,'en',threeSteps(1671,'Shared first museum'));
+const leaverPublishedE=await publish(placeE,leaverRevE,orgE);
+const leaverReport=await report(orgE,null,'The map on the second step is upside down.','en');
+const leaverDevice=(await db.query('select public.remember_device() token')).rows[0].token;
+await as(colleague);
+const colleagueRevE=await saveDraft(orgE,placeE2,0,'en',threeSteps(1681,'Shared second museum'));
+const colleaguePublishedE=await publish(placeE2,colleagueRevE,orgE);
+const guideStatus=async slug=>{await as(null,'anon');const result=(await db.query('select public.published_guide($1,$2) g',[slug,'en'])).rows[0].g?.status;return result;};
+const startDeletion=async()=>(await db.query('select public.request_account_deletion() r')).rows[0].r;
+
+await as(leaver,'authenticated','aal2',leaver,Math.floor(Date.now()/1000)-3600);
+await check('a deletion needs a fresh sign-in: an hour-old session cannot start one',async()=>{await assert.rejects(()=>startDeletion(),/password again/);});
+await as(leaver,'authenticated','aal1');
+await check('with two-factor set up, a deletion needs the code too',async()=>{await assert.rejects(()=>startDeletion(),/two-factor code/);});
+let deletion;
+await as(leaver);
+await check('the person starts it: the account is locked at once, with the date it will be deleted',async()=>{
+ deletion=await startDeletion();
+ const days=(new Date(deletion.delete_after)-Date.now())/86400000;assert.ok(days>29.9 && days<30.1,String(days));
+ assert.deepEqual(deletion.held_organisations,[orgD]);assert.equal(deletion.guides_taken_down,2);
+ await assert.rejects(()=>startDeletion(),e=>e.code==='40001');
+ await db.exec('reset role');assert.ok((await db.query('select banned_until from auth.users where id=$1',[leaver])).rows[0].banned_until>new Date(Date.now()+86400000*365*50),'sign-in refused');
+});
+await as(leaver);
+await check('a locked account can read and change nothing, even with a session still in hand',async()=>{
+ assert.equal(await count('places'),0);assert.equal(await count('organizations'),0);assert.equal(await count('organization_applications'),0);
+ assert.equal(await count('organization_evidence_documents'),0);
+ await assert.rejects(()=>saveDraft(orgE,placeE,leaverRevE,'en',threeSteps(1671,'Changed')));
+ await assert.rejects(()=>report(orgE,null,'Another message that is long enough.','en'));
+ await assert.rejects(()=>db.query('select public.remember_device()'));
+ assert.equal((await db.query("select count(*)::int n from storage.objects where bucket_id='vianorae-mandate-evidence'")).rows[0].n,0);
+});
+await check('their guides go down at once: everything of the organisation they own alone, and what they published in the shared one',async()=>{
+ assert.equal(await guideStatus(leaverPublishedD.slug),'unavailable');assert.deepEqual((await db.query('select public.resolve_qr($1) r',[leaverPublishedD.code])).rows[0].r,{status:'unavailable'});
+ assert.equal(await guideStatus(leaverPublishedE.slug),'unavailable');
+ assert.equal(await guideStatus(colleaguePublishedE.slug),'published','the colleague\'s guide stays');
+ await as(colleague);assert.ok(await count('places')>=2,'the colleague keeps the shared organisation');
+});
+await as(colleague);
+await check('only an administrator restores, and only within the 30 days',async()=>{
+ await assert.rejects(()=>db.query('select public.restore_account($1)',[leaver]),/Platform administrator required/);
+ await as(leaver);await assert.rejects(()=>db.query('select public.restore_account($1)',[leaver]));
+});
+await as(platformAdmin);
+await check('restoring brings everything back: sign-in, rights, guides and the organisation',async()=>{
+ const list=(await db.query('select public.account_deletions() l')).rows[0].l;const entry=list.find(row=>row.user_id===leaver);
+ assert.equal(entry.email,leaverEmail);assert.equal(entry.due,false);assert.equal(entry.by_administrator,false);assert.deepEqual(entry.organisations.map(o=>o.id),[orgD]);
+ assert.equal((await db.query('select public.restore_account($1) ok',[leaver])).rows[0].ok,true);
+ assert.equal(await guideStatus(leaverPublishedD.slug),'published');assert.equal(await guideStatus(leaverPublishedE.slug),'published');
+ await db.exec('reset role');assert.equal((await db.query('select banned_until from auth.users where id=$1',[leaver])).rows[0].banned_until,null);
+ await as(leaver);assert.ok(await count('places')>=3);
+});
+await as(platformAdmin);
+await check('an administrator can start a deletion for someone who wrote in, but not for themselves; clients can\'t touch the records',async()=>{
+ const started=(await db.query('select public.request_account_deletion_for($1) r',[leaverEmail.toUpperCase()])).rows[0].r;assert.equal(started.user_id,leaver);
+ assert.equal((await db.query('select public.account_deletions() l')).rows[0].l.find(row=>row.user_id===leaver).by_administrator,true);
+ await assert.rejects(()=>db.query('select public.request_account_deletion_for($1)',['nobody@example.test']),/No account/);
+ // Emails are unique in Supabase; the shared default email of the test users isn't.
+ await db.exec('reset role');await db.query("update auth.users set email='platform.admin@example.test' where id=$1",[platformAdmin]);const adminEmail='platform.admin@example.test';
+ await as(platformAdmin);await assert.rejects(()=>db.query('select public.request_account_deletion_for($1)',[adminEmail]),/your account page/);
+ await as(colleague);
+ await denied('select * from private.account_deletions');await denied('select * from private.organisation_holds');
+ await assert.rejects(()=>db.query('select private.begin_account_deletion($1,null)',[colleague]));
+ await assert.rejects(()=>db.query('select public.account_deletions()'),/Platform administrator required/);
+ await assert.rejects(()=>db.query('select public.request_account_deletion_for($1)',[leaverEmail]),/Platform administrator required/);
+});
+await as(leaver,'authenticated','aal2');
+await check('the export holds everything about the person, and nothing about anyone else',async()=>{
+ const own=(await db.query('select public.export_my_data() d')).rows[0].d;
+ assert.equal(own.account.email,leaverEmail);assert.equal(own.organisation_requests.length,1);assert.equal(own.organisation_requests[0].decisions[0].note_to_you,'Welcome');
+ assert.equal(own.documents[0].file_name,'mandate.pdf');assert.deepEqual(own.memberships.map(m=>m.organisation).sort(),['Leaver alone museum','Shared museum']);
+ assert.equal(own.problem_reports_sent.length,1);assert.equal(own.guide_versions_published.length,2);assert.equal(own.statements_accepted.length,1);
+ assert.equal(own.two_factor.authenticator_app,true);assert.equal(own.two_factor.remembered_devices.length,1);assert.ok(own.deletion.delete_after);
+ assert.deepEqual(own.organisations_you_own_alone.map(o=>o.organisation),['Leaver alone museum'],'not the shared one');
+ assert.equal(own.organisations_you_own_alone[0].places[0].steps.length,3);
+ const text=JSON.stringify(own);assert.ok(!text.includes('colleague@example.test') && !text.includes(colleague),'nothing about the colleague');
+ assert.ok(!text.includes(leaverDevice),'not the device token');assert.ok(!/encrypted_password|recovery_token|confirmation_token/.test(text));
+ const files=(await db.query('select public.export_files() f')).rows[0].f;assert.deepEqual(files.map(f=>f.name).sort().slice(0,1),['documents/mandate.pdf']);
+ await assert.rejects(()=>db.query('select public.export_user_data($1)',[colleague]),/Platform administrator required/);
+ await assert.rejects(()=>db.query('select public.export_files($1)',[colleague]),/Not allowed/);
+ await as(platformAdmin);assert.equal((await db.query('select public.export_user_data($1) d',[leaver])).rows[0].d.account.email,leaverEmail);
+ // After the lock, the photos of the hidden organisation stay readable for the administrator's export, and only for them.
+ assert.equal((await db.query("select count(*)::int n from storage.objects where bucket_id='vianorae-private-photos' and name=$1",[photoD])).rows[0].n,1);
+ await as(colleague);assert.equal((await db.query("select count(*)::int n from storage.objects where bucket_id='vianorae-private-photos' and name=$1",[photoD])).rows[0].n,0);
+});
+await as(platformAdmin);
+await check('nothing is erased before the 30 days, by anyone but an administrator, or while files remain',async()=>{
+ await assert.rejects(()=>db.query('select public.erase_account($1)',[leaver]),/Not due/);
+ assert.equal((await db.query("delete from storage.objects where bucket_id='vianorae-mandate-evidence' and name=$1 returning name",[leaverDocKey])).rows.length,0,'no early file removal');
+ await db.exec('reset role');await db.query("update private.account_deletions set delete_after=now()-interval '1 minute' where user_id=$1",[leaver]);
+ await as(colleague);await assert.rejects(()=>db.query('select public.erase_account($1)',[leaver]),/Platform administrator required/);
+ assert.equal((await db.query("delete from storage.objects where bucket_id='vianorae-mandate-evidence' and name=$1 returning name",[leaverDocKey])).rows.length,0,'not by a colleague');
+ await as(platformAdmin);await assert.rejects(()=>db.query('select public.erase_account($1)',[leaver]),/Remove the files first/);
+ assert.equal((await db.query('select public.restore_account($1)',[leaver]).catch(e=>e)).message,'The 30 days have passed');
+});
+await as(platformAdmin);
+await check('an administrator removes exactly the files of a due erasure, and no one else\'s',async()=>{
+ const files=(await db.query('select public.account_erasure_files($1) f',[leaver])).rows[0].f;assert.deepEqual(files,[{bucket:'vianorae-mandate-evidence',key:leaverDocKey}]);
+ assert.equal((await db.query("delete from storage.objects where bucket_id='vianorae-private-photos' and name=$1 returning name",[photoD])).rows.length,0,'the held organisation is not due yet');
+ assert.equal((await db.query("delete from storage.objects where bucket_id='vianorae-private-photos' and name=$1 returning name",[pubKey])).rows.length,0,'another organisation\'s photo');
+ assert.equal((await db.query("delete from storage.objects where bucket_id='vianorae-mandate-evidence' and name=$1 returning name",[leaverDocKey])).rows.length,1);
+});
+await check('after the erase nothing anywhere holds their id or email; their reports stay without them; the colleague\'s guide is untouched',async()=>{
+ const result=(await db.query('select public.erase_account($1) r',[leaver])).rows[0].r;assert.equal(result.guide_versions_deleted,2);assert.equal(result.problem_reports_anonymised,1);
+ await db.exec('reset role');
+ const columns=(await db.query("select table_schema s,table_name t,column_name c from information_schema.columns c join information_schema.tables t using(table_schema,table_name) where table_schema in ('public','private','auth','storage') and t.table_type='BASE TABLE'")).rows;
+ const found=[];
+ for(const {s:schema,t:table,c:column} of columns){
+  const n=(await db.query(`select count(*)::int n from "${schema}"."${table}" where "${column}"::text ilike $1 or "${column}"::text ilike $2`,[`%${leaver}%`,`%${leaverEmail}%`])).rows[0].n;
+  if(n)found.push(`${schema}.${table}.${column} (${n})`);
+ }
+ assert.deepEqual(found,[],'something still names the person');
+ const kept=(await db.query('select reporter_id,reporter_email,message from public.problem_reports where id=$1',[leaverReport])).rows[0];
+ assert.equal(kept.reporter_id,null);assert.equal(kept.reporter_email,null);assert.equal(kept.message,'The map on the second step is upside down.');
+ assert.equal(await guideStatus(colleaguePublishedE.slug),'published');assert.equal(await guideStatus(leaverPublishedE.slug),'unavailable','the guide waits for a colleague to publish again');
+ assert.equal(await guideStatus(leaverPublishedD.slug),'unavailable','the organisation they owned alone stays hidden');
+});
+await as(platformAdmin);
+await check('the organisation they owned alone is erased after its own 30 days: content and photos gone, QR code kept, no name',async()=>{
+ await assert.rejects(()=>db.query('select public.erase_held_organisation($1)',[orgD]),/Not due/);
+ await db.exec('reset role');await db.query("update private.organisation_holds set delete_after=now()-interval '1 minute' where organization_id=$1",[orgD]);
+ await as(platformAdmin);
+ const holds=(await db.query('select public.organisation_holds() h')).rows[0].h.find(h=>h.id===orgD);assert.equal(holds.due,true);assert.equal(holds.former_owner_email,null,'the former owner is gone');
+ await assert.rejects(()=>db.query('select public.erase_held_organisation($1)',[orgD]),/Remove the files first/);
+ assert.deepEqual((await db.query('select public.organisation_erasure_files($1) f',[orgD])).rows[0].f,[{bucket:'vianorae-private-photos',key:photoD}]);
+ assert.equal((await db.query("delete from storage.objects where bucket_id='vianorae-private-photos' and name=$1 returning name",[photoD])).rows.length,1);
+ assert.equal((await db.query('select public.erase_held_organisation($1) r',[orgD])).rows[0].r.places_kept_for_qr_codes,1);
+ await assert.rejects(()=>db.query('select public.erase_held_organisation($1)',[orgD]),/Already erased/);
+ await db.exec('reset role');
+ for(const table of ['place_translations','zones','zone_translations','guides','guide_versions','media_assets','organization_members','audit_log','sensory_profiles'])
+  assert.equal((await db.query(`select count(*)::int n from public.${table} where organization_id=$1`,[orgD])).rows[0].n,0,table);
+ assert.equal((await db.query('select name from public.organizations where id=$1',[orgD])).rows[0].name,'Deleted organisation');
+ await as(null,'anon');assert.deepEqual((await db.query('select public.resolve_qr($1) r',[leaverPublishedD.code])).rows[0].r,{status:'unavailable'});
+ assert.deepEqual((await db.query('select public.published_guide($1,$2) g',[leaverPublishedD.slug,'en'])).rows[0].g,{status:'unavailable'});
+});
+await as(platformAdmin);
+await check('an administrator deletes a kept report by hand, with its history; nobody else can',async()=>{
+ await as(colleague);await assert.rejects(()=>db.query('select public.delete_problem_report($1)',[leaverReport]),/Platform administrator required/);
+ await as(platformAdmin);assert.equal((await db.query('select public.delete_problem_report($1) ok',[leaverReport])).rows[0].ok,true);
+ await db.exec('reset role');assert.equal((await db.query("select count(*)::int n from public.audit_log where entity_type='problem_reports' and entity_id=$1",[leaverReport])).rows[0].n,0);
+});
+// Leave the world as the checks below expect it: no published guide outside the organisations they suspend.
+await as(colleague);await unpublish(placeE2,orgE);
 
 await as(platformAdmin);
 await check('suspension immediately blocks member data and private storage with existing identity',async()=>{await review(applicationId,4,'suspended',false,false,'','','Access suspended while the mandate is investigated.');});

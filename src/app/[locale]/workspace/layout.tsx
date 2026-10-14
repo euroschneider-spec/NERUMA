@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import { getCopy, isLocale } from '@/lib/i18n';
+import { getCopy, isLocale, longDate } from '@/lib/i18n';
 import { getOrganisationCopy } from '@/lib/organisation-copy';
 import { getWorkspaceCopy } from '@/lib/workspace';
 import { problemReportsReady } from '@/lib/verification-server';
@@ -45,7 +45,7 @@ export default async function WorkspaceLayout({ children, params }: { children: 
       <div className="app-content">
         {deadline && (
           <p className="notice two-factor-banner">
-            {twoFactor.banner.replace('{date}', new Date(deadline).toLocaleDateString(locale, { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'Europe/Berlin' }))}{' '}
+            {twoFactor.banner.replace('{date}', longDate(deadline, locale))}{' '}
             <Link href={`/${locale}/account#two-factor-title`}>{twoFactor.bannerLink}</Link>
           </p>
         )}

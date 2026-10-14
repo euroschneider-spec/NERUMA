@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { authErrorMessage, getAuthFeedback } from '@/lib/auth-feedback';
 import { locales } from '@/lib/i18n';
+import { getDeletionCopy } from '@/lib/account-deletion';
 
 // What a person reads when Supabase Auth refuses something. A wrong message sends them to the wrong fix
 // (a weak password is not an email problem), and a raw error code must never reach the page.
@@ -27,6 +28,10 @@ describe.each(locales)('authErrorMessage (%s)', (locale) => {
   it('tells a person when registration is switched off in the project, not that the email failed', () => {
     expect(message('signup_disabled')).toBe(t.signupOff);
     expect(message('email_provider_disabled')).toBe(t.signupOff);
+  });
+  it('tells a person whose account is being deleted how to restore it, not that the password was wrong', () => {
+    expect(message('user_banned', true)).toBe(getDeletionCopy(locale).banned);
+    expect(message('user_banned', true)).not.toBe(t.loginError);
   });
   it('gives the sign-in message for any other sign-in failure, and never echoes the code', () => {
     for (const code of [undefined, 'invalid_credentials', 'unexpected_failure', '<script>alert(1)</script>']) {

@@ -100,6 +100,11 @@ Languages everywhere: **English, Romanian, German.** Root `/` opens English; an 
   the account page lists remembered devices by date only and can forget them. A new password or an administrator's reset forgets all.
 - **Lost phone**: write to NERUMA from the account's email; an administrator checks who they are and resets two-factor.
 - The rule is enforced by the database: a session that didn't pass the second factor can't read or change organisation data.
+- **Delete my account** (account page): confirmed with the password and the two-factor code, after reading the exact date. The
+  person gets a ZIP of all their data at once (a private link that works 7 days without signing in). The account is locked
+  immediately (every page says so), deleted completely 30 days later, and restorable by an administrator until then. Problem
+  reports they sent stay without their name. An organisation they owned alone is hidden for 30 days, then deleted; its QR codes
+  keep saying the guide isn't available.
 
 ---
 
@@ -148,15 +153,17 @@ Languages everywhere: **English, Romanian, German.** Root `/` opens English; an 
   is recorded with who decided and what was checked. An administrator can't approve their own request.
 - **Suspending** an organisation removes its members' access and takes its guides and QR codes down at once.
 - **Problem reports**: open and closed lists, the sender's email, close a report.
+- **Account deletions** (`/admin/deletions`): every deletion in progress with its date; restore within 30 days; erase when due;
+  erase a hidden organisation when due; start a deletion for someone who wrote in and download their data to send it to them.
+  Problem reports from a deleted sender are labelled and can be deleted by hand. Steps: `docs/guides/ACCOUNT-DELETION.md`.
 - **Two-factor** is always required, and "remember this device" is never offered to them.
 
 ---
 
 ## 7. Decided, not built yet
 
-- **Delete my account and export my data** (brief `docs/briefs/2026-10-13-delete-account.md`): a self-service button and an
-  administrator path; a 30-day grace period, locked and restorable; then everything deleted; reports kept anonymised; a sole owner's
-  organisation hidden 30 days, then deleted; **hand an organisation to a verified colleague**.
+- **Hand an organisation to a verified colleague** (brief `docs/briefs/2026-10-13-delete-account.md`, step 2), and the emails that go
+  with a deletion (step 3, after the email provider).
 - **Terms of use tick** at registration, with the accepted version recorded (proposed; waits for real terms text).
 - **Email provider** for confirmations, reminders and notices (TECH-TASKS §4).
 - **Visit counts** per location (privacy decision pending).

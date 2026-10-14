@@ -1,5 +1,5 @@
 ---
-status: idea   # idea → building → done
+status: building   # idea → building → done
 date: 2026-10-13
 ---
 
@@ -16,24 +16,24 @@ has done anything can't even be deleted (`docs/guides/PERSONAL-DATA.md`, finding
 leaves is stuck, with nobody able to edit its guides.
 
 ## Done when
-- [ ] **The person deletes their own account** with a "Delete my account" button on the account page. They confirm with their
+- [x] **The person deletes their own account** with a "Delete my account" button on the account page. They confirm with their
       password and their two-factor code. Before confirming they read the **exact date** everything will be deleted (30 days later).
-- [ ] **The account is locked at once**: they can't sign in, their guides go down, and everything that mentions them shows
+- [x] **The account is locked at once**: they can't sign in, their guides go down, and everything that mentions them shows
       "deletion in progress".
-- [ ] **They receive their data**: everything held about them, the date they asked, what happens to each part and when, and how to
+- [x] **They receive their data**: everything held about them, the date they asked, what happens to each part and when, and how to
       change their mind. Photos and documents come as a private download link that works for 7 days without signing in.
-      *Open: until the email provider exists (§4), the same export is offered as a download on screen (suggested; to confirm).*
-- [ ] **Within 30 days an administrator can restore the account** if the person changes their mind.
-- [ ] **After 30 days everything is deleted**: sign-in, two-factor, remembered devices, request, documents, review history,
+      *Until the email provider exists (§4), the export is offered on screen right after confirming (owner, 2026-10-14).*
+- [x] **Within 30 days an administrator can restore the account** if the person changes their mind.
+- [x] **After 30 days everything is deleted**: sign-in, two-factor, remembered devices, request, documents, review history,
       acceptance record, guide versions they published, and their name in the change history. A database check proves nothing
       with their email or id is left.
-- [ ] **Problem reports they sent stay**, with the sender anonymised and marked "account deleted" (or "deletion in progress"
+- [x] **Problem reports they sent stay**, with the sender anonymised and marked "account deleted" (or "deletion in progress"
       during the 30 days). An administrator can delete them by hand.
-- [ ] **Their organisation**, if they were its only owner: published guides go down at once, QR codes say "unavailable", and the
+- [x] **Their organisation**, if they were its only owner: published guides go down at once, QR codes say "unavailable", and the
       content is hidden for 30 days, in which an administrator can hand it to a colleague; then it is deleted.
 - [ ] **Hand an organisation to a colleague**: the colleague registers and proves their mandate like a new request; an
       administrator checks them independently and transfers ownership; the former owner loses access at once.
-- [ ] **An administrator can do the same on request** (a person who writes in), after checking it is really them, with the steps
+- [x] **An administrator can do the same on request** (a person who writes in), after checking it is really them, with the steps
       written down.
 - [ ] Texts in EN, RO and DE; the privacy page says how to ask, what is deleted and when.
 
@@ -63,3 +63,10 @@ Technical, to be confirmed while building:
 - The export includes the organisation's guides and photos only when the person is its only owner.
 
 ## Result
+**Step 1** (delete, export, restore, erase): migration `20261016090000_account_deletion.sql`; *Delete my account* (`/account/delete`);
+*Account deletions* for administrators (`/admin/deletions`, steps in `docs/guides/ACCOUNT-DELETION.md`); reports of a deleted sender
+labelled and deletable; the privacy page says how it works. Every page tells a locked account it is locked. Ran: typecheck, lint,
+`test:unit` (217), `test:db` (131, 14 new, incl. a scan of every column after the erase), `test:data` (18), `test:workspace` (64,
+3 new end-to-end). Not yet known: whether hosted Supabase lets the functions update and delete `auth.users` (try on `neruma-dev`).
+
+**Step 2** hand an organisation to a colleague, **step 3** the emails: to do.

@@ -1122,3 +1122,5 @@ figure.gg-photo { margin: 0; }
 .remember-device { display: flex; gap: 8px; align-items: flex-start; margin: 12px 0; }
 .remember-device input { margin-top: 4px; }
 .remember-device .form-hint { margin: 2px 0 0; font-size: 0.8125rem; color: var(--v-muted); }
+.deletion-list { list-style: none; padding: 0; display: grid; gap: 16px; }
+.deletion-done h2:focus { outline: none; }

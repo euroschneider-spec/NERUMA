@@ -1,6 +1,7 @@
 # Personal data: what NERUMA holds, where, and what is still undecided
 
-Written 2026-10-13 from the migrations and the code, not from memory. It is the **input** for three things: the privacy
+Written 2026-10-13 from the migrations and the code, not from memory. Updated 2026-10-14: deleting an account exists now
+(`docs/guides/ACCOUNT-DELETION.md`); the "Blocks deleting the user" column describes the tables, and `erase_account` handles each of them. It is the **input** for three things: the privacy
 notice (to be drafted with a lawyer), "Delete my account and export my data" (TECH-TASKS §13 step 3), and the terms
 acceptance (§13).
 
@@ -42,6 +43,9 @@ Whose data: the **applicant or member** (the person who registers), the **admini
 | `public.guide_versions.created_by` | Who published each version. Published versions are immutable. | The organisation | The version is public; the author is not | **Yes** |
 | `private.platform_admins` | Who is an administrator | Nobody by the app | No | **Yes** |
 | `private.remembered_devices`, `private.trusted_sessions` | A hash of a remembered-device token, and dates. No device name, browser or IP. | The account holder (dates only) | No | No: removed with the user |
+| `private.account_deletions`, `private.deletion_takedowns` | A deletion in progress: who, when asked, when due, which administrator started it, which guides went down | Platform administrators | No | No: removed with the user |
+| `private.organisation_holds` | An organisation hidden after its only owner asked to be deleted, and who that was | Platform administrators | No | No: `former_owner` is emptied with the user |
+| Bucket `vianorae-account-exports` | A person's own export (a ZIP), kept for the 7 days its link works | The person, through the private link | No | Yes (removed before the erase) |
 | Pilot tables: `assessors`, `assessment_assignments`, `assessments`, `reviews` | User ids and reviewers' notes. **Not used by the app today.** | Staff of the organisation | No | **Yes** |
 
 ### Organisation-written content (may name or show third parties by mistake)
@@ -60,7 +64,8 @@ Whose data: the **applicant or member** (the person who registers), the **admini
 
 ## 2. Findings that change decisions
 
-1. **A user cannot be deleted today.** 15 foreign keys in 14 of our tables point at `auth.users` with "no action", so deleting an account that has
+1. *Resolved by `20261016090000_account_deletion.sql` (`erase_account`, checked in `test:db` by scanning every column for the person's id
+   and email afterwards). Kept for the record:* **A user could not be deleted.** 15 foreign keys in 14 of our tables point at `auth.users` with "no action", so deleting an account that has
    registered, filed a report, been reviewed or published a guide **fails**. The list is the "Blocks deleting the user" column
    above. Only an account that never did anything (an unconfirmed sign-up) can be removed, and Supabase's own "Delete user"
    button will fail for the rest. §13 step 3 therefore needs a design, not a button: for each row either **delete**,
@@ -102,6 +107,10 @@ email, a name, a note, a file name, a free-text message or a snapshot) is **miss
 longer exists. A new table with personal data therefore can't be added without being written down here, and then in §1.
 
 <!-- personal-data-columns:start -->
+private.account_deletions.requested_by
+private.account_deletions.user_id
+private.deletion_takedowns.user_id
+private.organisation_holds.former_owner
 private.platform_admins.user_id
 private.remembered_devices.token_hash
 private.remembered_devices.user_id
