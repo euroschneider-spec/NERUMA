@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { fill } from '@/lib/account-deletion';
 import { locales } from '@/lib/i18n';
-import { getSuperadminCopy, parseAccounts, parseOverview } from '@/lib/superadmin';
+import { getSuperadminCopy, parseAccounts, parseOverview, parseProfile } from '@/lib/superadmin';
 
 describe('parseOverview', () => {
   it('reads the six numbers', () => {
@@ -27,6 +27,31 @@ describe('parseAccounts', () => {
   it('fails closed when the answer is not a list', () => {
     expect(parseAccounts({ total: 1 })).toBeNull();
     expect(parseAccounts(undefined)).toBeNull();
+  });
+});
+
+describe('parseProfile', () => {
+  const base = { user_id: 'u1', email: 'a@example.test', created_at: '2026-10-01T10:00:00Z', last_sign_in_at: '2026-10-02T10:00:00Z', confirmed: true, is_admin: false, two_factor: true };
+  it('reads the organisations with their status, the request and the deletion', () => {
+    const profile = parseProfile({
+      ...base,
+      organisations: [{ id: 'o1', name: 'Museum', role: 'owner', status: 'approved' }],
+      application: { status: 'pending', organisation: 'Museum', submitted_at: '2026-10-01T11:00:00Z' },
+      deletion: { requested_at: '2026-10-03T10:00:00Z', delete_after: '2026-11-02T10:00:00Z', by_administrator: true },
+    });
+    expect(profile).toMatchObject({ userId: 'u1', twoFactor: true, deletionPending: true });
+    expect(profile?.organisations).toEqual([{ id: 'o1', name: 'Museum', role: 'owner' }]);
+    expect(profile?.organisationStatuses).toEqual({ o1: 'approved' });
+    expect(profile?.application).toEqual({ status: 'pending', organisation: 'Museum', submittedAt: '2026-10-01T11:00:00Z' });
+    expect(profile?.deletion).toEqual({ requestedAt: '2026-10-03T10:00:00Z', deleteAfter: '2026-11-02T10:00:00Z', byAdministrator: true });
+  });
+  it('has no deletion or request when there is none', () => {
+    const profile = parseProfile({ ...base, deletion: null, application: null, organisations: [] });
+    expect(profile).toMatchObject({ deletion: null, application: null, deletionPending: false, organisations: [] });
+  });
+  it('is null for no account or an answer without an id', () => {
+    expect(parseProfile(null)).toBeNull();
+    expect(parseProfile({ email: 'x' })).toBeNull();
   });
 });
 

@@ -12,6 +12,11 @@ export type AccountRow = {
   userId: string; email: string; createdAt: string; lastSignInAt: string | null; confirmed: boolean; isAdmin: boolean;
   twoFactor: boolean; deletionPending: boolean; organisations: AccountOrganisation[];
 };
+export type AccountProfile = AccountRow & {
+  deletion: { requestedAt: string; deleteAfter: string; byAdministrator: boolean } | null;
+  application: { status: string; organisation: string; submittedAt: string } | null;
+  organisationStatuses: Record<string, string>;
+};
 export type AccountsPage = { total: number; rows: AccountRow[] };
 
 const text = (value: unknown) => (typeof value === 'string' ? value : '');
@@ -26,27 +31,47 @@ export function parseOverview(value: unknown): Overview | null {
   };
 }
 
+function parseRow(row: unknown): AccountRow | null {
+  if (!row || typeof row !== 'object') return null;
+  const a = row as Record<string, unknown>;
+  if (!text(a.user_id)) return null;
+  const organisations = Array.isArray(a.organisations)
+    ? a.organisations.flatMap((org): AccountOrganisation[] => {
+      const o = org && typeof org === 'object' ? (org as Record<string, unknown>) : {};
+      return text(o.id) ? [{ id: text(o.id), name: text(o.name), role: text(o.role) }] : [];
+    })
+    : [];
+  return {
+    userId: text(a.user_id), email: text(a.email), createdAt: text(a.created_at), lastSignInAt: text(a.last_sign_in_at) || null,
+    confirmed: a.confirmed === true, isAdmin: a.is_admin === true, twoFactor: a.two_factor === true,
+    deletionPending: a.deletion_pending === true, organisations,
+  };
+}
+
 export function parseAccounts(value: unknown): AccountsPage | null {
   if (!value || typeof value !== 'object') return null;
   const r = value as Record<string, unknown>;
   if (!Array.isArray(r.rows)) return null;
-  const rows = r.rows.flatMap((row): AccountRow[] => {
-    if (!row || typeof row !== 'object') return [];
-    const a = row as Record<string, unknown>;
-    if (!text(a.user_id)) return [];
-    const organisations = Array.isArray(a.organisations)
-      ? a.organisations.flatMap((org): AccountOrganisation[] => {
-        const o = org && typeof org === 'object' ? (org as Record<string, unknown>) : {};
-        return text(o.id) ? [{ id: text(o.id), name: text(o.name), role: text(o.role) }] : [];
-      })
-      : [];
-    return [{
-      userId: text(a.user_id), email: text(a.email), createdAt: text(a.created_at), lastSignInAt: text(a.last_sign_in_at) || null,
-      confirmed: a.confirmed === true, isAdmin: a.is_admin === true, twoFactor: a.two_factor === true,
-      deletionPending: a.deletion_pending === true, organisations,
-    }];
-  });
-  return { total: count(r.total), rows };
+  return { total: count(r.total), rows: r.rows.flatMap((row) => parseRow(row) ?? []) };
+}
+
+// One account in full (`admin_account`). The organisation's own status travels with each membership.
+export function parseProfile(value: unknown): AccountProfile | null {
+  const row = parseRow(value);
+  if (!row || !value || typeof value !== 'object') return null;
+  const r = value as Record<string, unknown>;
+  const obj = (v: unknown) => (v && typeof v === 'object' ? (v as Record<string, unknown>) : null);
+  const deletion = obj(r.deletion);
+  const application = obj(r.application);
+  const organisationStatuses: Record<string, string> = {};
+  if (Array.isArray(r.organisations)) for (const org of r.organisations) { const o = obj(org); if (o && text(o.id)) organisationStatuses[text(o.id)] = text(o.status); }
+  return {
+    ...row,
+    deletionPending: deletion !== null,
+    deletion: deletion && text(deletion.delete_after) ? { requestedAt: text(deletion.requested_at), deleteAfter: text(deletion.delete_after), byAdministrator: deletion.by_administrator === true } : null,
+    application: application && text(application.status) ? { status: text(application.status), organisation: text(application.organisation), submittedAt: text(application.submitted_at) } : null,
+    organisationStatuses,
+  };
 }
 
 const copy = {
@@ -66,6 +91,8 @@ const copy = {
     added: 'Added. They see the administration area the next time they sign in.', alreadyAdmin: 'That account is already an administrator.',
     noAccount: 'There is no confirmed account with that email.', addError: 'The administrator could not be added.',
     remove: 'Remove', removeTitle: 'Remove this administrator?', removeBody: 'They lose access to the administration area at once. They keep their account and any organisation they belong to.',
+    viewingAs: 'You are viewing this account as a platform administrator.', backToAccounts: '← Accounts', profileStatus: 'Status', confirmedYes: 'Email confirmed',
+    organisationsTitle: 'Organisations', applicationTitle: 'Organisation request', submittedOn: 'Submitted {date}',
     cancel: 'Cancel', you: 'You', removeNote: 'You can’t remove yourself, and the last administrator can’t be removed.',
   },
   ro: {
@@ -84,6 +111,8 @@ const copy = {
     added: 'Adăugat. Vede zona de administrare la următoarea autentificare.', alreadyAdmin: 'Acest cont este deja administrator.',
     noAccount: 'Nu există niciun cont confirmat cu acest email.', addError: 'Administratorul nu a putut fi adăugat.',
     remove: 'Elimină', removeTitle: 'Elimini acest administrator?', removeBody: 'Pierde imediat accesul la zona de administrare. Își păstrează contul și organizațiile din care face parte.',
+    viewingAs: 'Vezi acest cont ca administrator al platformei.', backToAccounts: '← Conturi', profileStatus: 'Stare', confirmedYes: 'Email confirmat',
+    organisationsTitle: 'Organizații', applicationTitle: 'Cererea organizației', submittedOn: 'Trimisă la {date}',
     cancel: 'Anulează', you: 'Tu', removeNote: 'Nu te poți elimina pe tine și nici ultimul administrator.',
   },
   de: {
@@ -102,6 +131,8 @@ const copy = {
     added: 'Hinzugefügt. Die Person sieht die Verwaltung bei der nächsten Anmeldung.', alreadyAdmin: 'Dieses Konto ist bereits Administrator.',
     noAccount: 'Es gibt kein bestätigtes Konto mit dieser E-Mail.', addError: 'Der Administrator konnte nicht hinzugefügt werden.',
     remove: 'Entfernen', removeTitle: 'Diesen Administrator entfernen?', removeBody: 'Der Zugang zur Verwaltung endet sofort. Konto und Organisationen bleiben bestehen.',
+    viewingAs: 'Sie sehen dieses Konto als Plattform-Administrator.', backToAccounts: '← Konten', profileStatus: 'Status', confirmedYes: 'E-Mail bestätigt',
+    organisationsTitle: 'Organisationen', applicationTitle: 'Organisationsantrag', submittedOn: 'Eingereicht am {date}',
     cancel: 'Abbrechen', you: 'Sie', removeNote: 'Sie können sich nicht selbst entfernen, und der letzte Administrator kann nicht entfernt werden.',
   },
 } as const;

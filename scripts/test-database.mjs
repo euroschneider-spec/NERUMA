@@ -709,6 +709,30 @@ await check('an administrator is added by a confirmed email only, and removed by
 });
 await db.exec('reset role');
 
+// The account profile (brief 2026-10-17-account-profile): one account in full, for a platform administrator only.
+await db.exec('reset role');
+await db.query(`insert into public.organization_applications(applicant_id,applicant_email,organization_name,organization_type,country_code,official_website,representative_name,representative_role,authorization_description,statement_version,statement_locale)
+ values($1,'unconfirmed.person@example.test','Profile test museum','museum','RO','https://profile.example.test','Una Confirmed','Director','The registered office can confirm the appointment.','2026-10-07-v1','en')`,[unconfirmedPerson]);
+await db.query("insert into private.account_deletions(user_id,delete_after,requested_by) values($1,now()+interval '30 days',$2)",[unconfirmedPerson,platformAdmin]);
+await as(platformAdmin);
+const profile=async user=>(await db.query('select public.admin_account($1) p',[user])).rows[0].p;
+await check('an account profile shows the organisations, the request and the deletion, and nothing for an unknown or anonymous id',async()=>{
+ const shared=await profile(colleague);
+ assert.equal(shared.email,'colleague@example.test');assert.equal(shared.confirmed,true);assert.equal(shared.is_admin,false);assert.equal(shared.deletion,null);assert.equal(shared.application,null);
+ assert.deepEqual(shared.organisations.map(org=>[org.name,org.role,org.status]),[['Shared museum','owner','approved']]);
+ const pending=await profile(unconfirmedPerson);
+ assert.equal(pending.confirmed,false);assert.equal(pending.application.status,'pending');assert.equal(pending.application.organisation,'Profile test museum');
+ assert.equal(pending.deletion.by_administrator,true);assert.ok(pending.deletion.delete_after);
+ assert.equal((await profile(platformAdmin)).is_admin,true);
+ assert.equal(await profile(id(9999)),null);assert.equal(await profile(anonymous),null);
+});
+await check('only a platform administrator can open a profile',async()=>{
+ await as(colleague);await assert.rejects(()=>db.query('select public.admin_account($1)',[colleague]),/Platform administrator required/);
+ await as(null,'anon');await denied(`select public.admin_account('${colleague}')`);
+ await as(platformAdmin);
+});
+await db.exec('reset role');
+
 // Personal data is written down (docs/guides/PERSONAL-DATA.md). A column that points at a user, or looks like an email, a name,
 // a note, a file name, a free-text message or a snapshot, can't be added without being listed there; and nothing listed may be stale.
 await check('every column that can hold personal data is listed in docs/guides/PERSONAL-DATA.md, and nothing listed is stale',async()=>{

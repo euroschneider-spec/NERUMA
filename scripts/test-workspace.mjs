@@ -502,6 +502,21 @@ try {
     await expect(adminPage.getByRole('heading',{name:'owner1@example.test',exact:true})).toHaveCount(0);
     await adminPage.goto(`${base}/en/admin/organisations`);
   });
+  await check('an account profile opens from the list, says who is viewing, is read only, and unknown ids are 404',async()=>{
+    await adminPage.goto(`${base}/en/admin/accounts`);
+    await adminPage.getByLabel('Search by email',{exact:true}).fill('owner1@');
+    await adminPage.getByRole('button',{name:'Search',exact:true}).click();
+    await adminPage.getByRole('link',{name:'owner1@example.test',exact:true}).click();
+    await expect(adminPage).toHaveURL(/\/en\/admin\/accounts\/[0-9a-f-]{36}$/);
+    await expect(adminPage.getByRole('heading',{name:'owner1@example.test',exact:true,level:1})).toBeVisible();
+    await expect(adminPage.getByText('You are viewing this account as a platform administrator.',{exact:true})).toBeVisible();
+    await expect(adminPage.locator('section[aria-labelledby="profile-organisations"]')).toContainText('Fixture museum 1');
+    await expect(adminPage.locator('main button')).toHaveCount(1);
+    const profileAudit=await new AxeBuilder({page:adminPage}).withTags(['wcag2a','wcag2aa','wcag21a','wcag21aa']).analyze();assert.deepEqual(profileAudit.violations,[]);
+    for(const bad of ['not-an-id','00000000-0000-4000-8000-000000000000']) assert.equal((await adminPage.goto(`${base}/en/admin/accounts/${bad}`)).status(),404,bad);
+    assert.equal((await applicant.goto(`${base}/en/admin/accounts/00000000-0000-4000-8000-000000000000`)).status(),404);
+    await adminPage.goto(`${base}/en/admin/organisations`);
+  });
   await check('incomplete approval is prevented in browser; request for information is recorded',async()=>{
     await adminPage.getByLabel('Message for the applicant',{exact:true}).fill('Please identify the official contact for confirming your mandate.');
     await adminPage.getByRole('button',{name:'Record decision',exact:true}).click();

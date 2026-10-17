@@ -381,6 +381,7 @@ legend { padding-inline: var(--space-2); max-width: 100%; font-weight: var(--fon
 .admin-strip { background: var(--color-accent-100); color: var(--color-accent-800); border-bottom: 2px solid var(--color-accent); font-size: 0.9375rem; }
 .admin-strip-inner { display: flex; align-items: center; gap: 10px; padding-block: 10px; }
 .account-email { font-size: 1.25rem; overflow-wrap: anywhere; }
+.account-heading { font-size: clamp(1.5rem, 6vw, 2.25rem); overflow-wrap: anywhere; }
 .admin-strip svg { flex: none; }
 .admin-strip p { margin: 0; overflow-wrap: anywhere; }
 .note { margin: 0 0 24px; padding-inline-start: 12px; border-left: 3px solid var(--color-divider); color: var(--v-muted); font-size: 0.875rem; }

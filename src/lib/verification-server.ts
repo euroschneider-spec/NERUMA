@@ -29,6 +29,7 @@ export const rememberDeviceReady=(supabase:SupabaseClient)=>schemaVersionIsOne(s
 // Deleting an account exists only after the 2026-10-16 migration; before it, the account page offers no button.
 export const accountDeletionReady=(supabase:SupabaseClient)=>schemaVersionIsOne(supabase,'account_deletion_schema_version');
 export const superadminReady=(supabase:SupabaseClient)=>schemaVersionIsOne(supabase,'superadmin_schema_version');
+export const accountProfileReady=(supabase:SupabaseClient)=>schemaVersionIsOne(supabase,'account_profile_schema_version');
 export const evidenceReady=(supabase:SupabaseClient)=>schemaVersionIsOne(supabase,'mandate_evidence_schema_version');
 
 export async function approvedOrganization(supabase:SupabaseClient,org:string):Promise<boolean> {
