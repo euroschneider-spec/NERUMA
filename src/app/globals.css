@@ -370,6 +370,19 @@ legend { padding-inline: var(--space-2); max-width: 100%; font-weight: var(--fon
 .notice { padding: 12px 14px; background: var(--color-accent-100); color: var(--color-accent-800); border-radius: var(--radius-md); font-size: 0.875rem; margin-bottom: 24px; }
 .notice-warning { border: 1px solid var(--color-accent); border-left-width: 4px; font-weight: 600; }
 .notice-warning::before { content: "\26A0\FE0E" / ""; margin-inline-end: 8px; }
+/* The administration area: a warm yellow in place of the reader's accent, so it can't be mistaken for the organisation side.
+   Dark and light only; high contrast keeps its fixed palette. Contrast checked: links 6.8 to 10.9, button text 5.2 to 10.2. */
+:root:not([data-theme="light"]):not([data-theme="contrast"]) .admin-area {
+  --color-accent: #f2b84b; --color-accent-600: #f6c765; --color-accent-700: #f4c05a; --color-accent-100: #2b2210; --color-accent-800: #fbe2a6;
+}
+:root[data-theme="light"] .admin-area {
+  --color-accent: #8f5f00; --color-accent-600: #7d5200; --color-accent-700: #774e00; --color-accent-100: #fdf1d0; --color-accent-800: #573900;
+}
+.admin-strip { background: var(--color-accent-100); color: var(--color-accent-800); border-bottom: 2px solid var(--color-accent); font-size: 0.9375rem; }
+.admin-strip-inner { display: flex; align-items: center; gap: 10px; padding-block: 10px; }
+.account-email { font-size: 1.25rem; overflow-wrap: anywhere; }
+.admin-strip svg { flex: none; }
+.admin-strip p { margin: 0; overflow-wrap: anywhere; }
 .note { margin: 0 0 24px; padding-inline-start: 12px; border-left: 3px solid var(--color-divider); color: var(--v-muted); font-size: 0.875rem; }
 .callout { border-left: 3px solid var(--color-accent); padding: 16px 20px; background: var(--color-surface); border-radius: 0 var(--radius-md) var(--radius-md) 0; margin-block: 24px; }
 .callout p:last-child { margin-bottom: 0; }
@@ -935,7 +948,7 @@ p, li, dt, dd, summary, label, figcaption, a, .lbl, .small-label, .small-note { 
   .guide-card, .guide-text-steps > li { break-inside: avoid; }
   .guide-text-view { border: 0; padding: 0; }
   body { background: #ffffff; color: #000000; }
-  .notice, .note { border: 1px solid #000000; }
+  .notice, .note, .admin-strip { border: 1px solid #000000; }
 }
 
 /* ── Organisation app shell: the sidebar around the signed-in workspace (desktop and laptop first) ─── */
