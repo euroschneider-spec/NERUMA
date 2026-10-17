@@ -16,10 +16,10 @@ export const isOrganisationRole=(value:unknown):value is OrganisationRole=>value
 export type Membership={organisation:string;name:string;role:OrganisationRole};
 export type Viewer={isPlatformAdmin:boolean;memberships:Membership[]};
 
-// A platform administrator signing in is there to review organisations, so that tier wins over
+// A platform administrator signing in is there to run the platform, so that tier wins over
 // any organisation membership the same account also holds.
 export function landingPath(viewer:Viewer,locale:Locale) {
-  if(viewer.isPlatformAdmin) return `/${locale}/admin/organisations`;
+  if(viewer.isPlatformAdmin) return `/${locale}/admin`;
   if(viewer.memberships.length) return `/${locale}/workspace`;
   return `/${locale}/account`;
 }

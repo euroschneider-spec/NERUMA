@@ -70,7 +70,7 @@ test.describe('the deployed site', () => {
   });
 
   test('private pages and photos refuse a signed-out visitor', async ({ request }) => {
-    for (const path of ['/en/workspace', '/en/admin/organisations', '/en/admin/reports', '/api/workspace/photos?key=x']) {
+    for (const path of ['/en/workspace', '/en/admin', '/en/admin/organisations', '/en/admin/reports', '/en/admin/accounts', '/en/admin/administrators', '/api/workspace/photos?key=x']) {
       const response = await request.get(`${site}${path}`, { maxRedirects: 0 });
       expect([307, 308, 401, 403, 404], path).toContain(response.status());
     }

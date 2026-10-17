@@ -3,6 +3,7 @@ import { notFound, redirect } from 'next/navigation';
 import { isLocale } from '@/lib/i18n';
 import { getOrganisationCopy } from '@/lib/organisation-copy';
 import { getVerificationCopy } from '@/lib/verification';
+import { getSuperadminCopy } from '@/lib/superadmin';
 import { getWorkspaceCopy } from '@/lib/workspace';
 import { authConfigured } from '@/lib/supabase/config';
 import { confirmedUser, createClient } from '@/lib/supabase/server';
@@ -29,6 +30,7 @@ export default async function AccountDeletions({ params }: { params: Promise<{ l
   if (admin.error || admin.data !== true) notFound();
   const nav = (
     <nav aria-label={t.adminTitle} className="button-row">
+      <Link className="quiet-link" href={`/${locale}/admin`}>{getSuperadminCopy(locale).dashboard}</Link>
       <Link className="quiet-link" href={`/${locale}/admin/organisations`}>{getVerificationCopy(locale).admin}</Link>
       <Link className="quiet-link" href={`/${locale}/admin/reports`}>{getWorkspaceCopy(locale).reportsAdmin}</Link>
       <Link className="quiet-link" href={`/${locale}/account`}>{getOrganisationCopy(locale).account}</Link>

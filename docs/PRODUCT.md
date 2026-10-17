@@ -146,6 +146,12 @@ Languages everywhere: **English, Romanian, German.** Root `/` opens English; an 
 
 ## 6. Platform administrators (NERUMA)
 
+- **Dashboard** (`/admin`, where an administrator lands after signing in): the three queues below with how many wait in each, and
+  the number of accounts and administrators. The same sign-in and two-factor steps as everyone else.
+- **Accounts** (`/admin/accounts`): every account, newest first, 25 a page, searchable by email: confirmed or not, administrator,
+  two-factor on or off, deletion in progress, last sign-in, and the organisations the person belongs to.
+- **Administrators** (`/admin/administrators`): who they are; add one by the email of a confirmed account; remove another one
+  (never yourself, so there is always at least one). The very first administrator is still added with SQL.
 - **Organisation review queue**: pending requests (25 a page) and a history of decisions. Each request shows the organisation,
   representative, role, website, country, registry reference, authority statement and documents.
 - **Decisions**: approve (requires confirming the organisation and the mandate independently, the source checked, the evidence, and

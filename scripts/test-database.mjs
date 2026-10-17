@@ -662,6 +662,53 @@ await as(null,'anon');
 await check('online draft content remains private and never enters public snapshots',async()=>{assert.equal((await db.query('select count(*)::int n from storage.objects')).rows[0].n,0);assert.equal((await db.query('select count(*)::int n from public.guides where place_id=$1',[livePlace])).rows[0].n,0);});
 await db.exec('reset role');
 await db.exec("select set_config('request.jwt.claim.sub','',false)");
+// The superadmin area (brief 2026-10-17): what waits, who has an account, who administers. Only a platform administrator may call any of it.
+const candidate=id(1701),unconfirmedPerson=id(1702);
+await db.exec('reset role');
+await db.query("insert into auth.users(id,email,email_confirmed_at) values($1,'candidate@example.test',now()),($2,'unconfirmed.person@example.test',null)",[candidate,unconfirmedPerson]);
+const adminRows=async(...args)=>(await db.query('select public.admin_accounts($1,$2,$3,$4) a',args)).rows[0].a;
+await as(platformAdmin);
+await check('the overview counts what waits and refuses everyone who is not a platform administrator',async()=>{
+ const overview=(await db.query('select public.admin_overview() o')).rows[0].o;
+ for(const key of ['pending_requests','open_reports','deletions_in_progress','deletions_due','accounts','administrators']) assert.equal(typeof overview[key],'number',key);
+ assert.equal(overview.administrators,1);
+ await as(colleague);await assert.rejects(()=>db.query('select public.admin_overview()'),/Platform administrator required/);
+ await assert.rejects(()=>adminRows(null,25,0,false),/Platform administrator required/);
+ await as(null,'anon');await denied('select public.admin_overview()');await denied("select public.admin_accounts(null,25,0,false)");await denied("select public.add_platform_admin('candidate@example.test')");
+ await as(platformAdmin);
+});
+await check('the account list searches by email, treats wildcards as text, pages, and leaves out anonymous visitors',async()=>{
+ const found=await adminRows('CANDIDATE@',25,0,false);
+ assert.equal(found.total,1);assert.equal(found.rows[0].user_id,candidate);
+ assert.deepEqual([found.rows[0].is_admin,found.rows[0].two_factor,found.rows[0].deletion_pending,found.rows[0].confirmed],[false,false,false,true]);
+ assert.equal((await adminRows('unconfirmed.person',25,0,false)).rows[0].confirmed,false);
+ assert.equal((await adminRows('%',25,0,false)).total,0);assert.equal((await adminRows('candidate_example',25,0,false)).total,0);
+ await assert.rejects(()=>adminRows('x'.repeat(255),25,0,false),/too long/);
+ const everyone=await adminRows(null,100,0,false);assert.ok(everyone.total>=3);assert.ok(!everyone.rows.some(row=>row.user_id===anonymous));
+ const first=await adminRows(null,1,0,false);assert.equal(first.rows.length,1);assert.equal(first.total,everyone.total);
+ assert.deepEqual((await adminRows(null,25,0,true)).rows.map(row=>row.user_id),[platformAdmin]);
+});
+await check('an administrator is added by a confirmed email only, and removed by someone else only',async()=>{
+ await assert.rejects(()=>db.query("select public.add_platform_admin('unconfirmed.person@example.test')"),/No confirmed account/);
+ await assert.rejects(()=>db.query("select public.add_platform_admin('nobody@example.test')"),/No confirmed account/);
+ assert.equal((await db.query("select public.add_platform_admin(' Candidate@Example.test ') r")).rows[0].r,true);
+ assert.equal((await db.query("select public.add_platform_admin('candidate@example.test') r")).rows[0].r,false);
+ assert.equal((await db.query('select public.admin_overview() o')).rows[0].o.administrators,2);
+ await as(colleague);await assert.rejects(()=>db.query("select public.add_platform_admin('candidate@example.test')"),/Platform administrator required/);
+ await assert.rejects(()=>db.query('select public.remove_platform_admin($1)',[platformAdmin]),/Platform administrator required/);
+ await as(candidate);
+ assert.equal((await db.query('select public.admin_overview() o')).rows[0].o.administrators,2);
+ await assert.rejects(()=>db.query('select public.remove_platform_admin($1)',[candidate]),/cannot remove yourself/);
+ await as(platformAdmin);
+ await assert.rejects(()=>db.query('select public.remove_platform_admin($1)',[platformAdmin]),/cannot remove yourself/);
+ assert.equal((await db.query('select public.remove_platform_admin($1) r',[colleague])).rows[0].r,false);
+ assert.equal((await db.query('select public.remove_platform_admin($1) r',[candidate])).rows[0].r,true);
+ assert.equal((await db.query('select public.admin_overview() o')).rows[0].o.administrators,1);
+ await as(candidate);await assert.rejects(()=>db.query('select public.admin_overview()'),/Platform administrator required/);
+ await as(platformAdmin);
+});
+await db.exec('reset role');
+
 // Personal data is written down (docs/guides/PERSONAL-DATA.md). A column that points at a user, or looks like an email, a name,
 // a note, a file name, a free-text message or a snapshot, can't be added without being listed there; and nothing listed may be stale.
 await check('every column that can hold personal data is listed in docs/guides/PERSONAL-DATA.md, and nothing listed is stale',async()=>{

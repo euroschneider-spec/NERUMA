@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { notFound, redirect } from 'next/navigation';
 import { isLocale } from '@/lib/i18n';
 import { getWorkspaceCopy } from '@/lib/workspace';
+import { getSuperadminCopy } from '@/lib/superadmin';
 import { getVerificationCopy } from '@/lib/verification';
 import { getOrganisationCopy } from '@/lib/organisation-copy';
 import { closeProblemReport } from '@/app/admin/actions';
@@ -31,6 +32,7 @@ export default async function ProblemReports({ params, searchParams }: { params:
   const base = `/${locale}/admin/reports`;
   const nav = (
     <nav aria-label={t.reportsAdmin} className="button-row">
+      <Link className="quiet-link" href={`/${locale}/admin`}>{getSuperadminCopy(locale).dashboard}</Link>
       <Link className="quiet-link" href={base}>{t.reportsOpen}</Link>
       <Link className="quiet-link" href={`${base}?closed=1`}>{t.reportsHistory}</Link>
       <Link className="quiet-link" href={`/${locale}/admin/organisations`}>{getVerificationCopy(locale).admin}</Link>

@@ -1,3 +1,4 @@
+import { getSuperadminCopy } from '@/lib/superadmin';
 import Link from 'next/link';
 import { notFound, redirect } from 'next/navigation';
 import { isLocale } from '@/lib/i18n';
@@ -35,7 +36,7 @@ export default async function ReviewQueue({params,searchParams}:{params:Promise<
   const documents=documentResults.flatMap(result=>result.data||[]) as MandateDocument[];
   const base=`/${locale}/admin/organisations`;
   return <main id="main-content" className="container verification-page"><div className="page-heading"><h1>{v.admin}</h1><p className="lead">{v.adminIntro}</p></div><div className="content-body">
-    <nav aria-label={v.title} className="button-row"><Link className="quiet-link" href={base}>{v.statuses.pending}</Link><Link className="quiet-link" href={`${base}?history=1`}>{v.history}</Link><Link className="quiet-link" href={`/${locale}/admin/reports`}>{getWorkspaceCopy(locale).reportsAdmin}</Link><Link className="quiet-link" href={`/${locale}/admin/deletions`}>{getDeletionCopy(locale).adminTitle}</Link><Link className="quiet-link" href={`/${locale}/account`}>{t.account}</Link></nav>
+    <nav aria-label={v.title} className="button-row"><Link className="quiet-link" href={`/${locale}/admin`}>{getSuperadminCopy(locale).dashboard}</Link><Link className="quiet-link" href={base}>{v.statuses.pending}</Link><Link className="quiet-link" href={`${base}?history=1`}>{v.history}</Link><Link className="quiet-link" href={`/${locale}/admin/reports`}>{getWorkspaceCopy(locale).reportsAdmin}</Link><Link className="quiet-link" href={`/${locale}/admin/deletions`}>{getDeletionCopy(locale).adminTitle}</Link><Link className="quiet-link" href={`/${locale}/account`}>{t.account}</Link></nav>
     {!documentsEnabled && <p className="notice notice-warning">{getEvidenceCopy(locale).setup}</p>}
     {!requests.length && <p className="note">{v.empty}</p>}
     {requests.map(request=><section key={request.id} className="verification-request" aria-labelledby={`request-${request.id}`}>
