@@ -6,6 +6,7 @@ import { getOrganisationCopy } from '@/lib/organisation-copy';
 import { authConfigured } from '@/lib/supabase/config';
 import { confirmedUser, createClient } from '@/lib/supabase/server';
 import { signOut } from '@/app/auth/actions';
+import { getSuperadminCopy } from '@/lib/superadmin';
 import { OrganisationForm } from '@/components/organisation-form';
 import { ResponsibilityNotice } from '@/components/responsibility-notice';
 import { workspaceConfigured } from '@/lib/workspace-server';
@@ -50,6 +51,8 @@ export default async function Account({ params }: { params: Promise<{ locale: st
   if(!twoFactor || !viewer || applicationResult.error) return <main id="main-content" className="container verification-page"><div className="page-heading"><h1>{t.account}</h1></div><p role="alert">{t.authError}</p></main>;
   const ownOrganizations=viewer.memberships.map(membership=>({id:membership.organisation,name:membership.name}));
   const application=applicationResult.data as OrganizationApplication|null;
+  // A platform administrator with no organisation of their own is not applying for one: the registration side of this page is for everyone else.
+  const operatorOnly=viewer.isPlatformAdmin && !application && !ownOrganizations.length;
   const documentsEnabled=await evidenceReady(supabase);
   const documentsResult=documentsEnabled ? await supabase.from('organization_evidence_documents').select('*').eq('applicant_id',user.id).order('created_at').limit(30) : null;
   const documents=((documentsResult?.data||[]) as MandateDocument[]).filter(doc=>doc.uploaded_at && application?.evidence_document_ids?.includes(doc.id));
@@ -64,14 +67,14 @@ export default async function Account({ params }: { params: Promise<{ locale: st
     website:field('website',500),country:field('country',2),registry:field('registry',300),representativeRole:field('representativeRole',160),authorization:field('authorization',2000),
   };
   return <main id="main-content" className="container verification-page"><div className="page-heading"><h1>{t.account}</h1></div><div className="content-body">
-    {viewer.isPlatformAdmin && <p><Link className="button" href={`/${locale}/admin/organisations`}>{v.admin}</Link></p>}
-    {!application && !ownOrganizations.length && <p className="auth-feedback" role="status">{getAuthFeedback(locale).confirmed}</p>}
-    <ResponsibilityNotice locale={locale}/>
+    {viewer.isPlatformAdmin && <p><Link className="button" href={`/${locale}/admin`}>{getSuperadminCopy(locale).title}</Link></p>}
+    {!operatorOnly && !application && !ownOrganizations.length && <p className="auth-feedback" role="status">{getAuthFeedback(locale).confirmed}</p>}
+    {!operatorOnly && <ResponsibilityNotice locale={locale}/>}
     {application && <section className="notice" aria-labelledby="application-status"><h2 id="application-status">{v.statuses[application.status]}</h2><p>{application.organization_name}</p>{application.status==='pending' && <p>{getAuthFeedback(locale).pending}</p>}{application.applicant_note && <p>{application.applicant_note}</p>}{application.status!=='approved' && <p>{v.gate}</p>}</section>}
     {application && documentsEnabled && <MandateDocuments locale={locale} documents={documents}/>}
-    {!documentsEnabled && !ownOrganizations.length && <p className="notice notice-warning" role="status">{getEvidenceCopy(locale).setup}</p>}
+    {!operatorOnly && !documentsEnabled && !ownOrganizations.length && <p className="notice notice-warning" role="status">{getEvidenceCopy(locale).setup}</p>}
     {ownOrganizations.length ? <><ul>{ownOrganizations.map(org=><li key={org.id}>{org.name}</li>)}</ul>{workspaceConfigured() ? <><p className="notice">{getWorkspaceCopy(locale).boundary}</p><Link className="button" href={`/${locale}/workspace`}>{getWorkspaceCopy(locale).workspace}</Link></> : <p className="notice">{t.liveBoundary}</p>}</> : null}
-    {(!application || ['needs_information','rejected'].includes(application.status)) && !ownOrganizations.length && <OrganisationForm key={application?.revision || 'new'} locale={locale} mode="onboard" enabled={documentsEnabled && !documentsResult?.error} initial={initial} initialDocuments={initialDocuments}/>}
+    {!operatorOnly && (!application || ['needs_information','rejected'].includes(application.status)) && !ownOrganizations.length && <OrganisationForm key={application?.revision || 'new'} locale={locale} mode="onboard" enabled={documentsEnabled && !documentsResult?.error} initial={initial} initialDocuments={initialDocuments}/>}
     {await twoFactorReady(supabase) && <TwoFactorSetup locale={locale} enrolled={twoFactor.enrolled} required={false}>{backup.state!=='off' && <BackupCodesPanel locale={locale} backup={backup}/>}{devices && <RememberedDevices locale={locale} devices={devices}/>}</TwoFactorSetup>}
     {await accountDeletionReady(supabase) && <section className="notice" aria-labelledby="delete-account"><h2 id="delete-account">{getDeletionCopy(locale).sectionTitle}</h2><p>{getDeletionCopy(locale).sectionIntro}</p><p><Link className="quiet-link" href={`/${locale}/account/delete`}>{getDeletionCopy(locale).sectionLink}</Link></p></section>}
     <p><Link className="quiet-link" href={`/${locale}/demo`}>{getCopy(locale).openWorkspace}</Link></p>
