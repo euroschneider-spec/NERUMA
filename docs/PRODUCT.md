@@ -147,7 +147,7 @@ Languages everywhere: **English, Romanian, German.** Root `/` opens English; an 
 ## 6. Platform administrators (NERUMA)
 
 - **Dashboard** (`/admin`, where an administrator lands after signing in): the three queues below with how many wait in each, and
-  the number of accounts and administrators. The same sign-in and two-factor steps as everyone else. The account page of an administrator with no organisation of their own has a link to it and no registration form.
+  the number of accounts and administrators. The same sign-in and two-factor steps as everyone else. The account page of an administrator with no organisation of their own has a link to it and no registration form. Every administration page has a Sign out button in its menu.
 - **Accounts** (`/admin/accounts`): every account, newest first, 25 a page, searchable by email: confirmed or not, administrator,
   two-factor on or off, deletion in progress, last sign-in, and the organisations the person belongs to.
 - **Administrators** (`/admin/administrators`): who they are; add one by the email of a confirmed account; remove another one
