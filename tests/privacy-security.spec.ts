@@ -146,7 +146,7 @@ test.describe('hostile requests', () => {
       expect([401, 403, 404], path).toContain(response.status());
       expect(response.headers()['content-type'] ?? '').not.toMatch(/image|pdf/);
     }
-    for (const path of ['/en/workspace', '/en/admin/organisations', '/en/admin/reports', '/en/login/verify']) {
+    for (const path of ['/en/workspace', '/en/admin', '/en/admin/organisations', '/en/admin/reports', '/en/admin/accounts', '/en/admin/administrators', '/en/login/verify']) {
       const response = await request.get(path, { maxRedirects: 0 });
       expect([307, 308, 404], path).toContain(response.status());
     }

@@ -28,7 +28,7 @@ async function signInWithPassword(page,owner) {
   await page.goto(`${base}/en/login`);await page.getByLabel('Work email',{exact:true}).fill(`owner${owner}@example.test`);
   await page.getByLabel('Password',{exact:true}).fill('Fixture-only-passphrase-123');
   await page.getByRole('button',{name:'Sign in',exact:true}).click();
-  await page.waitForURL(/\/en\/(account|workspace|admin\/organisations|login\/verify)$/);
+  await page.waitForURL(/\/en\/(account|workspace|admin(\/organisations)?|login\/verify)$/);
 }
 async function signInWithPasswordExpectingRefusal(page,owner) {
   await page.goto(`${base}/en/login`);await page.waitForLoadState('networkidle');await page.getByLabel('Work email',{exact:true}).fill(`owner${owner}@example.test`);
@@ -37,7 +37,7 @@ async function signInWithPasswordExpectingRefusal(page,owner) {
 }
 async function login(page,owner=1) {
   await signInWithPassword(page,owner);
-  if(page.url().endsWith('/en/login/verify')) {await enterCode(page,totp(authenticators[owner]));await page.waitForURL(/\/en\/(account|workspace|admin\/organisations)$/);}
+  if(page.url().endsWith('/en/login/verify')) {await enterCode(page,totp(authenticators[owner]));await page.waitForURL(/\/en\/(account|workspace|admin(\/organisations)?)$/);}
 }
 const saved=page=>expect(page.locator('.status-message[role]')).toContainText('Draft saved');
 const save=async page=>{await page.getByRole('button',{name:'Save',exact:true}).last().click();await saved(page);};
@@ -443,10 +443,11 @@ try {
   });
   await check('ordinary applicants cannot open the platform review queue',async()=>{
     const response=await applicant.goto(`${base}/en/admin/organisations`);assert.equal(response.status(),404);
+    for(const path of ['/en/admin','/en/admin/accounts','/en/admin/administrators']) assert.equal((await applicant.goto(base+path)).status(),404,path);
     await applicant.goto(`${base}/en/account`);await expect(applicant.getByRole('heading',{name:'Awaiting manual verification',exact:true})).toBeVisible();
   });
   await check('platform administrator sees pending request and manual evidence controls',async()=>{
-    await login(adminPage,3);await expect(adminPage).toHaveURL(/\/en\/admin\/organisations$/);
+    await login(adminPage,3);await expect(adminPage).toHaveURL(/\/en\/admin$/);await adminPage.goto(`${base}/en/admin/organisations`);
     await expect(adminPage.getByRole('heading',{name:'Verified fixture museum',exact:true})).toBeVisible();
     assert.equal((await adminContext.request.get(base+mandatePath)).status(),200);
     await expect(adminPage.getByLabel('I opened and checked this mandate document: mandate.pdf',{exact:true})).toHaveJSProperty('required',true);
@@ -454,6 +455,34 @@ try {
     const audit=await new AxeBuilder({page:adminPage}).withTags(['wcag2a','wcag2aa','wcag21a','wcag21aa']).analyze();assert.deepEqual(audit.violations,[]);
     await adminPage.setViewportSize({width:320,height:800});await adminPage.addStyleTag({content:'html{font-size:200%}'});
     assert.equal(await adminPage.evaluate(()=>document.documentElement.scrollWidth<=window.innerWidth),true);await adminPage.setViewportSize({width:1280,height:900});await adminPage.reload();
+  });
+  await check('the administration dashboard shows what waits, searches accounts, and adds and removes administrators',async()=>{
+    await adminPage.goto(`${base}/en/admin`);
+    await expect(adminPage.getByRole('heading',{name:'Administration',exact:true,level:1})).toBeVisible();
+    await expect(adminPage.getByRole('link',{name:'Review organisation requests',exact:true}).first()).toBeVisible();
+    await expect(adminPage.getByText(/^\d+ waiting$/)).toBeVisible();
+    await expect(adminPage.getByText(/^\d+ administrators$/)).toBeVisible();
+    const dashboardAudit=await new AxeBuilder({page:adminPage}).withTags(['wcag2a','wcag2aa','wcag21a','wcag21aa']).analyze();assert.deepEqual(dashboardAudit.violations,[]);
+    await adminPage.goto(`${base}/en/admin/accounts`);
+    await adminPage.getByLabel('Search by email',{exact:true}).fill('owner1@');
+    await adminPage.getByRole('button',{name:'Search',exact:true}).click();
+    await expect(adminPage.getByRole('heading',{name:'owner1@example.test',exact:true})).toBeVisible();
+    await expect(adminPage.getByRole('heading',{name:'owner3@example.test',exact:true})).toHaveCount(0);
+    await expect(adminPage.getByText('1 found',{exact:true})).toBeVisible();
+    await adminPage.goto(`${base}/en/admin/administrators`);
+    await expect(adminPage.getByRole('heading',{name:'owner3@example.test (You)',exact:true})).toBeVisible();
+    await expect(adminPage.getByRole('button',{name:'Remove',exact:true})).toHaveCount(0);
+    await adminPage.getByLabel('Email',{exact:true}).fill('nobody@example.test');
+    await adminPage.getByRole('button',{name:'Add administrator',exact:true}).click();
+    await expect(adminPage.getByRole('alert').filter({hasText:'There is no confirmed account with that email.'})).toBeVisible();
+    await adminPage.getByLabel('Email',{exact:true}).fill('owner1@example.test');
+    await adminPage.getByRole('button',{name:'Add administrator',exact:true}).click();
+    await expect(adminPage.getByRole('status').filter({hasText:'Added.'})).toBeVisible();
+    await expect(adminPage.getByRole('heading',{name:'owner1@example.test',exact:true})).toBeVisible();
+    await adminPage.getByRole('button',{name:'Remove',exact:true}).click();
+    await adminPage.getByRole('dialog').getByRole('button',{name:'Remove',exact:true}).click();
+    await expect(adminPage.getByRole('heading',{name:'owner1@example.test',exact:true})).toHaveCount(0);
+    await adminPage.goto(`${base}/en/admin/organisations`);
   });
   await check('incomplete approval is prevented in browser; request for information is recorded',async()=>{
     await adminPage.getByLabel('Message for the applicant',{exact:true}).fill('Please identify the official contact for confirming your mandate.');

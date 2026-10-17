@@ -21,11 +21,11 @@ describe('isOrganisationRole', () => {
 });
 
 describe('landingPath', () => {
-  it('sends a platform administrator to the review queue', () => {
-    expect(landingPath(viewer({isPlatformAdmin:true}),'en')).toBe('/en/admin/organisations');
+  it('sends a platform administrator to the administration dashboard', () => {
+    expect(landingPath(viewer({isPlatformAdmin:true}),'en')).toBe('/en/admin');
   });
   it('prefers the platform tier over an organisation membership', () => {
-    expect(landingPath(viewer({isPlatformAdmin:true,memberships:[membership]}),'en')).toBe('/en/admin/organisations');
+    expect(landingPath(viewer({isPlatformAdmin:true,memberships:[membership]}),'en')).toBe('/en/admin');
   });
   it('sends an organisation member to the workspace', () => {
     expect(landingPath(viewer({memberships:[membership]}),'ro')).toBe('/ro/workspace');

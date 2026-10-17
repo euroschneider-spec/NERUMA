@@ -47,7 +47,8 @@ const safe=value=>{if(!/^[a-z_]+$/.test(value)) throw new Error('Unsafe identifi
 // Functions whose JSON body maps straight onto their named parameters.
 const simpleRpcs={my_account_deletion:[],request_account_deletion:[],request_account_deletion_for:['p_email'],restore_account:['p_user'],account_deletions:[],organisation_holds:[],
   account_erasure_files:['p_user'],organisation_erasure_files:['p_org'],erase_account:['p_user'],erase_held_organisation:['p_org'],export_my_data:[],
-  export_user_data:['p_user'],export_files:['p_user'],delete_problem_report:['p_report'],account_deletion_schema_version:[]};
+  export_user_data:['p_user'],export_files:['p_user'],delete_problem_report:['p_report'],account_deletion_schema_version:[],
+  admin_overview:[],admin_accounts:['p_search','p_limit','p_offset','p_admins_only'],add_platform_admin:['p_email'],remove_platform_admin:['p_user'],superadmin_schema_version:[]};
 const tables=new Set(['organizations','organization_members','places','place_translations','zones','zone_translations','zone_fields','zone_field_translations','sensory_profiles','media_assets','guides','guide_steps','organization_applications','organization_review_events','organization_evidence_documents','problem_reports']);
 createServer(async(req,res)=>{
   try {
@@ -142,7 +143,7 @@ createServer(async(req,res)=>{
     }
     if (url.pathname==='/auth/v1/logout') {tokens.delete(token);res.writeHead(204);return res.end();}
     // What a visitor may ask without signing in: schema checks, and the functions that return published data only.
-    const anonymousRpc=['workspace_schema_version','organization_verification_schema_version','mandate_evidence_schema_version','publishing_schema_version','two_factor_schema_version','remember_device_schema_version','account_deletion_schema_version','published_guide','published_places','resolve_qr'].map(name=>`/rest/v1/rpc/${name}`);
+    const anonymousRpc=['workspace_schema_version','organization_verification_schema_version','mandate_evidence_schema_version','publishing_schema_version','two_factor_schema_version','remember_device_schema_version','account_deletion_schema_version','superadmin_schema_version','published_guide','published_places','resolve_qr'].map(name=>`/rest/v1/rpc/${name}`);
     if (!user && !anonymousRpc.includes(url.pathname) && !(req.method==='GET' && url.pathname.startsWith('/storage/v1/object/'))) return send(res,401,{code:'42501',message:'Sign in required'});
     await locked(async()=>{
       await db.exec('begin');

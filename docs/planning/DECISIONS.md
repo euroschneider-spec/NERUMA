@@ -189,6 +189,13 @@ reaches the server; *Reset demo* restores the sample. Publishing is switched off
 example guide. Not chosen: a shared demo account (visitors would overwrite each other) and keeping nothing (a reload
 would lose the visitor's work). Plan: brief `2026-10-12-demo-workspace.md`.
 
+### Platform administrators land on their own dashboard and manage each other from the app
+Owner, 2026-10-17. Everyone signs in through the same steps (password, then the authenticator code); where they land depends on
+the account. A platform administrator goes to `/admin`: what waits (organisation requests, problem reports, deletions), the
+accounts list (searchable by email) and the administrators list. An administrator can add another (an existing confirmed account)
+or remove another, never themselves, so the last one can't be removed. Before this, the first one was added with SQL; that is still
+how the very first one is made. Not chosen yet: a list of organisations, a history of who added whom. Plan: brief `2026-10-17-superadmin-dashboard.md`.
+
 ## Not yet discussed
 
 - `DESIGN-TASKS.md` sections 5, 6 (other items) and 7.
