@@ -56,7 +56,7 @@ export default async function ProblemReports({ params, searchParams }: { params:
       <div className="page-heading"><h1>{t.reportsAdmin}</h1></div>
       <div className="content-body">
         {nav}
-        {!rows.length && <p className="notice">{showClosed ? t.reportsClosedEmpty : t.reportsEmpty}</p>}
+        {!rows.length && <p className="note">{showClosed ? t.reportsClosedEmpty : t.reportsEmpty}</p>}
         {rows.map((report) => (
           <section key={report.id} className="verification-request" aria-labelledby={`report-${report.id}`}>
             <h2 id={`report-${report.id}`}>{orgName.get(report.organization_id) || report.organization_id}</h2>

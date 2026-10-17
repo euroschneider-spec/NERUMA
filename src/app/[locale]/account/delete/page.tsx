@@ -36,7 +36,7 @@ export default async function DeleteAccount({ params }: { params: Promise<{ loca
       </div>
       <div className="content-body">
         {!ready || own?.error ? (
-          <p className="notice" role="status">{t.unavailable}</p>
+          <p className="notice notice-warning" role="status">{t.unavailable}</p>
         ) : (
           <>
             {!lockedUntil && <section aria-labelledby="what-happens">

@@ -78,8 +78,9 @@ Decision needed before starting.
 
 ## 5. Banners and boxes
 
-- [ ] Blue notice boxes are overused: two stacked on Register, two on Dashboard, one each on Contact
-  and Login. Information and warnings look the same. Use separate styles.
+- [x] Notice kinds now differ by shape and icon, without new colours: `.notice` (filled box), `.notice-warning` (⚠, heavier border,
+  bold) for "not available / action needed", `.note` (quiet rule, no fill) for empty states. On Register the second box is plain text.
+  Still open: the Dashboard and Contact boxes were not changed; look at them on a phone and decide whether they still earn a box.
 - [ ] *How it works* and *Methodology* end in a bordered box containing a single link
   ("Example guide →"). Make it a button.
 - [x] Move the home organisations banner (see section 1; removed in PR #13). Its button text wraps to two lines on

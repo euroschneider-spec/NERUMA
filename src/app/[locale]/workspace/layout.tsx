@@ -44,7 +44,7 @@ export default async function WorkspaceLayout({ children, params }: { children: 
       />
       <div className="app-content">
         {deadline && (
-          <p className="notice two-factor-banner">
+          <p className="notice notice-warning two-factor-banner">
             {twoFactor.banner.replace('{date}', longDate(deadline, locale))}{' '}
             <Link href={`/${locale}/account#two-factor-title`}>{twoFactor.bannerLink}</Link>
           </p>

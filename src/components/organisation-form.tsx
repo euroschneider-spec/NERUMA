@@ -44,7 +44,7 @@ export function OrganisationForm({ locale, mode, enabled, initial, initialDocume
           <div className="form-field wide"><label htmlFor="organisation-authorization">{v.authorization}</label><textarea id="organisation-authorization" name="authorization" required minLength={20} maxLength={2000} rows={3} aria-describedby="authorization-hint" defaultValue={initial?.authorization}/><small id="authorization-hint">{v.hint}</small></div>
         </>}
         {mode === 'onboard' && <MandateUpload locale={locale} documents={documents} onChange={setDocuments} onBusy={setUploading}/>}
-        {mode === 'register' && <section className="notice wide"><h3>{e.title}</h3><p>{e.hint}</p><p>{e.afterEmail}</p></section>}
+        {mode === 'register' && <section className="wide"><h3>{e.title}</h3><p>{e.hint}</p><p>{e.afterEmail}</p></section>}
         {mode !== 'onboard' && <>
           <label className="form-field">{t.email}<input type="email" name="email" autoComplete="email" required maxLength={254}/></label>
           <div className="form-field"><label htmlFor="account-password">{t.password}</label><input id="account-password" type="password" name="password" aria-describedby={mode === 'register' ? 'password-hint' : undefined} autoComplete={mode === 'register' ? 'new-password' : 'current-password'} required minLength={mode === 'register' ? 12 : 1} maxLength={128}/>{mode === 'register' && <small id="password-hint">{t.passwordHint}</small>}</div>
