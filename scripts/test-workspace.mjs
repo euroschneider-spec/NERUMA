@@ -460,6 +460,7 @@ try {
     await adminPage.goto(`${base}/en/admin`);
     await expect(adminPage.getByRole('heading',{name:'Administration',exact:true,level:1})).toBeVisible();
     await expect(adminPage.getByRole('link',{name:'Review organisation requests',exact:true}).first()).toBeVisible();
+    await expect(adminPage.getByRole('button',{name:'Sign out',exact:true})).toBeVisible();
     await expect(adminPage.getByText(/^\d+ waiting$/)).toBeVisible();
     await expect(adminPage.getByText(/^\d+ administrators$/)).toBeVisible();
     const dashboardAudit=await new AxeBuilder({page:adminPage}).withTags(['wcag2a','wcag2aa','wcag21a','wcag21aa']).analyze();assert.deepEqual(dashboardAudit.violations,[]);

@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { signOut } from '@/app/auth/actions';
 import type { Locale } from '@/lib/i18n';
 import { getOrganisationCopy } from '@/lib/organisation-copy';
 import { getSuperadminCopy } from '@/lib/superadmin';
@@ -21,6 +22,7 @@ export function AdminNav({ locale }: { locale: Locale }) {
   return (
     <nav aria-label={t.title} className="button-row">
       {links.map(([path, label]) => <Link key={path} className="quiet-link" href={`/${locale}${path}`}>{label}</Link>)}
+      <form action={signOut.bind(null, locale)}><button className="text-button" type="submit">{getOrganisationCopy(locale).signOut}</button></form>
     </nav>
   );
 }
