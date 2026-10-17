@@ -463,6 +463,10 @@ try {
     await expect(adminPage.getByText(/^\d+ waiting$/)).toBeVisible();
     await expect(adminPage.getByText(/^\d+ administrators$/)).toBeVisible();
     const dashboardAudit=await new AxeBuilder({page:adminPage}).withTags(['wcag2a','wcag2aa','wcag21a','wcag21aa']).analyze();assert.deepEqual(dashboardAudit.violations,[]);
+    await adminPage.goto(`${base}/en/account`);
+    await expect(adminPage.getByRole('link',{name:'Administration',exact:true})).toBeVisible();
+    await expect(adminPage.getByRole('button',{name:'Submit for manual review',exact:true})).toHaveCount(0);
+    await expect(adminPage.getByRole('heading',{name:'Your information can change someone’s experience.',exact:true})).toHaveCount(0);
     await adminPage.goto(`${base}/en/admin/accounts`);
     await adminPage.getByLabel('Search by email',{exact:true}).fill('owner1@');
     await adminPage.getByRole('button',{name:'Search',exact:true}).click();
