@@ -171,3 +171,17 @@ shown, `Draft` found on two cards. Two re-runs and a wrong theory about my own c
 
 **Takeaway**: before `test:workspace`, run `lsof -i:3012 -i:3000`; after `dev:mock`, stop its children too (the fixture and `next-server`), not just
 the `npm` wrapper. A workspace run that fails on data you didn't create is a stale fixture until proven otherwise.
+
+## 2026-10-17 — the dashboard asked PostgREST for a link that doesn't exist, and only production could say so
+
+`listPlaces` embedded `zone_translations(...)` under `places` in one select. `zone_translations` points at `zones`, not at `places`, so
+PostgREST has nothing to join through and refuses the whole query. In production every organisation owner saw the workspace error page
+("Your draft was not saved"), on the dashboard and on *Report a problem*, both of which call `listPlaces`. Every test passed, because
+`scripts/workspace-fixture.mjs` fakes the REST layer by hand and happily returned rows for any embed it was asked for. A `notify pgrst,
+'reload schema'` changed nothing, which was the clue: the schema was fine, the question was wrong.
+
+**Fix**: the step texts are read in a second query; `npm run test:db` now checks that every table embedded under `places` in
+`src/lib/workspace-server.ts` has a foreign key to `places`.
+
+**Takeaway**: a fake REST layer proves nothing about embedded selects. When a query embeds, check the foreign key in the schema (the test above
+does), and treat the first sign-in of a real organisation on production as part of the test of any workspace change.

@@ -193,8 +193,9 @@ createServer(async(req,res)=>{
           const values=[];const filters=[];
           for(const [key,value] of url.searchParams) {
             if(['select','order','limit','offset'].includes(key)) continue;
-            const [op,...rest]=value.split('.');if(!['eq','neq'].includes(op)) throw new Error('Unsupported filter');
-            const filterValue=rest.join('.');values.push(filterValue==='true'?true:filterValue==='false'?false:filterValue);filters.push(`${safe(key)} ${op==='eq'?'=':'<>'} $${values.length}`);
+            const [op,...rest]=value.split('.');if(!['eq','neq','in'].includes(op)) throw new Error('Unsupported filter');
+            const filterValue=rest.join('.');
+            if(op==='in') {values.push(filterValue.replace(/^\(|\)$/g,'').split(','));filters.push(`${safe(key)}::text = any($${values.length})`);continue;}values.push(filterValue==='true'?true:filterValue==='false'?false:filterValue);filters.push(`${safe(key)} ${op==='eq'?'=':'<>'} $${values.length}`);
           }
           const ordering=(url.searchParams.get('order') || '').split(',').filter(Boolean).map(item=>{const [key,dir]=item.split('.');return `${safe(key)} ${dir==='desc'?'desc':'asc'}`;}).join(',');
           const limit=Math.min(100,Number(url.searchParams.get('limit') || 100));

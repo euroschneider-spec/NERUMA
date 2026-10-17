@@ -733,6 +733,26 @@ await check('only a platform administrator can open a profile',async()=>{
 });
 await db.exec('reset role');
 
+// The test fixture fakes the REST layer, so it can't tell when the app asks PostgREST to embed a table that has no direct link to the one
+// being read (it fails at run time, and the whole dashboard shows its error page). Every table embedded in the dashboard's place query
+// must reference `places` directly.
+await check('every table the dashboard embeds under a place has a foreign key to places',async()=>{
+ await db.exec('reset role');
+ const source=await readFile('src/lib/workspace-server.ts','utf8');
+ const selects=[...source.matchAll(/const (?:base|withPublishing) = '([^']+)'/g)].map(match=>match[1]);
+ assert.equal(selects.length,2);
+ for(const select of selects) {
+  let depth=0,part='';const parts=[];
+  for(const char of select) {if(char==='(') depth++;if(char===')') depth--;if(char===','&&depth===0){parts.push(part);part='';} else part+=char;}
+  parts.push(part);
+  const embeds=parts.filter(item=>item.includes('(')).map(item=>item.slice(0,item.indexOf('(')));
+  assert.ok(embeds.length>=3,'the place query embeds its children');
+  for(const child of embeds) {
+   const linked=(await db.query("select count(*)::int n from pg_constraint where contype='f' and conrelid=$1::regclass and confrelid='public.places'::regclass",[`public.${child}`])).rows[0].n;
+   assert.ok(linked>0,`${child} is embedded under places but has no foreign key to it: PostgREST would refuse the query`);
+  }
+ }
+});
 // Personal data is written down (docs/guides/PERSONAL-DATA.md). A column that points at a user, or looks like an email, a name,
 // a note, a file name, a free-text message or a snapshot, can't be added without being listed there; and nothing listed may be stale.
 await check('every column that can hold personal data is listed in docs/guides/PERSONAL-DATA.md, and nothing listed is stale',async()=>{
