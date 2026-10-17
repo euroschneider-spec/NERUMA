@@ -6,7 +6,7 @@ export function isLocale(value: string): value is Locale { return locales.includ
 export const longDate = (value: string | Date, locale: Locale) =>
   new Date(value).toLocaleDateString(locale === 'en' ? 'en-GB' : locale, { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'Europe/Berlin' });
 export type Copy = typeof dictionaries.en;
-export const dictionaries = {
+const dictionaries = {
   en: {
     nav: ['How it works', 'For organisations', 'Methodology', 'Explore'],
     guide: 'Example guide', contact: 'Contact', workspace: 'Demo workspace', skip: 'Skip to content',

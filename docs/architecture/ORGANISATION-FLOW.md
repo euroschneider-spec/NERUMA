@@ -21,7 +21,7 @@ Management API access still refuses this project, so the owner must apply the su
 ## Remaining activation and integration checks
 
 1. Dedicated project provisioned by the owner: `ywbcsvswisorlgajbkev`. Never use another project as a fallback.
-2. Schema installed manually; run Supabase advisors and regenerate database types when management access is available. Reconcile migration history before future CLI pushes.
+2. Schema installed manually; run Supabase advisors and Reconcile migration history before future CLI pushes.
 3. Set only this project's `VIANORAE_SUPABASE_PROJECT_REF`, `NEXT_PUBLIC_SUPABASE_URL`, and `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` in the VIANORAE preview. The guard requires matching project ref/URL and a publishable key. No service-role key is used.
 4. Enable email confirmation; configure the app URL and allow only the exact VIANORAE callback/branch URLs for redirects. Configure an appropriate email provider and abuse controls before public signup; built-in email delivery has development limits.
 5. Owner-performed signup → confirmation → account → organisation creation passed. Still verify sign-out/re-login, expired links and a second user/tenant. PGlite tests do not replace authenticated multi-tenant integration checks.

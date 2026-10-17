@@ -217,15 +217,10 @@ works offline once loaded. Browser speech stays as the fallback until a file exi
 
 Found on 2026-10-11. None are bugs.
 
-- [ ] `src/lib/database.types.ts` is imported nowhere. It looks like generated Supabase types. Either use
-  them to type the database calls or delete the file.
-- [ ] `scripts/create-demo-seed.mjs` is not in `package.json` or CI, but it writes `supabase/seed.sql` from
-  `src/lib/demo.ts`. Keep it, and add an npm script (e.g. `seed:generate`) plus a line in the README so the
-  seed file is not edited by hand.
+- [x] Removed `src/lib/database.types.ts` (imported nowhere) and `scripts/create-demo-seed.mjs`. `supabase/seed.sql` is now edited by hand.
 - [ ] Four illustrations (`collection`, `interactive`, `quiet-room`, `reception`) look unused but are
   loaded by zone name in `src/lib/demo.ts`. Keep them.
-- [ ] A few exports are used only inside their own file (e.g. `readPreferences`, `validApplication`,
-  `dictionaries`). Harmless; remove the `export` when next editing those files.
+- [x] `readPreferences` and `dictionaries` are no longer exported. (`validApplication` stays: a unit test uses it.)
 
 ## 11. Test strategy
 

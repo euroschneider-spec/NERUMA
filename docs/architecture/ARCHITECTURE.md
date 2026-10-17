@@ -9,7 +9,6 @@ The application uses Next.js 16.4.0 App Router, React 19.3.0 and strict TypeScri
 - `src/lib/i18n.ts`: public and workspace UI dictionaries.
 - `src/lib/content.ts`: public explanatory and legal draft copy.
 - `src/lib/demo.ts`: typed fictional guide, sensory model and validated local draft schema.
-- `src/lib/database.types.ts`: manually maintained foundation row contracts; replace with schema-generated types when management access to the new project is available.
 - `src/lib/roles.ts`: organisation-role descriptions.
 
 ## Current data flows

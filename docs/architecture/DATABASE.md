@@ -34,7 +34,7 @@ The private `platform_admins` table has no client policies or direct client gran
 
 ## Fictional seed
 
-`supabase/seed.sql` creates one explicitly fictional, draft Museum with five zones and EN/RO/DE translations. It contains no auth accounts, passwords or memberships and publishes no guide. It is generated from the same typed demonstration data by `node scripts/create-demo-seed.mjs`. It is intended for a disposable local database or the dedicated project only, after deliberate review. The manual installer does not apply this sample seed.
+`supabase/seed.sql` creates one explicitly fictional, draft Museum with five zones and EN/RO/DE translations. It contains no auth accounts, passwords or memberships and publishes no guide. It is maintained by hand. It is intended for a disposable local database or the dedicated project only, after deliberate review. The manual installer does not apply this sample seed.
 
 ## Before connecting a new live database
 

@@ -45,7 +45,7 @@ export function fromStored(raw:unknown):Preferences {
   };
 }
 
-export function readPreferences():Preferences {
+function readPreferences():Preferences {
   try { return fromStored(JSON.parse(localStorage.getItem(storageKey)||'null')); }
   catch { return defaults; }
 }
