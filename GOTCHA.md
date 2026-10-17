@@ -161,3 +161,13 @@ dashboard, or resolve the address (`dig <ref>.supabase.co`). Never retype a key 
 copy it from the source. When a form is disabled with no message, suspect the settings first, and run `npm run test:smoke`
 after any change to Vercel's environment variables.
 
+
+## 2026-10-17 — a stopped `dev:mock` left its fixture running, and `test:workspace` quietly used it
+
+I stopped `npm run dev:mock` by killing the `npm` process. `dev-mock.mjs` had started `scripts/workspace-fixture.mjs` (port 3012) and `next dev`
+as children, and they kept running. The next `npm run test:workspace` found port 3012 taken and talked to that old fixture, which was
+loaded with the browsing data (`VIANORAE_FIXTURE_DEMO_DATA=1`). Checks then failed in ways unrelated to the change: "No locations yet" not
+shown, `Draft` found on two cards. Two re-runs and a wrong theory about my own change went by before `lsof -i:3012` showed the leftover.
+
+**Takeaway**: before `test:workspace`, run `lsof -i:3012 -i:3000`; after `dev:mock`, stop its children too (the fixture and `next-server`), not just
+the `npm` wrapper. A workspace run that fails on data you didn't create is a stale fixture until proven otherwise.

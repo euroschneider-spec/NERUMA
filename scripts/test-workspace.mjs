@@ -25,6 +25,8 @@ const base='http://localhost:3011';
 const authenticators={3:FIXTURE_ADMIN_TOTP_SECRET};
 const enterCode=async(page,code)=>{await page.getByLabel('6-digit code from the app',{exact:true}).fill(code);await page.getByRole('button',{name:'Confirm',exact:true}).click();};
 async function signInWithPassword(page,owner) {
+  // The login page sends a signed-in person on to their own page, so switching person starts from signed out.
+  await page.context().clearCookies({name:/^sb-/});
   await page.goto(`${base}/en/login`);await page.getByLabel('Work email',{exact:true}).fill(`owner${owner}@example.test`);
   await page.getByLabel('Password',{exact:true}).fill('Fixture-only-passphrase-123');
   await page.getByRole('button',{name:'Sign in',exact:true}).click();
@@ -477,6 +479,8 @@ try {
     }
     await adminPage.goto(`${base}/en/account`);
     await expect(adminPage.locator('.admin-strip')).toHaveCount(0);
+    await adminPage.goto(`${base}/en/login`);
+    await expect(adminPage).toHaveURL(/\/en\/admin$/);
     await adminPage.goto(`${base}/en/account`);
     await expect(adminPage.getByRole('link',{name:'Administration',exact:true})).toBeVisible();
     await expect(adminPage.getByRole('button',{name:'Submit for manual review',exact:true})).toHaveCount(0);
@@ -637,6 +641,7 @@ try {
   await check('email rate limits and resend feedback are visible without claiming delivery',async()=>{
     await applicant.goto(`${base}/en/register`);await fillApplication();await applicant.getByLabel('Work email',{exact:true}).fill('limited@example.test');await applicant.getByLabel('Password',{exact:true}).fill('Fixture-only-passphrase-123');
     await applicant.getByRole('button',{name:'Request organisation access',exact:true}).click();await expect(applicant.locator('main').getByRole('alert')).toContainText('The email service is limiting requests.');
+    await applicant.context().clearCookies({name:/^sb-/});
     await applicant.goto(`${base}/en/login`);await applicant.getByLabel('Confirmation email address',{exact:true}).fill('limited@example.test');await applicant.getByRole('button',{name:'Resend confirmation email',exact:true}).click();await expect(applicant.locator('main').getByRole('alert')).toContainText('The email service is limiting requests.');
     await applicant.getByLabel('Confirmation email address',{exact:true}).fill('confirmed@example.test');await applicant.getByRole('button',{name:'Resend confirmation email',exact:true}).click();await expect(applicant.getByRole('status')).toContainText('The confirmation request was accepted.');
   });

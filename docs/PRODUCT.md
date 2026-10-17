@@ -81,7 +81,7 @@ Languages everywhere: **English, Romanian, German.** Root `/` opens English; an 
 - The server applies every rule even if the browser's checks are skipped.
 
 ### Confirm the email, then submit
-- A confirmation email (in the registration language); a link back signs them in. *Resend confirmation* is on the sign-in page.
+- A confirmation email (in the registration language); a link back signs them in. *Resend confirmation* is on the sign-in page. Someone who is already signed in who opens the sign-in page is sent straight on to their own page (the code step if one is owed, otherwise the administration area, the workspace or the account page).
   Until NERUMA has its own email provider, Supabase only sends to the project team's addresses.
 - After signing in: attach **1 to 3 documents** proving the mandate (PDF, JPEG or PNG, up to 3 MB each; images are re-encoded and
   stripped of hidden data; PDFs are checked), then submit for **manual review**.
