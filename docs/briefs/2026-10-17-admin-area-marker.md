@@ -1,5 +1,5 @@
 ---
-status: idea   # idea → building → done
+status: done   # idea → building → done
 date: 2026-10-17
 ---
 
@@ -17,12 +17,12 @@ two sides look alike today. A clear mark lowers the chance of acting in the wron
 whose view it is. (Proposed reason, to be confirmed by the owner.)
 
 ## Done when
-- [ ] Every administration page (dashboard, accounts, administrators, review queue, reports, deletions) shows a strip with an icon,
+- [x] Every administration page (dashboard, accounts, administrators, review queue, reports, deletions) shows a strip with an icon,
   the words "Platform administration" and the signed-in email, on a phone as well as a desktop.
-- [ ] The administration area has a warm yellow accent in every theme (dark, light, high contrast, warm dark, warm light) and
+- [x] The administration area has a warm yellow accent in every theme (dark, light, high contrast, warm dark, warm light) and
   passes the automated contrast checks in each; high contrast stays at least as strong as it is now.
-- [ ] The strip and the colour are not the only signal: the words stay when colours are changed, and a screen reader reads the strip.
-- [ ] Nothing outside the administration area changes colour.
+- [x] The strip and the colour are not the only signal: the words stay when colours are changed, and a screen reader reads the strip.
+- [x] Nothing outside the administration area changes colour.
 
 ## Not in scope
 - The profile page itself and its "you are viewing this account" line (TECH-TASKS §14, item 1): this brief only prepares the wording.
@@ -34,4 +34,12 @@ whose view it is. (Proposed reason, to be confirmed by the owner.)
 - Colour is applied by one class on the administration pages that replaces the accent colours, so no other page is affected.
 
 ## Result
-Filled in at the end.
+Built on pull request #57. `src/app/[locale]/admin/layout.tsx` wraps every administration page in `admin-area` and shows the strip (same gate as the
+pages, a plain 404 for anyone else). The yellow is in `globals.css` (`.admin-area`, dark and light; contrast 5.2 to 10.9 for links and
+button text). High contrast keeps its palette and gets the strip only; the reader's warm-green accent is replaced inside the area.
+
+Ran: typecheck, lint, unit (224), `test:workspace` (65; new checks: the strip on all six pages with the email, and axe in dark, light, warm dark,
+warm light and high contrast on the dashboard and administrators pages, and no strip on `/account`), and the full Playwright run (151 passed,
+13 skipped). One test failed once in the full run, "the header stays in view while the page scrolls" (home page anchor, 55px against 60px), and
+passed alone straight afterwards; the home page does not use this layout. Not run: `test:db`, `test:data`. RO and DE pages have no automated
+contrast scan beyond the shared tokens.

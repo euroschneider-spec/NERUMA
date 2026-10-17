@@ -464,6 +464,19 @@ try {
     await expect(adminPage.getByText(/^\d+ waiting$/)).toBeVisible();
     await expect(adminPage.getByText(/^\d+ administrators$/)).toBeVisible();
     const dashboardAudit=await new AxeBuilder({page:adminPage}).withTags(['wcag2a','wcag2aa','wcag21a','wcag21aa']).analyze();assert.deepEqual(dashboardAudit.violations,[]);
+    for(const path of ['','/organisations','/reports','/deletions','/accounts','/administrators']) {
+      await adminPage.goto(`${base}/en/admin${path}`);
+      await expect(adminPage.locator('.admin-strip').getByText('Platform administration',{exact:true})).toBeVisible();
+      await expect(adminPage.locator('.admin-strip')).toContainText('Signed in as owner3@example.test');
+    }
+    await adminPage.emulateMedia({reducedMotion:'reduce'});
+    for(const [theme,tone] of [['dark','cool'],['light','cool'],['dark','warm'],['light','warm'],['contrast','cool']]) for(const path of ['','/administrators']) {
+      await adminPage.goto(`${base}/en/admin${path}`);
+      await adminPage.evaluate(([t,w])=>{document.documentElement.dataset.theme=t;document.documentElement.dataset.tone=w;},[theme,tone]);
+      const themed=await new AxeBuilder({page:adminPage}).withTags(['wcag2a','wcag2aa','wcag21a','wcag21aa']).analyze();assert.deepEqual(themed.violations,[],`${theme}/${tone} ${path}`);
+    }
+    await adminPage.goto(`${base}/en/account`);
+    await expect(adminPage.locator('.admin-strip')).toHaveCount(0);
     await adminPage.goto(`${base}/en/account`);
     await expect(adminPage.getByRole('link',{name:'Administration',exact:true})).toBeVisible();
     await expect(adminPage.getByRole('button',{name:'Submit for manual review',exact:true})).toHaveCount(0);

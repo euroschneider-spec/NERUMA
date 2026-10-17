@@ -51,7 +51,7 @@ export function parseAccounts(value: unknown): AccountsPage | null {
 
 const copy = {
   en: {
-    title: 'Administration', intro: 'What waits for you, and who has an account.', dashboard: 'Dashboard', account: 'My account',
+    stripTitle: 'Platform administration', signedInAs: 'Signed in as {email}', title: 'Administration', intro: 'What waits for you, and who has an account.', dashboard: 'Dashboard', account: 'My account',
     unavailable: 'The administration tools are being activated. Account and administrator tools are unavailable until the latest database update is installed.',
     error: 'This could not be loaded. Reload the page, and try again later if it stays this way.',
     waiting: 'What waits', requests: 'Organisation requests', requestsCount: '{n} waiting', reports: 'Problem reports', reportsCount: '{n} open',
@@ -69,7 +69,7 @@ const copy = {
     cancel: 'Cancel', you: 'You', removeNote: 'You can’t remove yourself, and the last administrator can’t be removed.',
   },
   ro: {
-    title: 'Administrare', intro: 'Ce te așteaptă și cine are cont.', dashboard: 'Panou', account: 'Contul meu',
+    stripTitle: 'Administrarea platformei', signedInAs: 'Conectat ca {email}', title: 'Administrare', intro: 'Ce te așteaptă și cine are cont.', dashboard: 'Panou', account: 'Contul meu',
     unavailable: 'Instrumentele de administrare sunt în curs de activare. Instrumentele pentru conturi și administratori nu sunt disponibile până la instalarea ultimei actualizări a bazei de date.',
     error: 'Nu s-a putut încărca. Reîncarcă pagina și încearcă mai târziu dacă problema continuă.',
     waiting: 'Ce așteaptă', requests: 'Cereri ale organizațiilor', requestsCount: '{n} în așteptare', reports: 'Probleme raportate', reportsCount: '{n} deschise',
@@ -87,7 +87,7 @@ const copy = {
     cancel: 'Anulează', you: 'Tu', removeNote: 'Nu te poți elimina pe tine și nici ultimul administrator.',
   },
   de: {
-    title: 'Verwaltung', intro: 'Was auf Sie wartet und wer ein Konto hat.', dashboard: 'Übersicht', account: 'Mein Konto',
+    stripTitle: 'Plattform-Verwaltung', signedInAs: 'Angemeldet als {email}', title: 'Verwaltung', intro: 'Was auf Sie wartet und wer ein Konto hat.', dashboard: 'Übersicht', account: 'Mein Konto',
     unavailable: 'Die Verwaltungswerkzeuge werden aktiviert. Konten- und Administratorfunktionen sind erst nach dem neuesten Datenbank-Update verfügbar.',
     error: 'Das konnte nicht geladen werden. Laden Sie die Seite neu und versuchen Sie es später erneut.',
     waiting: 'Was wartet', requests: 'Organisationsanträge', requestsCount: '{n} wartend', reports: 'Gemeldete Probleme', reportsCount: '{n} offen',

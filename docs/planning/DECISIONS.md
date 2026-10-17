@@ -194,7 +194,7 @@ Owner, 2026-10-17. Everyone signs in through the same steps (password, then the 
 the account. A platform administrator goes to `/admin`: what waits (organisation requests, problem reports, deletions), the
 accounts list (searchable by email) and the administrators list. An administrator can add another (an existing confirmed account)
 or remove another, never themselves, so the last one can't be removed. Before this, the first one was added with SQL; that is still
-how the very first one is made. Not chosen yet: a list of organisations, a history of who added whom. Plan: brief `2026-10-17-superadmin-dashboard.md`.
+how the very first one is made. The administration area always says so: a strip with the signed-in email on every page, and a warm yellow in place of the blue (dark and light themes; high contrast keeps its palette). Not chosen yet: a list of organisations, a history of who added whom. Plan: brief `2026-10-17-superadmin-dashboard.md`.
 
 ## Not yet discussed
 
