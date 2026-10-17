@@ -422,3 +422,16 @@ Each step is its own small pull request. When it is merged, remove its task from
    the language of the page they registered in.
 5. [ ] **An optional second contact for the organisation**, for when the representative leaves or their email stops working.
    Shown to the administrator only.
+
+## 14. Superadmin area: what comes next (owner, 2026-10-17)
+
+The dashboard, accounts list and administrators list exist (brief `2026-10-17-superadmin-dashboard.md`). Left for later:
+
+1. [ ] **A profile page for any account.** A platform administrator opens a person from the Accounts list and sees their profile: email,
+   created and last sign-in, two-factor on or off, the organisations they belong to and their role in each, their application and its
+   status, and whether a deletion is in progress. Read-only first. Decide before building: whether the page offers actions (reset
+   two-factor, start or restore a deletion; these exist elsewhere today), and whether looking at a profile is recorded (who looked, when),
+   since it shows personal data (`docs/guides/PERSONAL-DATA.md`).
+2. [ ] **A list of organisations** with status (pending, approved, suspended) and number of published guides, each linking to its request.
+3. [ ] **A record of who added or removed which administrator**, and when.
+4. [ ] **"Organisation account" in the administration menu** reads better as "My account".
