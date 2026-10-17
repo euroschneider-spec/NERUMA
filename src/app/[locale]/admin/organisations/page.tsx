@@ -36,8 +36,8 @@ export default async function ReviewQueue({params,searchParams}:{params:Promise<
   const base=`/${locale}/admin/organisations`;
   return <main id="main-content" className="container verification-page"><div className="page-heading"><h1>{v.admin}</h1><p className="lead">{v.adminIntro}</p></div><div className="content-body">
     <nav aria-label={v.title} className="button-row"><Link className="quiet-link" href={base}>{v.statuses.pending}</Link><Link className="quiet-link" href={`${base}?history=1`}>{v.history}</Link><Link className="quiet-link" href={`/${locale}/admin/reports`}>{getWorkspaceCopy(locale).reportsAdmin}</Link><Link className="quiet-link" href={`/${locale}/admin/deletions`}>{getDeletionCopy(locale).adminTitle}</Link><Link className="quiet-link" href={`/${locale}/account`}>{t.account}</Link></nav>
-    {!documentsEnabled && <p className="notice">{getEvidenceCopy(locale).setup}</p>}
-    {!requests.length && <p className="notice">{v.empty}</p>}
+    {!documentsEnabled && <p className="notice notice-warning">{getEvidenceCopy(locale).setup}</p>}
+    {!requests.length && <p className="note">{v.empty}</p>}
     {requests.map(request=><section key={request.id} className="verification-request" aria-labelledby={`request-${request.id}`}>
       <h2 id={`request-${request.id}`}>{request.organization_name}</h2><p className="notice">{v.statuses[request.status]}</p>
       <dl className="verification-details"><dt>{t.email}</dt><dd>{request.applicant_email}</dd><dt>{t.representative}</dt><dd>{request.representative_name}</dd><dt>{v.role}</dt><dd>{request.representative_role}</dd><dt>{v.country}</dt><dd>{request.country_code}</dd><dt>{v.website}</dt><dd><a href={request.official_website} target="_blank" rel="noreferrer">{request.official_website}</a></dd><dt>{v.registry}</dt><dd>{request.registry_reference || '—'}</dd><dt>{v.authorization}</dt><dd>{request.authorization_description}</dd><dt>{v.submitted}</dt><dd>{new Date(request.submitted_at).toLocaleString(locale,{timeZone:'Europe/Berlin'})}</dd></dl>

@@ -54,7 +54,7 @@ export default async function AccountDeletions({ params }: { params: Promise<{ l
         {nav}
         <section aria-labelledby="deletions-pending">
           <h2 id="deletions-pending">{t.pending}</h2>
-          {!pending.length && <p className="notice">{t.none}</p>}
+          {!pending.length && <p className="note">{t.none}</p>}
           <ul className="deletion-list">
             {pending.map((entry) => (
               <li key={entry.userId} className="verification-request">
@@ -76,7 +76,7 @@ export default async function AccountDeletions({ params }: { params: Promise<{ l
         </section>
         <section aria-labelledby="deletions-holds">
           <h2 id="deletions-holds">{t.holds}</h2>
-          {!holds.length && <p className="notice">{t.holdsNone}</p>}
+          {!holds.length && <p className="note">{t.holdsNone}</p>}
           <ul className="deletion-list">
             {holds.map((hold) => (
               <li key={hold.id} className="verification-request">
