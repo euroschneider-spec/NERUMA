@@ -434,4 +434,7 @@ The dashboard, accounts list and administrators list exist (brief `2026-10-17-su
    since it shows personal data (`docs/guides/PERSONAL-DATA.md`).
 2. [ ] **A list of organisations** with status (pending, approved, suspended) and number of published guides, each linking to its request.
 3. [ ] **A record of who added or removed which administrator**, and when.
-4. [ ] **"Organisation account" in the administration menu** reads better as "My account".
+4. [ ] **Mark that you are in the administration area.** A superadmin should always see that they are acting as platform
+   administrator: a visible strip on every administration page (text and icon, not colour alone) with the signed-in email, and on
+   an account's profile page a clear "you are viewing as a platform administrator". Decide the wording with the owner.
+5. [ ] **"Organisation account" in the administration menu** reads better as "My account".
