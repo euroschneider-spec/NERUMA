@@ -136,3 +136,12 @@ Done on 2026-10-12: the top bar keeps three controls and everything else lives i
 - [ ] Unused CSS: `.pilot` and `.principle` aren't referenced by any page. Delete them.
 - [ ] Account and admin pages: `.verification-page` centres a 900px column, while other pages align
   left to the header. Check while signed in.
+
+## 8. The first visit of a new organisation (owner's test run, 2026-10-17)
+
+Found when the owner signed in as a brand-new organisation account on production. Brief to write before building.
+
+- [ ] **No path.** The account page shows blocks of text. Show three steps ("1. Email confirmed ✓ · 2. Send your request · 3. Wait for approval") with the form directly under them.
+- [ ] **Too early.** "Delete my account" and "Open demo workspace" appear before the person has sent a request. Show deletion only when there is something to delete, at the bottom; drop the demo link here.
+- [ ] **A disabled button with no reason.** *Submit for manual review* stays disabled until a mandate document is uploaded and says nothing. Say why under it ("Upload your mandate document to continue") and keep that line available to screen readers.
+- [ ] **The wrong words on a load error.** The workspace error page says "Your draft was not saved" for any failure, including a dashboard that couldn't load. Say what failed.

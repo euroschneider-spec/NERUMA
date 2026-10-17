@@ -29,18 +29,23 @@ export const workspaceSession = cache(async (locale: Locale) => {
 export async function listPlaces(supabase: SupabaseClient, org: string, locale: Locale): Promise<PlaceSummary[]> {
   // Before the publishing migration these columns and the QR table link don't exist: read without them.
   const publishing = await publishingReady(supabase);
-  const base = 'id,city,address,status,revision,updated_at,place_translations(name,locale),zones(id,status,sort_order),zone_translations(zone_id,title,description,locale),media_assets(zone_id,storage_key,alt_text,active)' as const;
-  const withPublishing = 'id,city,address,status,revision,updated_at,slug,published_revision,qr_redirects(public_code),place_translations(name,locale),zones(id,status,sort_order),zone_translations(zone_id,title,description,locale),media_assets(zone_id,storage_key,alt_text,active)';
+  const base = 'id,city,address,status,revision,updated_at,place_translations(name,locale),zones(id,status,sort_order),media_assets(zone_id,storage_key,alt_text,active)' as const;
+  const withPublishing = 'id,city,address,status,revision,updated_at,slug,published_revision,qr_redirects(public_code),place_translations(name,locale),zones(id,status,sort_order),media_assets(zone_id,storage_key,alt_text,active)';
   // The extra columns are read through `live` below, so the result is typed by the base select.
   const { data, error } = await supabase.from('places').select((publishing ? withPublishing : base) as typeof base)
     .eq('organization_id',org).neq('status','archived').order('updated_at',{ascending:false}).limit(100);
   if (error) throw new Error('workspace-unavailable');
+  // A step's text hangs off the step, not the place, so it has no direct link to a place to embed through: read it on its own.
+  const ids = (data || []).map(row => row.id as string);
+  const written = ids.length ? await supabase.from('zone_translations').select('zone_id,place_id,title,description,locale').in('place_id',ids).eq('locale',locale) : {data:[],error:null};
+  if (written.error) throw new Error('workspace-unavailable');
+  const stepTexts = (written.data || []) as {zone_id:string;place_id:string;title:string;description:string;locale:string}[];
   return (data || []).map(row => {
     const translations = row.place_translations as {name:string;locale:string}[];
     const current = translations.find(t=>t.locale===locale);
     const fallback = translations[0];
     const steps = (row.zones as {id:string;status:string;sort_order:number}[]).filter(z=>z.status!=='archived').sort((a,b)=>a.sort_order-b.sort_order);
-    const texts = (row.zone_translations as {zone_id:string;title:string;description:string;locale:string}[]).filter(t=>t.locale===locale);
+    const texts = stepTexts.filter(t=>t.place_id===row.id);
     const photos = (row.media_assets as {zone_id:string|null;storage_key:string;alt_text:Record<string,string>;active:boolean}[]).filter(p=>p.active);
     const firstPhoto = steps.map(s=>photos.find(p=>p.zone_id===s.id)).find(Boolean);
     const live = row as unknown as {slug?:string;published_revision?:number|string|null;qr_redirects?:{public_code:string}[]};
