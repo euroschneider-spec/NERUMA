@@ -150,6 +150,10 @@ Languages everywhere: **English, Romanian, German.** Root `/` opens English; an 
   the number of accounts and administrators. The same sign-in and two-factor steps as everyone else. The account page of an administrator with no organisation of their own has a link to it and no registration form. Every administration page has a Sign out button in its menu, a strip saying "Platform administration" with the signed-in email, and a warm yellow look that sets it apart from the rest of the site.
 - **Accounts** (`/admin/accounts`): every account, newest first, 25 a page, searchable by email: confirmed or not, administrator,
   two-factor on or off, deletion in progress, last sign-in, and the organisations the person belongs to.
+- **Account profile** (`/admin/accounts/<id>`, from the Accounts list): one account in full: email, created, last sign-in, confirmed or not,
+  administrator, two-factor on or off, the organisations the person belongs to with their role and the organisation's status, their
+  organisation request and its status, and a deletion in progress (asked when, by whom, due when). Read only; the page says "You are viewing
+  this account as a platform administrator." Nothing records who looked.
 - **Administrators** (`/admin/administrators`): who they are; add one by the email of a confirmed account; remove another one
   (never yourself, so there is always at least one). The very first administrator is still added with SQL.
 - **Organisation review queue**: pending requests (25 a page) and a history of decisions. Each request shows the organisation,

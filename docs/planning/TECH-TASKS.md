@@ -427,14 +427,11 @@ Each step is its own small pull request. When it is merged, remove its task from
 
 The dashboard, accounts list and administrators list exist (brief `2026-10-17-superadmin-dashboard.md`). Left for later:
 
-1. [ ] **A profile page for any account.** A platform administrator opens a person from the Accounts list and sees their profile: email,
-   created and last sign-in, two-factor on or off, the organisations they belong to and their role in each, their application and its
-   status, and whether a deletion is in progress. Read-only first. Decide before building: whether the page offers actions (reset
-   two-factor, start or restore a deletion; these exist elsewhere today), and whether looking at a profile is recorded (who looked, when),
-   since it shows personal data (`docs/guides/PERSONAL-DATA.md`).
+1. [x] **A profile page for any account** (`/admin/accounts/<id>`). Done, read only: email, dates, two-factor, organisations with role and status, the
+   request, a deletion in progress. Owner's choices, 2026-10-17: no actions on the page yet (reset two-factor and the deletion tools stay where they
+   are) and no record of who looked. Revisit both when an administrator needs them; a view log would be personal data (`docs/guides/PERSONAL-DATA.md`).
 2. [ ] **A list of organisations** with status (pending, approved, suspended) and number of published guides, each linking to its request.
 3. [ ] **A record of who added or removed which administrator**, and when.
 4. [x] **Mark that you are in the administration area.** Done: a strip on every administration page (icon, "Platform administration",
-   the signed-in email) and a warm yellow for the whole area in dark and light (`admin-area`; high contrast keeps its palette). Still
-   to do with item 1: "you are viewing this account as a platform administrator" on a profile page.
+   the signed-in email) and a warm yellow for the whole area in dark and light (`admin-area`; high contrast keeps its palette). The profile page (item 1) says "you are viewing this account as a platform administrator".
 5. [ ] **"Organisation account" in the administration menu** reads better as "My account".

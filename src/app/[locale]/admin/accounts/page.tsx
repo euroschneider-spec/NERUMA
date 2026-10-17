@@ -46,7 +46,7 @@ export default async function Accounts({ params, searchParams }: { params: Promi
         <ul className="deletion-list">
           {result.rows.map((row) => (
             <li key={row.userId} className="verification-request">
-              <h2 className="account-email">{row.email}</h2>
+              <h2 className="account-email"><Link href={`/${locale}/admin/accounts/${row.userId}`}>{row.email}</Link></h2>
               <p>
                 {[
                   row.isAdmin && t.adminBadge,
