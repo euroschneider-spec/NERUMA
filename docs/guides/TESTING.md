@@ -40,6 +40,8 @@ npm run typecheck && npm run lint && npm run test:unit
 PORT=3100 npx playwright test tests/platform.spec.ts
 ```
 
+`npm run test:workspace` takes `-- --group=workspace|approval|two-factor|accounts` to run one part on its own fixture (CI runs the four side by side); with no flag it runs all of them in order. `--skip-build` reuses the build already in `.next`.
+
 **Before pushing:** `npm run check && PORT=3100 npm run test:e2e`, or open the pull request and
 let CI run it.
 
