@@ -50,6 +50,8 @@ Languages everywhere: **English, Romanian, German.** Root `/` opens English; an 
 - Uses the device's own voice; **no text is sent anywhere**. Play, pause, resume, stop, speed 0.75× / 1× / 1.25×.
 - Reads the page, the current step or the whole guide. If the device has no voice for the page language, it says so instead of
   reading in another language.
+- Picks the best voice the device has for the language: on-device voices first, then "Premium" and "Enhanced" ones; Apple's joke
+  voices and eSpeak only when nothing else exists. A tip says how to install a more natural voice on the device.
 
 ### Contact
 - A form that **prepares** a message (name, email, organisation, message) and copies it; nothing is sent or stored.
@@ -199,7 +201,7 @@ Languages everywhere: **English, Romanian, German.** Root `/` opens English; an 
 - **Email provider** for confirmations, reminders and notices (TECH-TASKS §4).
 - **Visit counts** per location (privacy decision pending).
 - **Paying by invoice and bank transfer**, and German e-invoices (payments brief, "Not in scope").
-- **A consistent read-aloud voice** generated once per text (researched, not started).
+- **A consistent read-aloud voice** generated once per text (researched, postponed by the owner on 18 October 2026: the device's voice stays).
 
 ## 8. Visible gaps (things a person can notice today)
 

@@ -1,24 +1,24 @@
 import { test, expect, type Page } from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
 
-type SpeechFixture={texts:string[];lang:string;rate:number;paused:number;resumed:number;cancelled:number;pausedState:boolean;finish:()=>void;fail:()=>void;voices:SpeechSynthesisVoice[]};
+type SpeechFixture={texts:string[];lang:string;voice:string;rate:number;paused:number;resumed:number;cancelled:number;pausedState:boolean;finish:()=>void;fail:()=>void;voices:SpeechSynthesisVoice[]};
 async function mockSpeech(page:Page,locale='en',unsupported=false) {
   await page.addInitScript(({locale,unsupported})=>{
     if(unsupported){Object.defineProperty(window,'speechSynthesis',{value:undefined});return;}
     let current:SpeechSynthesisUtterance|null=null;
-    const state:SpeechFixture={texts:[],lang:'',rate:1,paused:0,resumed:0,cancelled:0,pausedState:false,
+    const state:SpeechFixture={texts:[],lang:'',voice:'',rate:1,paused:0,resumed:0,cancelled:0,pausedState:false,
       voices:[{lang:`${locale}-TEST`,name:'Test voice',default:true,localService:true,voiceURI:'test'}],
       finish:()=>{let count=0;while(current && count++<200){const next=current;current=null;next.onend?.({} as SpeechSynthesisEvent);}},
       fail:()=>{const next=current;current=null;next?.onerror?.({error:'synthesis-failed'} as SpeechSynthesisErrorEvent);}};
     Object.defineProperty(window,'__speech',{value:state});
     Object.defineProperty(window,'speechSynthesis',{value:{getVoices:()=>state.voices,
-      speak:(utterance:SpeechSynthesisUtterance)=>{current=utterance;state.texts.push(utterance.text);state.lang=utterance.lang;state.rate=utterance.rate;},
+      speak:(utterance:SpeechSynthesisUtterance)=>{current=utterance;state.texts.push(utterance.text);state.lang=utterance.lang;state.voice=utterance.voice?.name??'';state.rate=utterance.rate;},
       cancel:()=>{state.cancelled++;const old=current;current=null;old?.onerror?.({error:'canceled'} as SpeechSynthesisErrorEvent);},
       pause:()=>{state.paused++;state.pausedState=true;},resume:()=>{state.resumed++;state.pausedState=false;}}});
     Object.defineProperty(window,'SpeechSynthesisUtterance',{value:class {text:string;lang='';rate=1;voice=null;onend=null;onerror=null;constructor(text:string){this.text=text;}}});
   },{locale,unsupported});
 }
-const fixture=(page:Page)=>page.evaluate(()=>{const s=(window as unknown as {__speech:SpeechFixture}).__speech;return {texts:s.texts,lang:s.lang,rate:s.rate,paused:s.paused,resumed:s.resumed,cancelled:s.cancelled,pausedState:s.pausedState};});
+const fixture=(page:Page)=>page.evaluate(()=>{const s=(window as unknown as {__speech:SpeechFixture}).__speech;return {texts:s.texts,lang:s.lang,voice:s.voice,rate:s.rate,paused:s.paused,resumed:s.resumed,cancelled:s.cancelled,pausedState:s.pausedState};});
 const copy={
   en:{start:'Read aloud',pause:'Pause',resume:'Resume',stop:'Stop',speed:'Reading speed',next:'Next step',full:'Complete guide in text',playing:'Reading aloud.',paused:'Reading paused.',finished:'Reading finished.',options:'Guide options',closeOptions:'Close guide options'},
   ro:{start:'Citește cu voce',pause:'Pauză',resume:'Continuă',stop:'Oprește',speed:'Viteza lecturii',next:'Pasul următor',full:'Ghid complet în text',playing:'Lectură în curs.',paused:'Lectură în pauză.',finished:'Lectură încheiată.',options:'Opțiuni pentru ghid',closeOptions:'Închide opțiunile ghidului'},
@@ -74,6 +74,14 @@ test('missing language voices never fall back to a different language and can be
   await audio.getByRole('button',{name:copy.ro.start,exact:true}).click();await expect(audio.getByRole('status')).toContainText('voce în română');expect((await fixture(page)).texts).toEqual([]);
   await page.evaluate(()=>{const s=(window as unknown as {__speech:SpeechFixture}).__speech;s.voices[0]={...s.voices[0],lang:'ro-RO'};});
   await audio.getByRole('button',{name:copy.ro.start,exact:true}).click();expect((await fixture(page)).lang).toBe('ro-RO');
+});
+test('reads with the best on-device voice for the language, not the first one listed',async({page})=>{
+  await mockSpeech(page,'de');await page.goto('/de/places/willow-museum/guide');
+  await page.evaluate(()=>{const s=(window as unknown as {__speech:SpeechFixture}).__speech;
+    s.voices.push({lang:'de-DE',name:'Katja Online (Natural)',default:false,localService:false,voiceURI:'online'},{lang:'de-DE',name:'Anna (Erweitert)',default:false,localService:true,voiceURI:'enhanced'});});
+  await page.getByRole('button',{name:copy.de.options,exact:true}).click();const audio=page.locator('.gg-sheet .read-aloud');
+  await expect(audio.getByText('„erweiterte“ oder „Premium“-Stimme',{exact:false})).toBeVisible();
+  await audio.getByRole('button',{name:copy.de.start,exact:true}).click();expect((await fixture(page)).voice).toBe('Anna (Erweitert)');
 });
 test('unsupported speech leaves the complete readable guide and screen-reader guidance available',async({page})=>{
   await mockSpeech(page,'en',true);await page.goto('/en/places/willow-museum/guide');await page.getByRole('button',{name:copy.en.options,exact:true}).click();const audio=page.locator('.gg-sheet .read-aloud');

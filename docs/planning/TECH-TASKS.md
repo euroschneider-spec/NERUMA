@@ -26,7 +26,7 @@ and 16; the order below is a proposal for the owner to confirm.
    administrators.
 9. **Payment** (§8): built and switched off; set up Stripe in test mode, then go live after email and the privacy and terms text.
 10. **Going live:** the full checklist is §18.
-11. **Later:** a consistent read-aloud voice (§9), a storage plan and photo limits (§5), the table of every field (§6), test hardening (§11).
+11. **Later:** a consistent read-aloud voice (§9, postponed), a storage plan and photo limits (§5), the table of every field (§6), test hardening (§11).
 
 ## 1. Mock data and mock users
 
@@ -211,6 +211,10 @@ until a start date is set. Decisions: `DECISIONS.md`, "Payments go through Strip
       automatically when an organisation is erased (today a person does it in Stripe).
 
 ## 9. A consistent voice for read-aloud
+
+**Postponed (owner, 2026-10-18):** read-aloud keeps the device's own voice; no generated audio for now (DECISIONS.md, "Read-aloud
+keeps the device's voice"). Done instead: the best voice on the device is chosen (`pickVoice` in `src/lib/speech.ts`), text is read
+in sentence-sized pieces, and a tip says how to install a more natural voice. The research below stays for when this is reopened.
 
 **Today:** read-aloud uses the browser's built-in speech (`speechSynthesis`, `src/components/read-aloud.tsx`
 and `src/lib/speech.ts`). The voice is whatever the visitor's device has, so it sounds different, and often

@@ -4,18 +4,63 @@ import { getAccessCopy } from './accessibility-copy';
 import { getPublishingCopy } from './publishing';
 import type { Guide, Zone, SensoryProfile } from './demo';
 
-// Short utterances avoid browser limits on long guides. No text is sent to an app API.
+// Short utterances avoid browser limits: Chrome stops a long utterance after about 15 seconds.
+// Whole sentences are packed together so the voice pauses where the text does. No text is sent to an app API.
+const chunkLength=220;
+
 export function speechChunks(text:string):string[] {
   const chunks:string[]=[];
   for(const paragraph of text.split(/\n+/).map(value=>value.trim()).filter(Boolean)) {
-    let rest=paragraph;
-    while(rest.length>500) {
-      const space=rest.lastIndexOf(' ',500);const end=space>0?space:500;
-      chunks.push(rest.slice(0,end));rest=rest.slice(end).trim();
+    let current='';
+    for(const sentence of paragraph.split(/(?<=[.!?…]["'”»)]*)\s+/).filter(Boolean)) {
+      let rest=sentence;
+      // A sentence too long for one utterance breaks after a comma, else after a word.
+      while(rest.length>chunkLength) {
+        const comma=rest.lastIndexOf(', ',chunkLength);
+        const space=rest.lastIndexOf(' ',chunkLength);
+        const end=comma>0?comma+1:space>0?space:chunkLength;
+        if(current) {
+          chunks.push(current);
+          current='';
+        }
+        chunks.push(rest.slice(0,end).trim());
+        rest=rest.slice(end).trim();
+      }
+      if(current && current.length+1+rest.length>chunkLength) {
+        chunks.push(current);
+        current='';
+      }
+      current=current?`${current} ${rest}`:rest;
     }
-    if(rest) chunks.push(rest);
+    if(current) chunks.push(current);
   }
   return chunks;
+}
+
+// Apple's joke voices (English only) and eSpeak sound robotic; they are chosen only when nothing else exists.
+const noveltyVoices=/^(albert|bad news|bahh|bells|boing|bubbles|cellos|deranged|good news|hysterical|jester|organ|pipe organ|superstar|trinoids|whisper|wobble|zarvox)\b/i;
+
+function voiceScore(voice:SpeechSynthesisVoice):number {
+  let score=0;
+  // On-device voices keep the text on the device, so they come first.
+  if(voice.localService) score+=10;
+  if(/premium/i.test(voice.name)) score+=4;
+  else if(/enhanced|neural|natural|erweitert|îmbunătățit/i.test(voice.name)) score+=3;
+  if(/compact/i.test(voice.name)) score-=1;
+  if(/espeak/i.test(voice.name)) score-=3;
+  if(noveltyVoices.test(voice.name)) score-=20;
+  if(voice.default) score+=1;
+  return score;
+}
+
+// The best voice the device has for the page language, never one for another language.
+export function pickVoice(voices:SpeechSynthesisVoice[],locale:Locale):SpeechSynthesisVoice|undefined {
+  const matching=voices.filter(voice=>voice.lang.replace('_','-').toLowerCase().split('-')[0]===locale);
+  let best:SpeechSynthesisVoice|undefined;
+  for(const voice of matching) {
+    if(!best || voiceScore(voice)>voiceScore(best)) best=voice;
+  }
+  return best;
 }
 
 export function spokenZone(zone:Zone,locale:Locale,index:number,total:number):string {
