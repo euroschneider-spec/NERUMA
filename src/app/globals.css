@@ -929,10 +929,14 @@ p, li, dt, dd, summary, label, figcaption, a, .lbl, .small-label, .small-note { 
   .page-heading { padding-top: 40px; padding-bottom: 20px; }
   .content-body { padding-bottom: 48px; }
   .guide-content, .guide-text-view { padding: 22px 18px; }
-  .completion { padding: 24px; }
+  .completion { padding: 16px; }
   .verification-details { grid-template-columns: 1fr; gap: 4px; }
   .verification-details dd { margin-bottom: 14px; }
-  .verification-request, .photo-editor, .responsibility-notice, .publication-review, .organisation-form fieldset { padding: 16px; }
+  .verification-request, .photo-editor, .responsibility-notice, .publication-review, .builder-zone { padding: 16px; }
+  /* Phones: no box inside a box. A form's own frame goes (its legend stays as the heading), so the boxes around and
+     inside it keep the width. */
+  .organisation-form fieldset, .notice fieldset, .verification-request fieldset, .builder-zone fieldset { border: 0; padding: 0; border-radius: 0; }
+  .organisation-form legend, .notice legend, .verification-request legend, .builder-zone legend { padding-inline: 0; margin-bottom: 12px; }
 }
 @media (max-width: 450px) {
   .header-inner { padding-block: 8px; }

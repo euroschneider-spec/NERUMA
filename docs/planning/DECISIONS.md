@@ -242,7 +242,8 @@ line goes back in ("Questions? Write to support@lignorae.com.", in each language
 ### Text and control sizes
 Owner, 2026-10-18, after comparing a preview: body and field text are **16px** (were 15px; 16px also stops iPhones zooming into a
 field). Page titles on phones are about **30px** (were 36–42px); desktop sizes are unchanged. Fields are as tall as the buttons beside them:
-48px, and 40px on phones. Not part of this: the 24px padding and boxes inside boxes on phones, still open (`DESIGN-TASKS.md` §4, §7).
+48px, and 40px on phones. **On phones, no box inside a box** (owner, same day): a form's frame goes when it sits in another box or
+holds one (its heading stays), and boxes have 16px padding instead of 24px.
 
 ## Not yet discussed
 
