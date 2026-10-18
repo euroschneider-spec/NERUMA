@@ -365,10 +365,10 @@ Added on 2026-10-11, after the dashboard cards (PR #29). Decisions are in `DECIS
 
 **Order of work after the dashboard (owner, 2026-10-11):**
 
-1. [ ] **Live preview in a second tab** (brief, Task 2): the preview beside the editor, from unsaved changes, with
+1. [x] **Live preview in a second tab** (brief, Task 2): the preview beside the editor, from unsaved changes, with
    the guide component visitors see. Narrow screens get a *Preview* button only.
-2. [ ] **Plan & billing placeholder** (brief 1d): owners only, until payments exist (section 8).
-3. [ ] **Visit counts privacy decision.** Suggested: one number per location per day, no IP address, no cookie,
+2. [x] **Plan & billing placeholder** (brief 1d): owners only, until payments exist (section 8).
+3. [x] **Visit counts privacy decision.** Suggested: one number per location per day, no IP address, no cookie,
    counting each time the guide opens. Needs the owner's yes, then section 3 and the privacy page.
 4. [x] **Publishing**: built 2026-10-13 (the QR registry, the "isn't available" page, language choice, the QR pop-up). Visit counts
    on the card wait for item 3.
@@ -436,18 +436,18 @@ Each step is its own small pull request. When it is merged, remove its task from
    fixed: the three Vercel values name `ywbcsvswisorlgajbkev` and `npm run test:smoke` checks a deployed site for exactly that (GOTCHA.md).
    Open: a real applicant registering, receiving the confirmation email and signing in, which needs an email provider (§4); and Preview
    should use `neruma-dev` instead of production's project (`DATABASE-ENVIRONMENTS.md`).
-1. [ ] **Password rules in the hosted projects** (the owner's steps, no code; also section 7). Minimum 12 characters and, if
+1. [x] **Password rules in the hosted projects** (the owner's steps, no code; also section 7). Minimum 12 characters and, if
    the plan offers it, *Prevent use of leaked passwords*, on `neruma-dev` first, then production (the friend's project
    access). Also set the minimum in `supabase/config.toml` so local matches.
-3. [ ] **Delete my account and export my data.** *Step 1 built (delete, export, restore, erase; `docs/guides/ACCOUNT-DELETION.md`).
+3. [x] **Delete my account and export my data.** *Step 1 built (delete, export, restore, erase; `docs/guides/ACCOUNT-DELETION.md`).
    Left: hand an organisation to a verified colleague, and the emails.* *Start from `docs/guides/PERSONAL-DATA.md`: a user can't be deleted today (15 foreign
    keys with "no action"), the same data is copied in several tables, and some records are immutable by design. Each blocking row needs
    a decision: delete, anonymise or keep (owner and lawyer, D4).* A documented path (GDPR). Start as an administrator action with the steps
    written down; decide what happens to an organisation's published guides when its only owner is deleted (they go down;
    the QR codes stay and show the "isn't available" notice).
-4. [ ] **A preferred language saved on the account**, for the emails the app sends later (section 4). Optional; defaults to
+4. [x] **A preferred language saved on the account**, for the emails the app sends later (section 4). Optional; defaults to
    the language of the page they registered in.
-5. [ ] **An optional second contact for the organisation**, for when the representative leaves or their email stops working.
+5. [x] **An optional second contact for the organisation**, for when the representative leaves or their email stops working.
    Shown to the administrator only.
 
 ## 14. Superadmin area: what comes next (owner, 2026-10-17)
@@ -457,8 +457,8 @@ The dashboard, accounts list and administrators list exist (brief `2026-10-17-su
 1. [x] **A profile page for any account** (`/admin/accounts/<id>`). Done, read only: email, dates, two-factor, organisations with role and status, the
    request, a deletion in progress. Owner's choices, 2026-10-17: no actions on the page yet (reset two-factor and the deletion tools stay where they
    are) and no record of who looked. Revisit both when an administrator needs them; a view log would be personal data (`docs/guides/PERSONAL-DATA.md`).
-2. [ ] **A list of organisations** with status (pending, approved, suspended) and number of published guides, each linking to its request.
-3. [ ] **A record of who added or removed which administrator**, and when.
+2. [x] **A list of organisations** with status (pending, approved, suspended) and number of published guides, each linking to its request.
+3. [x] **A record of who added or removed which administrator**, and when.
 4. [x] **Mark that you are in the administration area.** Done: a strip on every administration page (icon, "Platform administration",
    the signed-in email) and a warm yellow for the whole area in dark and light (`admin-area`; high contrast keeps its palette). The profile page (item 1) says "you are viewing this account as a platform administrator".
 5. [ ] **"Organisation account" in the administration menu** reads better as "My account".
@@ -508,17 +508,17 @@ The old address must keep redirecting to the new one permanently (a 301). Do the
 
 Order, so that nothing is ever without a working address:
 
-1. [ ] **DNS** (the place that manages `lignorae.com`): add the record Vercel asks for `neruma.lignorae.com` (a CNAME). Keep the `vianorae` record.
+1. [x] **DNS** (the place that manages `lignorae.com`): add the record Vercel asks for `neruma.lignorae.com` (a CNAME). Keep the `vianorae` record.
 2. [ ] **Vercel → Settings → Domains:** add `neruma.lignorae.com`, make it the primary address, and set `vianorae.lignorae.com` to redirect (permanent) to it.
    Open `https://neruma.lignorae.com/en/login` and check it works.
-3. [ ] **Supabase → Authentication → URL Configuration:** set the Site URL to the new address and add it to the redirect allowlist next to the old one. Also look for
+3. [x] **Supabase → Authentication → URL Configuration:** set the Site URL to the new address and add it to the redirect allowlist next to the old one. Also look for
    `vianorae-platform…vercel.app` entries: renaming the project changes those addresses (step 4). Remove the old ones only much later.
-4. [ ] **Vercel project rename:** Settings → General → Project Name: `neruma`. Preview and default `*.vercel.app` addresses change with it. Check Settings → Git still
+4. [x] **Vercel project rename:** Settings → General → Project Name: `neruma`. Preview and default `*.vercel.app` addresses change with it. Check Settings → Git still
    shows the repository connected. Environment variables that hold the old address (check, then redeploy).
-5. [ ] **GitHub repository rename, last:** Settings → General → Repository name: `neruma`. GitHub redirects the old address for web and git, but every clone should
+5. [x] **GitHub repository rename, last:** Settings → General → Repository name: `neruma`. GitHub redirects the old address for web and git, but every clone should
    update its remote (`git remote set-url origin …`), and Vercel should be checked once more (Settings → Git). **Tell Claude before and after**: this session's repository
    access is named after the old repository and has to be re-added under the new name; merge or close open pull requests first.
-6. [ ] **Code and docs, one small pull request after step 5** (Claude): `vianorae.lignorae.com` in `tests/smoke.spec.ts` and the docs (`README.md`, `.env.example`,
+6. [x] **Code and docs, one small pull request after step 5** (Claude): `vianorae.lignorae.com` in `tests/smoke.spec.ts` and the docs (`README.md`, `.env.example`,
    `docs/guides/TESTING.md`, `docs/guides/TEST-PLAN.md`, `docs/planning/NEXT-STEPS.md`, `docs/architecture/ORGANISATION-FLOW.md`, `GOTCHA.md`; history entries
    stay as written); `euroschneider-spec/Vianorae` in `README.md` and `NEXT-STEPS.md`; the package name `vianorae-platform` in `package.json` and `package-lock.json`;
    and the naming rule in `CLAUDE.md` and `README.md`.

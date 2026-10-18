@@ -49,7 +49,7 @@ When you duplicate logic that already exists in two places, say so rather than a
 - Match the surrounding file. Don't reformat code you aren't changing.
 - New code: normal line breaks, one statement per line. Don't extend the dense one-line style that
   some older files use.
-- The displayed brand is NERUMA; VIANORAE is the repository/infrastructure name (see README). Don't
+- The displayed brand is NERUMA; VIANORAE survives only in internal identifiers (environment variables, storage buckets; see README). Don't
   introduce a third name.
 
 ## Before you commit or open a pull request
