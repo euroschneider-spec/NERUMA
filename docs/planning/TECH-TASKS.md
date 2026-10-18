@@ -492,31 +492,35 @@ and the EU–US Data Privacy Framework if the provider is certified; check, don'
 - [ ] **Methodology** describes on-site and independent assessments; none can be recorded in the app yet (the pilot trust workflow, `NEXT-STEPS.md` §6).
 - [ ] **The first visit of a new organisation** (found in the owner's test run): `DESIGN-TASKS.md` §8.
 
-## 17. Rename the site address to `neruma.lignorae.com` (owner, 2026-10-18)
+## 17. Rename to neruma: the site address, the Vercel project and the GitHub repository (owner, 2026-10-18)
 
-The site lives at `vianorae.lignorae.com`; the brand shown to people is NERUMA, and VIANORAE is the repository and infrastructure name (`README.md`). The owner
-wants the subdomain to say neruma, and to change the name in GitHub and Vercel too. **To confirm before starting:** only the site address, or also the GitHub
-repository (`euroschneider-spec/Vianorae`) and the Vercel project (`vianorae-platform`)? Renaming those is optional: a repository rename is redirected by GitHub
-and a project rename by Vercel, but every clone needs its remote updated, and `README.md` and `CLAUDE.md` currently say VIANORAE is the repository name
-(a rename would change that rule).
+**Confirmed by the owner, 2026-10-18: all three.** The site `vianorae.lignorae.com` becomes `neruma.lignorae.com`, the Vercel project `vianorae-platform` becomes
+`neruma`, and the GitHub repository `euroschneider-spec/Vianorae` becomes `euroschneider-spec/neruma`. The brand shown to people is already NERUMA; until now
+VIANORAE was the repository and infrastructure name (`README.md`, `CLAUDE.md`).
+
+**Keep the internal identifiers.** Names that live inside running systems stay as they are: the environment variables `VIANORAE_SUPABASE_PROJECT_REF` and
+`VIANORAE_WORKSPACE_ENABLED`, the Supabase buckets (`vianorae-private-photos` and the others), and the migration notes. Renaming them means changing Vercel
+settings, storage and code at the same moment, for no benefit a person can see. The naming rule in `CLAUDE.md` and `README.md` changes to: NERUMA everywhere a
+person or the web can see it; VIANORAE only in those internal identifiers.
 
 **The one thing that must not break: QR codes.** A QR code opens `/q/<code>` on the site's address, codes are kept forever, and organisations will print them.
-The old address has to keep redirecting to the new one permanently (a 301), not just for a few weeks. Do the rename before the first QR code is printed if at
-all possible.
+The old address must keep redirecting to the new one permanently (a 301). Do the rename before the first QR code is printed if at all possible.
 
-The owner's steps (no code):
-- [ ] **DNS:** at the place that manages `lignorae.com`, add the record Vercel asks for `neruma.lignorae.com` (a CNAME to Vercel). Keep the old
-  `vianorae` record.
-- [ ] **Vercel → Settings → Domains:** add `neruma.lignorae.com` and make it the primary address; set `vianorae.lignorae.com` to redirect (permanent) to it. Rename
-  the project only if confirmed above.
-- [ ] **Supabase → Authentication → URL Configuration:** set the Site URL to the new address and add it to the redirect allowlist next to the old one
-  (confirmation and reset links use these); remove the old one only much later.
-- [ ] **Vercel environment variables:** anything that holds the old address (the code reads the Supabase values; check for others), then redeploy.
-- [ ] **Email:** if the sending subdomain is `mail.lignorae.com` nothing changes; if it is under the old name, do the email DNS after this rename (§4).
-- [ ] **GitHub:** rename the repository only if confirmed above (Settings → General → Repository name); then update every clone's remote.
+Order, so that nothing is ever without a working address:
 
-What changes in the code (one small pull request, after the owner has done the steps above):
-- [ ] The default address in `tests/smoke.spec.ts`, and the examples in `README.md`, `.env.example`, `docs/guides/TESTING.md`, `docs/guides/TEST-PLAN.md`,
-  `docs/planning/NEXT-STEPS.md`, `docs/architecture/ORGANISATION-FLOW.md` and `GOTCHA.md` (history entries stay as written).
-- [ ] After deploying: `SMOKE_URL=https://neruma.lignorae.com npm run test:smoke`, then check that an old QR address, `https://vianorae.lignorae.com/q/<code>`, still ends
-  on the right guide.
+1. [ ] **DNS** (the place that manages `lignorae.com`): add the record Vercel asks for `neruma.lignorae.com` (a CNAME). Keep the `vianorae` record.
+2. [ ] **Vercel → Settings → Domains:** add `neruma.lignorae.com`, make it the primary address, and set `vianorae.lignorae.com` to redirect (permanent) to it.
+   Open `https://neruma.lignorae.com/en/login` and check it works.
+3. [ ] **Supabase → Authentication → URL Configuration:** set the Site URL to the new address and add it to the redirect allowlist next to the old one. Also look for
+   `vianorae-platform…vercel.app` entries: renaming the project changes those addresses (step 4). Remove the old ones only much later.
+4. [ ] **Vercel project rename:** Settings → General → Project Name: `neruma`. Preview and default `*.vercel.app` addresses change with it. Check Settings → Git still
+   shows the repository connected. Environment variables that hold the old address (check, then redeploy).
+5. [ ] **GitHub repository rename, last:** Settings → General → Repository name: `neruma`. GitHub redirects the old address for web and git, but every clone should
+   update its remote (`git remote set-url origin …`), and Vercel should be checked once more (Settings → Git). **Tell Claude before and after**: this session's repository
+   access is named after the old repository and has to be re-added under the new name; merge or close open pull requests first.
+6. [ ] **Code and docs, one small pull request after step 5** (Claude): `vianorae.lignorae.com` in `tests/smoke.spec.ts` and the docs (`README.md`, `.env.example`,
+   `docs/guides/TESTING.md`, `docs/guides/TEST-PLAN.md`, `docs/planning/NEXT-STEPS.md`, `docs/architecture/ORGANISATION-FLOW.md`, `GOTCHA.md`; history entries
+   stay as written); `euroschneider-spec/Vianorae` in `README.md` and `NEXT-STEPS.md`; the package name `vianorae-platform` in `package.json` and `package-lock.json`;
+   and the naming rule in `CLAUDE.md` and `README.md`.
+7. [ ] **Check, after deploying:** `SMOKE_URL=https://neruma.lignorae.com npm run test:smoke`, and that an old QR address, `https://vianorae.lignorae.com/q/<code>`, still
+   ends on the right guide.
