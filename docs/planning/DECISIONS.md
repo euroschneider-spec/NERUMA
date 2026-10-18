@@ -259,7 +259,8 @@ organisations' own recordings, a self-hosted open-source voice (research in TECH
 The workflow was one job that ran the static checks, the browser specs and `test:workspace` in series
 (6 min 34 s on 18 October 2026: 60 s, 129 s and 170 s of that). It is now three jobs that run side by side
 (`static`, `e2e`, `workspace`) plus a `checks` job that passes only if all three do, so the name branch
-protection looks for is unchanged. Pushes to branches run only through their pull request; `main` still
+protection looks for is unchanged. `workspace` is a matrix of four groups of `scripts/test-workspace.mjs` (`--group=workspace|approval|two-factor|accounts`), each
+on its own fixture; a group that needs state from another sets it up itself (the accounts group starts its own Stripe plan). Pushes to branches run only through their pull request; `main` still
 runs on push. A branch without a pull request gets no CI until one is opened.
 
 ## Not yet discussed

@@ -42,8 +42,14 @@ jobs:
             test-results/
           retention-days: 7
   # Builds its own copy of the app with fixture settings, so it cannot share the e2e build.
+  # The suite is split into groups that each start from a fresh fixture (scripts/test-workspace.mjs --group=...).
   workspace:
+    name: workspace (${{ matrix.group }})
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        group: [workspace, approval, two-factor, accounts]
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -52,7 +58,7 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npx playwright install --with-deps chromium
-      - run: npm run test:workspace
+      - run: npm run test:workspace -- --group=${{ matrix.group }}
   # One stable name for branch protection: it passes only when all three jobs above passed.
   checks:
     if: always()

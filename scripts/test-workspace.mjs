@@ -12,6 +12,9 @@ const env={...process.env,VIANORAE_TEST_FIXTURE:'1',VIANORAE_SUPABASE_PROJECT_RE
   VIANORAE_STRIPE_SECRET_KEY:'sk_test_fixture',VIANORAE_STRIPE_WEBHOOK_SECRET:'whsec_fixture',VIANORAE_STRIPE_PRICE_ID:'price_fixture',
   VIANORAE_BILLING_SECRET:'fixture-only-billing-secret-0123456789abcdef'};
 const children=[];let browser;let checks=0;
+// `--group=<name>` runs one part of the suite on its own fixture so CI can run the parts side by side; no flag runs them all in order.
+const group=process.argv.find(arg=>arg.startsWith('--group='))?.slice(8);
+const only=name=>!group||group===name;
 function start(command,args,extra={},log='/tmp/vianorae-workspace-test.log') {
   const child=spawn(command,args,{env:{...env,...extra},stdio:['ignore','pipe','pipe']});children.push(child);
   const output=createWriteStream(log);child.stdout.pipe(output);child.stderr.pipe(output);return child;
@@ -58,6 +61,7 @@ async function stripeEvent(status,{org='00000000-0000-4000-8000-000000000101',cu
   return (await fetch(`${base}/api/stripe/webhook`,{method:'POST',headers:{'Content-Type':'application/json','Stripe-Signature':signed},body:payload})).status;
 }
 const fixture=(path,body)=>fetch(`http://127.0.0.1:3012/__fixture/${path}`,body===undefined?{}:{method:'POST',body:JSON.stringify(body)}).then(response=>response.json());
+const newContext=async()=>{const context=await browser.newContext({colorScheme:'dark'});return {context,view:await context.newPage()};};
 const saved=page=>expect(page.locator('.status-message[role]')).toContainText('Draft saved');
 const save=async page=>{await page.getByRole('button',{name:'Save',exact:true}).last().click();await saved(page);};
 try {
@@ -70,6 +74,7 @@ try {
   start('node',['node_modules/next/dist/bin/next','start','--hostname','127.0.0.1','--port','3011'],{NODE_OPTIONS:`${process.env.NODE_OPTIONS || ''} --import ${process.cwd()}/scripts/workspace-fixture-fetch.mjs`},'/tmp/vianorae-workspace-server.log');
   await ready(`${base}/en/login`);browser=await chromium.launch();
   const context=await browser.newContext({colorScheme:'dark'});const page=await context.newPage();
+  if(only('workspace')) {
   await check('unauthenticated workspace redirects to sign in and photo API returns 401',async()=>{
     await page.goto(`${base}/en/workspace`);await expect(page).toHaveURL(/\/en\/login$/);
     assert.equal((await context.request.get(`${base}/api/workspace/photos?key=anything`)).status(),401);
@@ -475,6 +480,46 @@ try {
     assert.equal((await context.request.get(`${base}${photoPath}`)).status(),401);
     await page.goto(editUrl);await expect(page).toHaveURL(/\/en\/login$/);
   });
+  await check('an owner reports a problem; only the platform administrator reads and closes it',async()=>{
+    const ownerPage=await (await browser.newContext()).newPage();await login(ownerPage,1);
+    await ownerPage.getByRole('complementary').getByRole('link',{name:'Report a problem',exact:true}).click();
+    await expect(ownerPage).toHaveURL(/\/en\/workspace\/report$/);
+    await expect(ownerPage.getByRole('heading',{name:'Report a problem or ask for help',level:1})).toBeVisible();
+    await expect(ownerPage.getByRole('radiogroup',{name:'Which location is it about?'})).toBeVisible();
+    const message='The photo upload stops at 90 percent.';
+    await ownerPage.getByLabel('What happened?').fill(message);
+    await ownerPage.getByRole('button',{name:'Send report',exact:true}).click();
+    await expect(ownerPage.getByRole('status')).toContainText('Your report is saved');
+    assert.equal((await ownerPage.goto(`${base}/en/admin/reports`)).status(),404);
+    const adminPage=await (await browser.newContext()).newPage();await login(adminPage,3);
+    await adminPage.goto(`${base}/en/admin/reports`);
+    await expect(adminPage.getByRole('heading',{name:'Problem reports',level:1})).toBeVisible();
+    await expect(adminPage.getByRole('heading',{name:'Fixture museum 1',level:2})).toBeVisible();
+    await expect(adminPage.getByRole('link',{name:'owner1@example.test'})).toBeVisible();
+    await expect(adminPage.getByText(message,{exact:true})).toBeVisible();
+    await adminPage.getByRole('button',{name:'Mark as closed',exact:true}).click();
+    await expect(adminPage.getByText('No open reports.')).toBeVisible();
+    await adminPage.goto(`${base}/en/admin/reports?closed=1`);
+    await expect(adminPage.getByText(message,{exact:true})).toBeVisible();
+    await expect(adminPage.getByRole('button',{name:'Mark as closed'})).toHaveCount(0);
+  });
+  await check('missing evidence migration preserves approved workspaces',async()=>{
+    await fetch('http://127.0.0.1:3012/__fixture/evidence-mode',{method:'POST',body:JSON.stringify({enabled:false})});
+    try {
+      await login(page,1);await page.goto(editUrl);await expect(page).toHaveURL(new RegExp('/en/workspace/'+new URL(editUrl).pathname.split('/').at(-1)+'$'));
+    } finally {await fetch('http://127.0.0.1:3012/__fixture/evidence-mode',{method:'POST',body:JSON.stringify({enabled:true})});}
+  });
+  await check('missing verification migration fails closed for registration, workspace and photos',async()=>{
+    await login(page,1);await fetch('http://127.0.0.1:3012/__fixture/verification-mode',{method:'POST',body:JSON.stringify({enabled:false})});
+    try {
+      await page.goto(`${base}/en/register`);await expect(page.getByRole('button',{name:'Request organisation access',exact:true})).toBeDisabled();
+      await page.goto(editUrl);await expect(page).toHaveURL(/\/en\/account$/);
+      await expect(page.getByText('Organisation verification is being activated.',{exact:false})).toBeVisible();
+      assert.equal((await context.request.get(`${base}${photoPath}`)).status(),401);
+    } finally {await fetch('http://127.0.0.1:3012/__fixture/verification-mode',{method:'POST',body:JSON.stringify({enabled:true})});}
+  });
+  }
+  if(only('approval')) {
   const applicantContext=await browser.newContext({colorScheme:'dark'});const applicant=await applicantContext.newPage();
   const adminContext=await browser.newContext({colorScheme:'dark'});const adminPage=await adminContext.newPage();
   const fillApplication=async()=>{
@@ -663,29 +708,6 @@ try {
       assert.equal(await applicant.evaluate(()=>document.documentElement.scrollWidth<=window.innerWidth),true);await applicant.setViewportSize({width:1280,height:900});
     });
   }
-  await check('an owner reports a problem; only the platform administrator reads and closes it',async()=>{
-    const ownerPage=await (await browser.newContext()).newPage();await login(ownerPage,1);
-    await ownerPage.getByRole('complementary').getByRole('link',{name:'Report a problem',exact:true}).click();
-    await expect(ownerPage).toHaveURL(/\/en\/workspace\/report$/);
-    await expect(ownerPage.getByRole('heading',{name:'Report a problem or ask for help',level:1})).toBeVisible();
-    await expect(ownerPage.getByRole('radiogroup',{name:'Which location is it about?'})).toBeVisible();
-    const message='The photo upload stops at 90 percent.';
-    await ownerPage.getByLabel('What happened?').fill(message);
-    await ownerPage.getByRole('button',{name:'Send report',exact:true}).click();
-    await expect(ownerPage.getByRole('status')).toContainText('Your report is saved');
-    assert.equal((await ownerPage.goto(`${base}/en/admin/reports`)).status(),404);
-    const adminPage=await (await browser.newContext()).newPage();await login(adminPage,3);
-    await adminPage.goto(`${base}/en/admin/reports`);
-    await expect(adminPage.getByRole('heading',{name:'Problem reports',level:1})).toBeVisible();
-    await expect(adminPage.getByRole('heading',{name:'Fixture museum 1',level:2})).toBeVisible();
-    await expect(adminPage.getByRole('link',{name:'owner1@example.test'})).toBeVisible();
-    await expect(adminPage.getByText(message,{exact:true})).toBeVisible();
-    await adminPage.getByRole('button',{name:'Mark as closed',exact:true}).click();
-    await expect(adminPage.getByText('No open reports.')).toBeVisible();
-    await adminPage.goto(`${base}/en/admin/reports?closed=1`);
-    await expect(adminPage.getByText(message,{exact:true})).toBeVisible();
-    await expect(adminPage.getByRole('button',{name:'Mark as closed'})).toHaveCount(0);
-  });
   await check('signed-in owner and administrator pages pass automated checks in every theme and tone',async()=>{
     const combos=[['dark','cool'],['dark','warm'],['light','cool'],['light','warm'],['contrast','cool']];
     for(const [theme,tone] of combos) {
@@ -726,23 +748,15 @@ try {
     await applicant.goto(`${base}/en/login`);await applicant.getByLabel('Confirmation email address',{exact:true}).fill('limited@example.test');await applicant.getByRole('button',{name:'Resend confirmation email',exact:true}).click();await expect(applicant.locator('main').getByRole('alert')).toContainText('The email service is limiting requests.');
     await applicant.getByLabel('Confirmation email address',{exact:true}).fill('confirmed@example.test');await applicant.getByRole('button',{name:'Resend confirmation email',exact:true}).click();await expect(applicant.getByRole('status')).toContainText('The confirmation request was accepted.');
   });
-  await check('missing evidence migration locks request submission but preserves approved workspaces',async()=>{
+  await check('missing evidence migration locks request submission',async()=>{
     await fetch('http://127.0.0.1:3012/__fixture/evidence-mode',{method:'POST',body:JSON.stringify({enabled:false})});
     try {
       await login(page,5);await expect(page.getByRole('button',{name:'Submit for manual review',exact:true})).toBeDisabled();
       await expect(page.getByText('Private document upload is being activated.',{exact:false})).toBeVisible();
-      await login(page,1);await page.goto(editUrl);await expect(page).toHaveURL(new RegExp('/en/workspace/'+new URL(editUrl).pathname.split('/').at(-1)+'$'));
     } finally {await fetch('http://127.0.0.1:3012/__fixture/evidence-mode',{method:'POST',body:JSON.stringify({enabled:true})});}
   });
-  await check('missing verification migration fails closed for registration, workspace and photos',async()=>{
-    await login(page,1);await fetch('http://127.0.0.1:3012/__fixture/verification-mode',{method:'POST',body:JSON.stringify({enabled:false})});
-    try {
-      await page.goto(`${base}/en/register`);await expect(page.getByRole('button',{name:'Request organisation access',exact:true})).toBeDisabled();
-      await page.goto(editUrl);await expect(page).toHaveURL(/\/en\/account$/);
-      await expect(page.getByText('Organisation verification is being activated.',{exact:false})).toBeVisible();
-      assert.equal((await context.request.get(`${base}${photoPath}`)).status(),401);
-    } finally {await fetch('http://127.0.0.1:3012/__fixture/verification-mode',{method:'POST',body:JSON.stringify({enabled:true})});}
-  });
+  }
+  if(only('two-factor')) {
   // Two-factor sign-in (brief docs/briefs/2026-10-13-two-factor-sign-in.md).
   const backupPattern=/^[a-z0-9]{4} [a-z0-9]{4} [a-z0-9]{4} [a-z0-9]{4}$/;let backupCodes=[];
   const deadline=from=>fetch('http://127.0.0.1:3012/__fixture/two-factor-deadline',{method:'POST',body:JSON.stringify({from})});
@@ -845,7 +859,6 @@ try {
     } finally {await deadline(new Date(Date.now()+30*86400000).toISOString());}
   });
   // Edge cases and abuse. Nothing here is mocked beyond the Supabase HTTP layer the whole suite shares.
-  const newContext=async()=>{const context=await browser.newContext({colorScheme:'dark'});return {context,view:await context.newPage()};};
   await check('signed-out visitors are sent to sign-in from the code step and from the admin pages, and see no data',async()=>{
     const {context,view}=await newContext();
     for(const path of ['/en/login/verify','/en/admin/organisations','/en/admin/reports','/en/workspace','/en/account','/ro/login/verify','/de/admin/reports']) {
@@ -956,6 +969,8 @@ try {
     assert.equal(wrongPassword,unknownEmail);assert.ok(!/owner1|nobody|exist|no account|not found/i.test(wrongPassword));
     await context.close();
   });
+  }
+  if(only('accounts')) {
   // Deleting an account (docs/briefs/2026-10-13-delete-account.md). Last, because it removes owner1 for good.
   const day30=new Date(Date.now()+30*86400000).toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric',timeZone:'Europe/Berlin'});
   const fixtureUrl=link=>link.replace('https://vianorae-fixture.supabase.co','http://127.0.0.1:3012');
@@ -1225,6 +1240,8 @@ try {
     const person=await newContext();await login(person.view,1);await expect(person.view).toHaveURL(/\/en\/workspace$/);await person.context.close();
   });
   await check('an administrator starts a deletion for someone who wrote in, downloads their data, and erases account and organisation after the 30 days',async()=>{
+    // This organisation still pays through Stripe: an active plan, set here so this group does not rely on the billing checks.
+    assert.equal(await stripeEvent('active'),200);
     const {context,view}=await newContext();await login(view,3);
     await view.goto(`${base}/en/admin/deletions`);await view.waitForLoadState('networkidle');
     await view.getByLabel('Email of the account',{exact:true}).fill('owner1@example.test');
@@ -1241,7 +1258,7 @@ try {
     await outsider.context.close();
     await fetch('http://127.0.0.1:3012/__fixture/deletions-due',{method:'POST'});await view.reload();
     await expect(entry.getByText('Due: can be erased now',{exact:true})).toBeVisible();
-    // This organisation still pays through Stripe (the payment checks above): nothing is erased until the subscription is cancelled there.
+    // Nothing is erased until the subscription is cancelled on Stripe.
     await expect(entry.getByRole('button',{name:'Erase now',exact:true})).toHaveAttribute('aria-disabled','true');
     await expect(entry.getByRole('button',{name:'Erase now',exact:true})).toHaveAccessibleDescription(/A Stripe subscription is still running/);
     await entry.getByRole('button',{name:'Erase now',exact:true}).hover();
@@ -1267,6 +1284,7 @@ try {
     const gone=await newContext();await signInWithPasswordExpectingRefusal(gone.view,1);
     await expect(gone.view.locator('main').getByRole('alert')).not.toContainText('being deleted');await gone.context.close();
   });
+  }
   console.log(`${checks} online workspace checks passed (real migrations; simulated Auth/Storage HTTP).`);
 } finally {
   if(browser) await browser.close();for(const child of children) if(child.exitCode===null) child.kill('SIGTERM');
