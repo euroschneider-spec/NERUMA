@@ -142,7 +142,7 @@ body {
   background: var(--color-bg);
   color: var(--color-text);
   font-family: var(--font-body);
-  font-size: 0.9375rem;
+  font-size: 1rem;
   line-height: 1.55;
 }
 h1, h2, h3, h4, h5, h6 {
@@ -267,8 +267,8 @@ main { min-height: 65vh; }
 .form-field .label-row > label { padding-left: 11px; }
 .form-field input, .form-field textarea, .form-field select, .field input, .field textarea, .field select { text-indent: 0; }
 .input, input, select, textarea {
-  width: 100%; min-width: 0; min-height: 36px; padding: 6px 10px; font: inherit;
-  font-size: 0.9375rem; color: var(--color-text); caret-color: var(--color-accent);
+  width: 100%; min-width: 0; min-height: 48px; padding: 6px 10px; font: inherit;
+  font-size: 1rem; color: var(--color-text); caret-color: var(--color-accent);
   background: var(--color-surface);
   border: 1px solid var(--color-divider); border-radius: var(--radius-md);
 }
@@ -531,7 +531,7 @@ legend { padding-inline: var(--space-2); max-width: 100%; font-weight: var(--fon
 }
 .hero > * { min-width: 0; }
 .hero-copy, .hero-text { display: flex; flex-direction: column; min-width: 0; }
-.hero h1 { font-size: clamp(2.5rem, 5.5vw, 4rem); line-height: 1.08; letter-spacing: -0.02em; margin: 0 0 20px; }
+.hero h1 { font-size: clamp(2.125rem, 5.5vw, 4rem); line-height: 1.08; letter-spacing: -0.02em; margin: 0 0 20px; }
 .hero-description, .lead {
   font-size: 1.1875rem; line-height: 1.6; max-width: 56ch;
   margin: 0 0 24px; color: var(--v-muted); text-wrap: pretty;
@@ -605,7 +605,7 @@ legend { padding-inline: var(--space-2); max-width: 100%; font-weight: var(--fon
 
 /* ── Content pages ───────────────────────────────────────────────────── */
 .page-heading { padding-top: 64px; padding-bottom: 32px; max-width: 850px; }
-.page-heading h1 { font-size: clamp(2.25rem, 4.8vw, 3.25rem); margin-bottom: 20px; }
+.page-heading h1 { font-size: clamp(1.875rem, 4.8vw, 3.25rem); margin-bottom: 20px; }
 .page-heading .lead { font-size: 1.125rem; max-width: 70ch; }
 .page-heading p { overflow-wrap: anywhere; }
 .page-heading .button-row { margin-top: 24px; }
@@ -943,6 +943,10 @@ p, li, dt, dd, summary, label, figcaption, a, .lbl, .small-label, .small-note { 
   .button-small { padding: 4px 12px; font-size: 0.8125rem; }
   .btn-lg { min-height: 40px; }
   .button-row .button { width: 100%; }
+  /* Phones: titles about 30px, and fields as tall as the buttons beside them. */
+  h1 { font-size: 2rem; }
+  h2 { font-size: 1.625rem; }
+  .input, input, select { min-height: 40px; }
 }
 
 @media (prefers-reduced-motion: reduce) {
