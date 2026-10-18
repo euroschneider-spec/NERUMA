@@ -42,7 +42,7 @@ npm run start
 
 ## Demonstration boundaries
 
-This is the **foundation and start of the MVP**. The public site is temporarily hosted at https://vianorae.lignorae.com with its own VIANORAE Vercel application and dedicated Supabase project `ywbcsvswisorlgajbkev`. Email confirmation establishes a personal sign-in; it does not authorise an organisation. Applicants submit verification information and await a platform administrator's recorded approval. See [manual organisation verification](docs/organisation-verification.md) for the evidence procedure and additive SQL activation. Existing organisations retain all data and require review. Until the verification migration is installed, online registration/editing fail closed.
+This is the **foundation and start of the MVP**. The public site is temporarily hosted at https://neruma.lignorae.com with its own Vercel application and dedicated Supabase project `ywbcsvswisorlgajbkev`. Email confirmation establishes a personal sign-in; it does not authorise an organisation. Applicants submit verification information and await a platform administrator's recorded approval. See [manual organisation verification](docs/organisation-verification.md) for the evidence procedure and additive SQL activation. Existing organisations retain all data and require review. Until the verification migration is installed, online registration/editing fail closed.
 
 Approved organisation accounts access the private database-backed Guide Builder at `/[locale]/workspace`; the public demonstration editor remains browser-local. Invitations, live publishing, assessor workflows, billing and PDF export remain to implement. Built-in email serves authorised development recipients; a production email provider is still required before public invitations. No automatic review emails are sent. The Contact form prepares an enquiry to copy; it does not send messages. Missing dedicated configuration disables account forms.
 
@@ -50,7 +50,7 @@ The illustrations are original example assets, not photographs or evidence of a 
 
 ## Project isolation
 
-Work is confined to the dedicated VIANORAE directory, `euroschneider-spec/Vianorae`, Vercel project `vianorae-platform` (`prj_wxGgoaJGSuHR7ko74qEDGuJWMFzy`) and Supabase project. The temporary `vianorae.lignorae.com` subdomain was explicitly authorised. No other application, database or secrets are shared or modified, and no paid service was provisioned.
+Work is confined to the dedicated repository, `euroschneider-spec/neruma`, Vercel project `neruma` (`prj_wxGgoaJGSuHR7ko74qEDGuJWMFzy`) and Supabase project. The temporary `neruma.lignorae.com` subdomain was explicitly authorised. No other application, database or secrets are shared or modified, and no paid service was provisioned.
 
 Branch `foundation-v0.1` contains the complete application; remote `main` preserves the owner's initial README until review. The dedicated Supabase URL/ref/publishable key and workspace flag are configured for Production and this branch's Preview. The owner installed the first four migrations manually; the fifth verification migration and initial platform-admin bootstrap require the supplied additive SQL in the dedicated VIANORAE SQL Editor because management API access still refuses this project.
 

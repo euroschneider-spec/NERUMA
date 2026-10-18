@@ -504,23 +504,23 @@ settings, storage and code at the same moment, for no benefit a person can see. 
 person or the web can see it; VIANORAE only in those internal identifiers.
 
 **The one thing that must not break: QR codes.** A QR code opens `/q/<code>` on the site's address, codes are kept forever, and organisations will print them.
-The old address must keep redirecting to the new one permanently (a 301). Do the rename before the first QR code is printed if at all possible.
+No QR code has been printed yet (owner, 2026-10-18), so the old address `vianorae.lignorae.com` can simply be removed, together with its DNS record and its
+Supabase redirect entry. From the first printed code on, the address in it must keep working for good.
 
 Order, so that nothing is ever without a working address:
 
-1. [ ] **DNS** (the place that manages `lignorae.com`): add the record Vercel asks for `neruma.lignorae.com` (a CNAME). Keep the `vianorae` record.
-2. [ ] **Vercel → Settings → Domains:** add `neruma.lignorae.com`, make it the primary address, and set `vianorae.lignorae.com` to redirect (permanent) to it.
+1. [x] **DNS** (the place that manages `lignorae.com`): add the record Vercel asks for `neruma.lignorae.com` (a CNAME). Keep the `vianorae` record.
+2. [ ] **Vercel → Settings → Domains:** add `neruma.lignorae.com` and make it the primary address; remove `vianorae.lignorae.com` (no QR codes exist yet).
    Open `https://neruma.lignorae.com/en/login` and check it works.
-3. [ ] **Supabase → Authentication → URL Configuration:** set the Site URL to the new address and add it to the redirect allowlist next to the old one. Also look for
+3. [x] **Supabase → Authentication → URL Configuration:** set the Site URL to the new address and add it to the redirect allowlist next to the old one. Also look for
    `vianorae-platform…vercel.app` entries: renaming the project changes those addresses (step 4). Remove the old ones only much later.
-4. [ ] **Vercel project rename:** Settings → General → Project Name: `neruma`. Preview and default `*.vercel.app` addresses change with it. Check Settings → Git still
+4. [x] **Vercel project rename:** Settings → General → Project Name: `neruma`. Preview and default `*.vercel.app` addresses change with it. Check Settings → Git still
    shows the repository connected. Environment variables that hold the old address (check, then redeploy).
-5. [ ] **GitHub repository rename, last:** Settings → General → Repository name: `neruma`. GitHub redirects the old address for web and git, but every clone should
+5. [x] **GitHub repository rename, last:** Settings → General → Repository name: `neruma`. GitHub redirects the old address for web and git, but every clone should
    update its remote (`git remote set-url origin …`), and Vercel should be checked once more (Settings → Git). **Tell Claude before and after**: this session's repository
    access is named after the old repository and has to be re-added under the new name; merge or close open pull requests first.
-6. [ ] **Code and docs, one small pull request after step 5** (Claude): `vianorae.lignorae.com` in `tests/smoke.spec.ts` and the docs (`README.md`, `.env.example`,
+6. [x] **Code and docs, one small pull request after step 5** (Claude): `vianorae.lignorae.com` in `tests/smoke.spec.ts` and the docs (`README.md`, `.env.example`,
    `docs/guides/TESTING.md`, `docs/guides/TEST-PLAN.md`, `docs/planning/NEXT-STEPS.md`, `docs/architecture/ORGANISATION-FLOW.md`, `GOTCHA.md`; history entries
    stay as written); `euroschneider-spec/Vianorae` in `README.md` and `NEXT-STEPS.md`; the package name `vianorae-platform` in `package.json` and `package-lock.json`;
    and the naming rule in `CLAUDE.md` and `README.md`.
-7. [ ] **Check, after deploying:** `SMOKE_URL=https://neruma.lignorae.com npm run test:smoke`, and that an old QR address, `https://vianorae.lignorae.com/q/<code>`, still
-   ends on the right guide.
+7. [ ] **Check, after deploying:** `SMOKE_URL=https://neruma.lignorae.com npm run test:smoke`, (skip the old-QR-address check while no code has been printed).
