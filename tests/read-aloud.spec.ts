@@ -50,9 +50,11 @@ for(const locale of ['en','ro','de'] as const) {
 }
 test('the reading button sits in the top bar, the panel opens under it and stays put while the page scrolls and reflows at 320px',async({page})=>{
   await mockSpeech(page,'ro');await page.setViewportSize({width:1440,height:1000});
-  for(const route of ['/ro','/ro/places/willow-museum/guide']) {
+  // German has the longest words, so /de is the hardest case for the panel at 320px with enlarged text.
+  const screenshots:Record<string,string>={'/ro':'media-controls-preview.png','/ro/places/willow-museum/guide':'audio-guide-preview.png'};
+  for(const route of ['/ro','/ro/places/willow-museum/guide','/de']) {
     await page.goto(route);const trigger=page.locator('.topbar-reading');
-    await expect(page.getByRole('button',{name:'Setări de lectură',exact:true})).toHaveCount(1);await expect(page.locator('.floating-reading,.reading-trigger,.media-tools')).toHaveCount(0);
+    await expect(page.getByRole('button',{name:route.startsWith('/de')?'Leseeinstellungen':'Setări de lectură',exact:true})).toHaveCount(1);await expect(page.locator('.floating-reading,.reading-trigger,.media-tools')).toHaveCount(0);
     const tb=await trigger.boundingBox();expect(tb!.y).toBeLessThan(80);
     await trigger.click();const panel=page.getByRole('dialog');const before=await panel.boundingBox();
     // The panel hangs under the button with their right edges aligned.
@@ -60,7 +62,7 @@ test('the reading button sits in the top bar, the panel opens under it and stays
     await page.mouse.move(1400,800);await page.mouse.wheel(0,600);await expect.poll(()=>page.evaluate(()=>window.scrollY)).toBeGreaterThan(200);
     const after=await panel.boundingBox();expect(after!.x).toBeCloseTo(before!.x,0);expect(after!.y).toBeCloseTo(before!.y,0);await expect(panel).toBeVisible();
     await page.evaluate(()=>window.scrollTo({top:0,behavior:'instant'}));
-    await page.screenshot({path:route==='/ro'?'docs/verification/screenshots/media-controls-preview.png':'docs/verification/screenshots/audio-guide-preview.png',fullPage:true});
+    if(screenshots[route]) await page.screenshot({path:`docs/verification/screenshots/${screenshots[route]}`,fullPage:true});
     await page.setViewportSize({width:320,height:900});await page.evaluate(()=>document.documentElement.style.fontSize='32px');
     await expect.poll(async()=>panel.evaluate(node=>{const r=node.getBoundingClientRect();return r.left>=0 && r.right<=window.innerWidth && r.top>=0 && r.bottom<=window.innerHeight && node.scrollWidth<=node.clientWidth;})).toBe(true);
     await expect.poll(async()=>{const box=(await trigger.boundingBox())!;return box.x>=0 && box.x+box.width<=320;}).toBe(true);

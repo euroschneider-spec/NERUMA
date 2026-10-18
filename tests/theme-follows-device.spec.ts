@@ -4,11 +4,12 @@ const key = 'vianorae:reading:v1';
 const theme = (page: import('@playwright/test').Page) => page.locator('html').getAttribute('data-theme');
 
 test.describe('a visitor who has not chosen follows the device', () => {
-  test('light device shows light, dark device shows dark', async ({ page }) => {
+  test('light device shows light, switching the device while the page is open changes it, and a dark device loads dark', async ({ page }) => {
     await page.emulateMedia({ colorScheme: 'light' });
     await page.goto('/en');
     await expect(page.locator('html')).toHaveAttribute('data-theme', 'light');
     await page.emulateMedia({ colorScheme: 'dark' });
+    await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
     await page.reload();
     await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
   });
@@ -18,14 +19,6 @@ test.describe('a visitor who has not chosen follows the device', () => {
     await page.route('**/_next/static/**/*.js', (route) => route.abort());
     await page.goto('/en');
     expect(await theme(page)).toBe('light');
-  });
-
-  test('switching the device while the page is open changes the theme', async ({ page }) => {
-    await page.emulateMedia({ colorScheme: 'light' });
-    await page.goto('/en');
-    await expect(page.locator('html')).toHaveAttribute('data-theme', 'light');
-    await page.emulateMedia({ colorScheme: 'dark' });
-    await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
   });
 
   test('a device that asks for more contrast gets high contrast, before the page scripts load and live', async ({ page }) => {

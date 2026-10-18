@@ -9,13 +9,12 @@ test('the old example address redirects to the one guide address, in every langu
   }
 });
 
-test('only the example place exists, and the header button and the QR address open it', async ({ page }) => {
+// The QR address is checked below and in tests/platform.spec.ts.
+test('only the example place exists, and the header button opens it', async ({ page }) => {
   expect((await page.goto('/en/places/unknown-place/guide'))?.status()).toBe(404);
   await page.goto('/en');
   await page.getByRole('link', { name: 'Example guide', exact: true }).first().click();
   await expect(page).toHaveURL(new RegExp(`${guide}$`));
-  await page.goto('/q/willow-museum?locale=ro');
-  await expect(page).toHaveURL(/\/ro\/places\/willow-museum\/guide$/);
 });
 
 test('one label stands above the guide: the others are gone', async ({ page }) => {
@@ -78,8 +77,8 @@ test('a scan of the example code opens it in the phone language, and an asked-fo
   await phone.close();
 });
 
-test('a code nobody made is a plain 404, and the notice page names no location', async ({ page, request }) => {
-  expect((await request.get('/q/ffffffff', { maxRedirects: 0 })).status()).toBe(404);
+// A code nobody made is a plain 404: tests/platform.spec.ts and tests/privacy-security.spec.ts.
+test('the notice page names no location', async ({ page }) => {
   await page.goto('/en/guide-unavailable');
   await expect(page.getByRole('heading', { name: "This guide isn't available right now" })).toBeVisible();
   await page.goto('/ro/guide-unavailable');

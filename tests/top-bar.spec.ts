@@ -29,21 +29,7 @@ test('light or dark is an icon with its action as the name and a tooltip', async
   await expect(toggle).toHaveAccessibleName('Switch to dark mode');
 });
 
-test('the reading panel holds the accent colour, and it is remembered', async ({ page }) => {
-  await page.goto('/en');
-  let panel = await openPanel(page);
-  const accent = panel.getByLabel('Accent colour', { exact: true });
-  await expect(accent).toHaveValue('cool');
-  await expect(accent.locator('option')).toHaveText(['Blue', 'Green']);
-  await accent.selectOption('warm');
-  await expect(page.locator('html')).toHaveAttribute('data-tone', 'warm');
-  await page.reload();
-  await expect(page.locator('html')).toHaveAttribute('data-tone', 'warm');
-  panel = await openPanel(page);
-  await expect(panel.getByLabel('Accent colour', { exact: true })).toHaveValue('warm');
-  await panel.getByRole('button', { name: 'Reset', exact: false }).last().click();
-  await expect(page.locator('html')).toHaveAttribute('data-tone', 'cool');
-});
+// The accent colour is tested in tests/platform.spec.ts, with the contrast checks.
 
 test('page length is offered only on the text pages, and summary shows its note', async ({ page }) => {
   await page.goto('/en');
@@ -71,8 +57,8 @@ test('the panel fields are translated', async ({ page }) => {
   }
 });
 
-test('on a phone the three controls fit on one row, and the panel opens fully on screen', async ({ page }) => {
-  for (const width of [390, 320]) {
+test('at every width the three controls share one row and one height, and the panel opens fully on screen', async ({ page }) => {
+  for (const width of [1280, 390, 320]) {
     await page.setViewportSize({ width, height: 800 });
     await page.goto('/en');
     const boxes = await bar(page).locator('.language-switch summary, .theme-toggle, .topbar-reading').evaluateAll((els) => els.map((el) => { const r = el.getBoundingClientRect(); return { y: Math.round(r.y), h: Math.round(r.height), right: r.right }; }));

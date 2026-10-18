@@ -4,7 +4,8 @@ const paths=['','for-organisations','methodology','places/willow-museum/guide','
 for(const locale of ['en','ro','de']) {
  test(`${locale}: routes and document language`,async({page})=>{const errors:string[]=[];page.on('pageerror',e=>errors.push(e.message));for(const path of paths){const response=await page.goto(`/${locale}/${path}`);expect(response?.status(),path).toBe(200);await expect(page.locator('html')).toHaveAttribute('lang',locale);await expect(page.locator('main h1')).toBeVisible();}expect(errors).toEqual([]);});
 }
-for(const path of ['/en','/en/places/willow-museum/guide','/en/contact','/en/demo','/en/demo/d0000000-0000-4000-8000-0000000000a1','/en/demo/d0000000-0000-4000-8000-0000000000a1/preview','/ro','/de']) {
+// The demo pages are checked in every theme by tests/demo-workspace.spec.ts.
+for(const path of ['/en','/en/places/willow-museum/guide','/en/contact','/ro','/de','/en/register','/ro/register','/de/register','/en/login']) {
  test(`WCAG A/AA checks ${path}`,async({page})=>{await page.goto(path);const results=await new AxeBuilder({page}).withTags(['wcag2a','wcag2aa','wcag21a','wcag21aa','wcag22aa']).analyze();expect(results.violations).toEqual([]);});
 }
 test('guide navigation, skip and completion work by keyboard',async({page})=>{await page.goto('/en/places/willow-museum/guide');await expect(page.getByRole('heading',{name:'The main entrance',exact:true})).toBeVisible();const next=page.getByRole('button',{name:'Next step',exact:true});await next.focus();await page.keyboard.press('Enter');await expect(page.getByRole('heading',{name:'Reception & the foyer',exact:true})).toBeFocused();await page.getByRole('button',{name:'Guide options',exact:true}).click();await page.getByRole('button',{name:'The quiet room',exact:false}).click();await expect(page.getByRole('heading',{name:'The quiet room',exact:true})).toBeVisible();await page.getByRole('button',{name:'Finish the guide'}).click();await expect(page.getByRole('heading',{name:'You have explored the guide.'})).toBeFocused();await page.getByRole('button',{name:'Start again'}).click();await expect(page.getByRole('heading',{name:'The main entrance',exact:true})).toBeVisible();});
@@ -54,10 +55,6 @@ test('auth callbacks cannot redirect to an external next parameter without confi
  const response=await request.get('/auth/callback?code=invalid&locale=https://evil.example&next=https://evil.example',{maxRedirects:0});expect(response.status()).toBe(307);expect(response.headers().location).toContain('/en/login?confirmation=failed');expect(response.headers().location).not.toContain('evil.example');
 });
 
-for(const path of ['/en/register','/ro/register','/de/register','/en/login']){
- test(`organisation WCAG A/AA checks ${path}`,async({page})=>{await page.goto(path);const result=await new AxeBuilder({page}).withTags(['wcag2a','wcag2aa','wcag21a','wcag21aa','wcag22aa']).analyze();expect(result.violations).toEqual([]);});
-}
-
 
 // How it works is a section of the home page; the menu jumps to it from anywhere and the old address redirects.
 test('the menu jumps to the home sections from other pages and the old how-it-works address redirects',async({page,request})=>{
@@ -102,16 +99,6 @@ test('Sign in and Request access are on screen when the organisations page opens
    await expect(page.getByRole('main').getByRole('link',{name:signIn,exact:true})).toBeInViewport();
    await expect(page.getByRole('main').getByRole('link',{name:request,exact:true})).toBeInViewport();
   }
- }
-});
-
-// Language, light or dark, and the reading button share one height, however the page is sized.
-test('the controls above the menu are all the same height',async({page})=>{
- for(const size of [{width:1280,height:800},{width:390,height:844},{width:320,height:700}]) {
-  await page.setViewportSize(size);await page.goto('/en/methodology');
-  const heights=await page.evaluate(()=>[...document.querySelectorAll('.topbar .language-switch summary, .topbar .theme-toggle, .topbar .topbar-reading')].map(el=>Math.round(el.getBoundingClientRect().height)));
-  expect(heights.length).toBe(3);
-  expect(new Set(heights).size,JSON.stringify(heights)).toBe(1);
  }
 });
 
@@ -221,10 +208,13 @@ test('the menu has one organisations link on a narrow viewport and sign-in sits 
 // Warm is a reader's alternative palette, so it has to clear the same contrast sweep as the default.
 const openPanel=async(page:import('@playwright/test').Page)=>{await page.locator('.topbar-reading').click();return page.getByRole('dialog');};
 for(const theme of ['dark','light']) {
- test(`green accent in ${theme} persists and passes automated checks`,async({page})=>{
+ test(`green accent in ${theme} persists, passes automated checks and resets to blue`,async({page})=>{
   await page.goto('/en');
-  const panel=await openPanel(page);
-  await panel.getByLabel('Accent colour',{exact:true}).selectOption('warm');
+  let panel=await openPanel(page);
+  const accent=panel.getByLabel('Accent colour',{exact:true});
+  await expect(accent).toHaveValue('cool');
+  await expect(accent.locator('option')).toHaveText(['Blue','Green']);
+  await accent.selectOption('warm');
   await expect(page.locator('html')).toHaveAttribute('data-tone','warm');
   await page.evaluate(t=>{const k='vianorae:reading:v1';localStorage.setItem(k,JSON.stringify({...JSON.parse(localStorage.getItem(k)||'{}'),theme:t,themeV:2}));},theme);
   for(const path of ['/en','/en/places/willow-museum/guide','/en/for-organisations']) {
@@ -234,6 +224,10 @@ for(const theme of ['dark','light']) {
    const results=await new AxeBuilder({page}).withTags(['wcag2a','wcag2aa','wcag21a','wcag21aa','wcag22aa']).analyze();
    expect(results.violations).toEqual([]);
   }
+  panel=await openPanel(page);
+  await expect(panel.getByLabel('Accent colour',{exact:true})).toHaveValue('warm');
+  await panel.getByRole('button',{name:'Reset',exact:false}).last().click();
+  await expect(page.locator('html')).toHaveAttribute('data-tone','cool');
  });
 }
 test('the saved accent colour is applied before the page scripts load, so a refresh does not flash blue',async({page})=>{

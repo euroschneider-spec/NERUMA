@@ -29,7 +29,8 @@ for (const text of hostile) {
     await page.getByRole('button', { name: 'Save', exact: true }).first().click();
     await expect(page.getByRole('status').filter({ hasText: 'Saved in this browser.' })).toBeVisible();
 
-    for (const path of [`/en/demo/${willow}/preview`, `/en/demo/${willow}`, '/en/demo']) {
+    // The preview comes last, so the check after the loop reads the page that is already open.
+    for (const path of [`/en/demo/${willow}`, '/en/demo', `/en/demo/${willow}/preview`]) {
       await page.goto(path);
       await page.waitForLoadState('networkidle');
       expect(await page.evaluate(() => (window as unknown as { __xss?: number }).__xss), `${path}: a script ran`).toBeUndefined();
@@ -40,7 +41,6 @@ for (const text of hostile) {
       expect(await page.locator('main a[href^="javascript:"]').count(), `${path}: a script link appeared`).toBe(0);
     }
     // The preview shows the characters themselves, not something made of them.
-    await page.goto(`/en/demo/${willow}/preview`);
     if (text.startsWith('<img') || text.startsWith('<svg') || text.startsWith('<a ')) {
       await expect(page.getByRole('heading', { name: text, exact: true })).toBeVisible();
     }
