@@ -223,6 +223,13 @@ shapes in the text colour, so it follows every theme; the folded sidebar shows o
 in each language because the one in the logo is English only. The lettering is custom (no matching font), kept as outlines. The logo spells the name "Neruma" while the
 rest of the site writes NERUMA: left as designed. The six source files are in `public/brand/`. Plan: brief `2026-10-18-logo.md`.
 
+### Emails are text and links only
+Owner, 2026-10-18. Every email NERUMA sends is text and hyperlinks, in the account's language (English, Romanian or German): no images (not even the logo), no tracking pixels,
+no rewritten links, nothing loaded from anywhere when it is opened. The header is the word "Neruma" in the logo's charcoal and off-white. Reasons: nothing in a NERUMA
+email may tell us or anyone else that it was opened (the same promise as the site's no-tracking); SVG doesn't work in Gmail or Outlook, and a PNG would have to load from a
+server; images are often blocked anyway; and text works for screen readers and every mail program. Resend's click and open tracking are switched off. Which emails exist:
+`TECH-TASKS.md` §4. Not chosen: one hosted PNG of the logo (it would show when an email is opened).
+
 ## Not yet discussed
 
 - `DESIGN-TASKS.md` sections 5, 6 (other items) and 7.

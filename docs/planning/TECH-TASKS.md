@@ -90,27 +90,52 @@ chose fall under that. **So no cookie banner is needed as things stand.**
 
 ## 4. Email
 
-**Today:** Supabase's built-in email sends the confirmation mail. It is for development only: it is
-limited to a few emails per hour, and Supabase restricts it to the project team's own addresses. So
-real applicants may not receive their confirmation email. There is a template in
-`supabase/templates/confirmation.html`. **Owner, 2026-10-18:** leaning towards a European provider, not French, German if there is one
-(the same for payment, §8). Resend was being tried (its EU region is Ireland only; no Frankfurt); nothing is decided or connected.
+**Where it stands (2026-10-18):** Resend is connected as Supabase's sender for the sign-in emails. The domain `mail.lignorae.com` is verified (region Ireland,
+click and open tracking off), a sending-only key was made, and Supabase sends from `NERUMA <noreply@mail.lignorae.com>` (Authentication → Emails → SMTP). **Still to
+confirm:** that a real test email arrives (Authentication → Users → *Send password recovery* on your own account, then check the inbox, the spam folder and Resend's
+Logs). The app itself sends nothing yet. **Provider:** Resend is used for now (owner, 2026-10-18); the owner's lean towards a European provider is still open
+(§15), and swapping is one SMTP setting.
 
-Missing: password reset (no recovery flow exists in the code), team invitations, and notifying
-applicants of an administrator's decision.
+**Rule (owner, 2026-10-18; `DECISIONS.md`, "Emails are text and links only"):** every email is text and hyperlinks, in English, Romanian and German. No images, no logo
+image, no tracking pixels, no rewritten links. A text header "Neruma" in the logo's charcoal and off-white. `tests/unit/email-template.test.ts` enforces it.
 
-- [ ] Choose an SMTP provider and connect it in Supabase (Authentication → Emails → SMTP settings). Research European providers,
-  German first, before settling (§15); the list below is the first pass, not a shortlist:
-  - **Brevo**: EU company, free tier around 300 emails/day. Simplest fit for GDPR.
-  - **Resend**: free tier around 3,000/month; good developer experience; US company with an EU
-    sending region.
-  - **Postmark**: paid, best known for deliverability.
-  - **Amazon SES**: cheapest at volume; more setup.
-- [ ] Sending domain: add SPF, DKIM and DMARC records on the domain's DNS (e.g. a
-  `mail.lignorae.com` subdomain, or the final NERUMA domain).
-- [ ] Add a password-reset flow (Supabase `resetPasswordForEmail` + a "set new password" page) in
-  EN/RO/DE.
-- [ ] Translate the email templates into RO and DE.
+- [x] Choose an SMTP provider and connect it in Supabase: Resend (see above). Delivery test still to confirm (above).
+- [x] Sending domain: SPF, DKIM and return-path records for `mail.lignorae.com` are in Vercel's DNS and Resend says verified. DMARC is not set yet: add a
+  `_dmarc.mail` TXT record (`v=DMARC1; p=none; rua=mailto:<an address you read>`) once mail is flowing, and tighten it later.
+- [ ] Check that Supabase's Authentication → URL Configuration has the Site URL `https://neruma.lignorae.com` and `…/auth/callback` in the redirect list, and
+  `VIANORAE_SITE_URL` is set in Vercel (the friend with Vercel access is checking).
+- [ ] Restyle the confirmation email: text header, new colours (the green is the old brand), same wording. Keep `supabase/templates/` as the source and the pasted
+  example file in step.
+- [ ] Translate the email templates into RO and DE (the confirmation already has all three; every new one needs them).
+- [ ] Add a password-reset flow (Supabase `resetPasswordForEmail` + a "set new password" page) in EN/RO/DE, and its email.
+
+### The emails we need
+
+Sent by Supabase through Resend (templates pasted in the dashboard, one per type, language chosen with `preferred_locale`):
+
+1. [x] **Confirm your email** (registration). Exists in three languages; restyle (above).
+2. [ ] **Reset your password.** Needs the reset flow (above). Before launch.
+3. [ ] **Security notices** (optional in Supabase, cheap to add): password changed, email address changed, two-factor added or removed. Tells someone when their
+   account was touched by somebody else.
+
+Sent by the app (needs code, a shared plain layout, and a plain-text part; a brief first):
+
+4. [ ] **Request received**: "we have your organisation's request and will check it" (nothing is emailed after submitting today).
+5. [ ] **Request approved**: the organisation can sign in and build. Before launch.
+6. [ ] **More information needed**: the administrator's note, and what to do. Before launch.
+7. [ ] **Request rejected**: the reason, and that they can apply again.
+8. [ ] **Team invitation** (needs the invite feature, §16): a link to join the organisation, and a notice to the owner when someone accepts.
+9. [ ] **Deleting an account** (`docs/briefs/2026-10-13-delete-account.md`, step 3): started (the date it is erased, how to restore), a reminder 3 days before, done.
+   Before launch: the law and the privacy page promise it.
+10. [ ] **Payments** (Stripe sends its own receipts and failed-payment mails; ours explain what the 30 days mean): "payment failed, your guides stay online
+    until <date>", a reminder 7 days before, "your guides are offline, pay to bring them back", "back online". Before the start date is set (§8).
+11. [ ] **To NERUMA's administrators**: a problem report arrived; a new organisation request is waiting (today the dashboard shows it, nothing is emailed).
+12. [ ] **Contact form**: sends the enquiry to NERUMA's inbox and shows the sender a copy (`/contact` only prepares a message today).
+13. [ ] **Organisation suspended or reinstated**: tells the owner, because their guides go offline.
+14. [ ] **Later**: a guide taken down by NERUMA, two-factor reset by an administrator, an export is ready, and visitor reports once they exist.
+
+**What every email shares:** one clear sentence on what to do, a button-like link *and* the address written out, the language of the account, a plain-text version,
+readable contrast, no images or tracking, the sender `NERUMA <noreply@mail.lignorae.com>` and a reply address a person reads.
 
 ## 5. Images and storage
 
