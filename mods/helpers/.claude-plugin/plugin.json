@@ -1,0 +1,5 @@
+{
+  "name": "helpers",
+  "version": "0.1.0",
+  "description": "Cheaper-model helpers for bulk work: scout (search the code), runner (run the tests), translator (draft RO/DE copy)."
+}

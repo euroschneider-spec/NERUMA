@@ -15,6 +15,12 @@ command writes one). Read the brief before building, and check "Done when" befor
 `docs/planning/DECISIONS.md` records why things are the way they are; don't re-open an entry without the
 owner saying what changed. Write a new entry when the owner makes a deliberate choice.
 
+## Task ledger
+
+Small tasks for fresh chats are in `docs/ledger/LEDGER.md`. When the owner says "next task", take the first open one. When
+it is finished, `/ledger done <id> | <what was done>` records it with the helpers used and the tokens spent. What the mods
+are and how to use them: `mods/README.md`.
+
 ## What the product does
 
 `docs/PRODUCT.md` describes, functionality only, what every kind of person can do today. A change that adds, removes or alters

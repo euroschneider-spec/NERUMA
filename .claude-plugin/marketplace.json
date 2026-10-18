@@ -1,0 +1,8 @@
+{
+  "name": "neruma-mods",
+  "owner": { "name": "NERUMA" },
+  "plugins": [
+    { "name": "ledger", "source": "./mods/ledger", "description": "Task list and handoff notes in docs/ledger/LEDGER.md." },
+    { "name": "helpers", "source": "./mods/helpers", "description": "Cheaper-model helpers: scout, runner, translator." }
+  ]
+}
