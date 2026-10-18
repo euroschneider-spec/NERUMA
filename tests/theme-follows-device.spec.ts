@@ -28,6 +28,27 @@ test.describe('a visitor who has not chosen follows the device', () => {
     await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
   });
 
+  test('a device that asks for more contrast gets high contrast, before the page scripts load and live', async ({ page }) => {
+    await page.emulateMedia({ colorScheme: 'light', contrast: 'more' });
+    await page.route('**/_next/static/**/*.js', (route) => route.abort());
+    await page.goto('/en');
+    expect(await theme(page)).toBe('contrast');
+    await page.unroute('**/_next/static/**/*.js');
+    await page.reload();
+    await expect(page.locator('html')).toHaveAttribute('data-theme', 'contrast');
+    await page.emulateMedia({ contrast: 'no-preference' });
+    await expect(page.locator('html')).toHaveAttribute('data-theme', 'light');
+    await page.emulateMedia({ contrast: 'more' });
+    await expect(page.locator('html')).toHaveAttribute('data-theme', 'contrast');
+  });
+
+  test('a theme the visitor chose wins over a device that asks for more contrast', async ({ page }) => {
+    await page.emulateMedia({ colorScheme: 'light', contrast: 'more' });
+    await page.addInitScript((k) => localStorage.setItem(k, JSON.stringify({ theme: 'light', themeV: 2 })), key);
+    await page.goto('/en');
+    await expect(page.locator('html')).toHaveAttribute('data-theme', 'light');
+  });
+
   test('changing another setting does not turn the device default into a stored choice', async ({ page }) => {
     await page.emulateMedia({ colorScheme: 'light' });
     await page.goto('/en');

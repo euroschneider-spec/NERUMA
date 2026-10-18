@@ -59,7 +59,7 @@ motion is already respected. The root URL always redirects to English (`src/app/
 
 - [x] Theme: follows `prefers-color-scheme` until the visitor picks one (`data-theme-choice`, *Match my device*),
   resolved before first paint and live. Done in #33.
-- [ ] Consider `prefers-contrast: more` → high contrast theme.
+- [x] `prefers-contrast: more` → high contrast theme, while the visitor follows the device (`DECISIONS.md`).
 - [ ] Language: the root URL picks EN/RO/DE from the browser's `Accept-Language`, falling back to EN.
   A language chosen in the menu wins.
 - [x] Tests: Playwright now runs as a dark device and `tests/theme-follows-device.spec.ts` emulates both. The signed-in workspace and admin pages
@@ -176,8 +176,8 @@ on the request form are `required`.
   a description, a description for every shown photo, and a name for every own field. Original note: place name, at least three zones,
   and a title and description per zone. Sensory levels may stay "not recorded". Alt text is required
   whenever there is a photo.
-- [ ] Error messages per field in EN/RO/DE, linked to the field (`aria-describedby`), not only a
-  message at the top. **Done for registration and sign-in** (brief `2026-10-18-form-warnings.md`, rule in `ACCESSIBILITY.md`); the password forms, the guide editor and the organisation request on the account page still use the browser's pop-up.
+- [x] Error messages per field in EN/RO/DE, linked to the field (`aria-describedby`), not only a
+  message at the top. **Done for registration and sign-in** (brief `2026-10-18-form-warnings.md`, rule in `ACCESSIBILITY.md`); since then also the organisation request on the account page (the same form), the three password forms (reset request, new password, change password) and the guide editor, where Save opens a folded step to show its field. The admin and two-factor forms are not converted yet.
 
 ## 7. Password rules
 

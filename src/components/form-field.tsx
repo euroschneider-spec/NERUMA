@@ -12,9 +12,10 @@ const isControl = (element: unknown): element is Control =>
  * Warnings for a form (docs/guides/ACCESSIBILITY.md, "Forms"). On Send every control is checked with the browser's own rules and
  * the screen jumps to the first one that needs attention; each such field says in words what to do. A warning goes away as soon as
  * its field is right (never before Send, and nothing is checked while typing), and none is left showing after Back or Forward.
- * The form is submitted from here, so what was typed stays when the server refuses.
+ * The form is submitted from here, so what was typed stays when the server refuses. `reveal` makes a control that is folded away
+ * visible (the guide editor opens its step); the focus then waits a frame for it to show.
  */
-export function useFormWarnings(locale: Locale, send: (data: FormData) => void) {
+export function useFormWarnings(locale: Locale, send: (data: FormData) => void, reveal?: (control: Control) => void) {
   const copy = getWarningCopy(locale);
   const prefix = useId();
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -36,7 +37,12 @@ export function useFormWarnings(locale: Locale, send: (data: FormData) => void) 
         first ??= control;
       }
       setErrors(found);
-      if (first) first.focus();
+      if (first && reveal) {
+        const target = first;
+        reveal(target);
+        requestAnimationFrame(() => target.focus());
+      }
+      else if (first) first.focus();
       else startTransition(() => send(new FormData(element)));
     },
     onChange(event: ChangeEvent<HTMLFormElement>) {
@@ -49,11 +55,14 @@ export function useFormWarnings(locale: Locale, send: (data: FormData) => void) 
 }
 export type FormWarnings = ReturnType<typeof useFormWarnings>;
 
-/** A labelled control with its hint and its warning, linked to it for screen readers; the warning also marks the control itself. */
-export function Field({ w, name, label, hint, className = '', children }: {
-  w: FormWarnings; name: string; label: string; hint?: string; className?: string; children: ReactElement<Record<string, unknown>>;
+/**
+ * A labelled control with its hint and its warning, linked to it for screen readers; the warning also marks the control itself.
+ * `id` is for a control that other code focuses by a fixed id.
+ */
+export function Field({ w, name, label, hint, className = '', id: fixedId, children }: {
+  w: FormWarnings; name: string; label: string; hint?: string; className?: string; id?: string; children: ReactElement<Record<string, unknown>>;
 }) {
-  const id = w.idOf(name);
+  const id = fixedId ?? w.idOf(name);
   const warning = w.errors[name];
   const described = [hint && `${id}-hint`, warning && `${id}-warning`].filter(Boolean).join(' ') || undefined;
   return (

@@ -8,7 +8,6 @@ import { confirmedUser, createClient } from '@/lib/supabase/server';
 import { signOut } from '@/app/auth/actions';
 import { getSuperadminCopy } from '@/lib/superadmin';
 import { OrganisationForm } from '@/components/organisation-form';
-import { ResponsibilityNotice } from '@/components/responsibility-notice';
 import { workspaceConfigured } from '@/lib/workspace-server';
 import { getWorkspaceCopy } from '@/lib/workspace';
 import { MandateDocuments } from '@/components/mandate-documents';
@@ -70,7 +69,6 @@ export default async function Account({ params }: { params: Promise<{ locale: st
   return <main id="main-content" className="container verification-page"><div className="page-heading"><h1>{t.account}</h1></div><div className="content-body">
     {viewer.isPlatformAdmin && <p><Link className="button" href={`/${locale}/admin`}>{getSuperadminCopy(locale).title}</Link></p>}
     {!operatorOnly && !application && !ownOrganizations.length && <p className="auth-feedback" role="status">{getAuthFeedback(locale).confirmed}</p>}
-    {!operatorOnly && <ResponsibilityNotice locale={locale}/>}
     {application && <section className="notice" aria-labelledby="application-status"><h2 id="application-status">{v.statuses[application.status]}</h2><p>{application.organization_name}</p>{application.status==='pending' && <p>{getAuthFeedback(locale).pending}</p>}{application.applicant_note && <p>{application.applicant_note}</p>}{application.status!=='approved' && <p>{v.gate}</p>}</section>}
     {application && documentsEnabled && <MandateDocuments locale={locale} documents={documents}/>}
     {!operatorOnly && !documentsEnabled && !ownOrganizations.length && <p className="notice notice-warning" role="status">{getEvidenceCopy(locale).setup}</p>}

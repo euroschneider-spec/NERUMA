@@ -11,6 +11,7 @@ import { ChoiceGroup } from './choice-group';
 import { getEvidenceCopy, type MandateDocument } from '@/lib/mandate-evidence';
 import { getVerificationCopy } from '@/lib/verification';
 import { CheckField, Field, useFormWarnings } from './form-field';
+import { ResponsibilityNotice } from './responsibility-notice';
 
 export function OrganisationForm({ locale, mode, enabled, initial, initialDocuments=[] }: {
   initialDocuments?:MandateDocument[];
@@ -53,6 +54,7 @@ export function OrganisationForm({ locale, mode, enabled, initial, initialDocume
         </>}
       </div>
       {hasOrganisation && <>
+        <ResponsibilityNotice locale={locale} id="responsibility"/>
         <CheckField w={w} name="authority" label={t.authority}/>
         <CheckField w={w} name="responsibility" label={t.accept}/>
       </>}

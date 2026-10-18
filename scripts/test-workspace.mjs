@@ -1018,6 +1018,39 @@ try {
     }
     await context.close();
   });
+  await check('the password forms mark each field that needs filling or checking, in words, in every language',async()=>{
+    const {context,view}=await newContext();
+    await view.goto(`${base}/en/login/reset`);await view.waitForLoadState('networkidle');
+    const email=view.getByLabel('Email address',{exact:true});
+    await view.getByRole('button',{name:'Send the link',exact:true}).click();
+    await expect(email).toBeFocused();
+    await expect(email).toHaveAttribute('aria-invalid','true');
+    await expect(email).toHaveAccessibleDescription('Fill in “Email address”.');
+    await email.fill('not-an-email');await view.getByRole('button',{name:'Send the link',exact:true}).click();
+    await expect(email).toHaveAccessibleDescription('Enter an email address like name@example.org.');
+    await axeClean(view,'the reset request with a warning');
+    await email.fill('nobody@example.test');
+    await expect(email).not.toHaveAttribute('aria-invalid','true');
+    for(const [locale,warning] of [['ro',/^Completează „.+”\.$/],['de',/^Füllen Sie „.+“ aus\.$/]]) {
+      await view.goto(`${base}/${locale}/login/reset`);await view.waitForLoadState('networkidle');
+      await view.locator('form button[type=submit]').click();
+      await expect(view.locator('main .field-warning'),locale).toHaveText(warning);
+    }
+    // The change-password form on the account page.
+    await login(view,4);await view.goto(`${base}/en/account`);await view.waitForLoadState('networkidle');
+    const box=view.getByRole('region',{name:'Change your password'});
+    await box.getByRole('button',{name:'Save new password',exact:true}).click();
+    await expect(box.getByLabel('Current password',{exact:true})).toBeFocused();
+    await expect(box.getByLabel('Current password',{exact:true})).toHaveAccessibleDescription('Fill in “Current password”.');
+    await expect(box.getByLabel('New password',{exact:true})).toHaveAccessibleDescription(/Fill in “New password”\.$/);
+    await expect(box.getByLabel('Repeat the new password',{exact:true})).toHaveAccessibleDescription('Fill in “Repeat the new password”.');
+    await box.getByLabel('New password',{exact:true}).fill('short');await box.getByRole('button',{name:'Save new password',exact:true}).click();
+    await expect(box.getByLabel('New password',{exact:true})).toHaveAccessibleDescription(/Use at least 12 characters\.$/);
+    await axeClean(view,'the change-password form with warnings');
+    await box.getByLabel('Current password',{exact:true}).fill('typed');
+    await expect(box.getByText('Fill in “Current password”.',{exact:true})).toHaveCount(0);
+    await context.close();
+  });
   await check('a forgotten password is reset through an emailed link: the answer never says who has an account, the link is used by its button, and the old password stops working',async()=>{
     const {context,view}=await newContext();
     await view.goto(`${base}/en/login`);
@@ -1050,7 +1083,7 @@ try {
     await expect(view.getByRole('heading',{name:'Choose a new password',level:1})).toBeVisible();
     await axeClean(view,'the new-password page');
     // The server checks what the form checks.
-    await view.locator('form').first().evaluate(form=>{form.noValidate=true;});
+    await view.locator('form').first().evaluate(form=>{form.querySelectorAll('input').forEach(input=>{input.removeAttribute('required');input.removeAttribute('minlength');});});
     const submit=async(first,second)=>{await view.getByLabel('New password',{exact:true}).fill(first);await view.getByLabel('Repeat the new password',{exact:true}).fill(second);await view.getByRole('button',{name:'Save new password',exact:true}).click();};
     await submit('short','short');await expect(view.getByRole('alert').filter({hasText:'The password needs at least 12 characters.'})).toBeVisible();
     await submit('Reset-passphrase-4821','Reset-passphrase-4822');await expect(view.getByRole('alert').filter({hasText:'The two passwords are not the same.'})).toBeVisible();
@@ -1078,7 +1111,7 @@ try {
     await expect(view).toHaveURL(/\/en\/account\/password$/);
     await expect(view.getByText('This account uses two-factor sign-in.',{exact:false})).toBeVisible();
     await axeClean(view,'the new-password page with a code field');
-    await view.locator('form').first().evaluate(form=>{form.noValidate=true;});
+    await view.locator('form').first().evaluate(form=>{form.querySelectorAll('input').forEach(input=>{input.removeAttribute('required');input.removeAttribute('minlength');});});
     const submit=async(code)=>{await view.getByLabel('6-digit code from the app',{exact:true}).fill(code);await view.getByLabel('New password',{exact:true}).fill('Admin-reset-passphrase-77');await view.getByLabel('Repeat the new password',{exact:true}).fill('Admin-reset-passphrase-77');await view.getByRole('button',{name:'Save new password',exact:true}).click();};
     await submit('');await expect(view.getByRole('alert').filter({hasText:'That code is not right.'})).toBeVisible();
     await submit('000000');await expect(view.getByRole('alert').filter({hasText:'That code is not right.'})).toBeVisible();
@@ -1101,7 +1134,7 @@ try {
     const box=view.getByRole('region',{name:'Change your password'});
     await expect(box.getByRole('heading',{name:'Change your password',level:2})).toBeVisible();
     await view.waitForLoadState('networkidle');await axeClean(view,'the account page with the change-password form');
-    await box.locator('form').evaluate(form=>{form.noValidate=true;});
+    await box.locator('form').evaluate(form=>{form.querySelectorAll('input').forEach(input=>{input.removeAttribute('required');input.removeAttribute('minlength');});});
     const submit=async(current,first,second)=>{await box.getByLabel('Current password',{exact:true}).fill(current);await box.getByLabel('New password',{exact:true}).fill(first);await box.getByLabel('Repeat the new password',{exact:true}).fill(second);await box.getByRole('button',{name:'Save new password',exact:true}).click();};
     await submit('Fixture-only-passphrase-123','short','short');await expect(box.getByRole('alert').filter({hasText:'The password needs at least 12 characters.'})).toBeVisible();
     await submit('Fixture-only-passphrase-123','Changed-passphrase-5521','Changed-passphrase-5522');await expect(box.getByRole('alert').filter({hasText:'The two passwords are not the same.'})).toBeVisible();
@@ -1121,7 +1154,7 @@ try {
     // Two-factor: the code is asked for, a missing or wrong one changes nothing.
     const admin=await newContext();await login(admin.view,3);await admin.view.goto(`${base}/en/account`);
     const adminBox=admin.view.getByRole('region',{name:'Change your password'});
-    await adminBox.locator('form').evaluate(form=>{form.noValidate=true;});
+    await adminBox.locator('form').evaluate(form=>{form.querySelectorAll('input').forEach(input=>{input.removeAttribute('required');input.removeAttribute('minlength');});});
     const adminSubmit=async code=>{await adminBox.getByLabel('Current password',{exact:true}).fill('Fixture-only-passphrase-123');await adminBox.getByLabel('6-digit code from the app',{exact:true}).fill(code);await adminBox.getByLabel('New password',{exact:true}).fill('Admin-changed-passphrase-88');await adminBox.getByLabel('Repeat the new password',{exact:true}).fill('Admin-changed-passphrase-88');await adminBox.getByRole('button',{name:'Save new password',exact:true}).click();};
     await adminSubmit('');await expect(adminBox.getByRole('alert').filter({hasText:'That code is not right.'})).toBeVisible();
     await adminSubmit('000000');await expect(adminBox.getByRole('alert').filter({hasText:'That code is not right.'})).toBeVisible();

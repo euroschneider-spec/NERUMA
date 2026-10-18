@@ -36,11 +36,14 @@ describe('theme preference',()=>{
     expect(fromStored({theme:'light',themeV:1}).theme).toBe('system');
   });
   it('resolves system to what the device prefers, and a choice to itself',()=>{
-    expect(resolveTheme('system',true)).toBe('light');
-    expect(resolveTheme('system',false)).toBe('dark');
+    expect(resolveTheme('system',true,false)).toBe('light');
+    expect(resolveTheme('system',false,false)).toBe('dark');
     for(const theme of ['light','dark','contrast'] as const){
-      expect(resolveTheme(theme,true)).toBe(theme);
-      expect(resolveTheme(theme,false)).toBe(theme);
+      for(const light of [true,false]) for(const contrast of [true,false]) expect(resolveTheme(theme,light,contrast)).toBe(theme);
     }
+  });
+  it('resolves system to high contrast when the device asks for more contrast, light or dark',()=>{
+    expect(resolveTheme('system',true,true)).toBe('contrast');
+    expect(resolveTheme('system',false,true)).toBe('contrast');
   });
 });
