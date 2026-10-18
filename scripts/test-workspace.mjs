@@ -668,6 +668,10 @@ try {
   await check('an owner without two-factor sees the date it becomes required',async()=>{
     const view=await (await browser.newContext({colorScheme:'dark'})).newPage();await login(view,1);await expect(view).toHaveURL(/\/en\/workspace$/);
     await expect(view.getByText('organisation owners and admins must use two-factor sign-in',{exact:false})).toBeVisible();
+    await view.evaluate(()=>{document.querySelector('.app-shell').style.minHeight='3000px';window.scrollTo({top:1500,behavior:'instant'});});
+    await expect(view.locator('.two-factor-banner')).toBeInViewport();
+    assert.equal(Math.round((await view.locator('.two-factor-banner').boundingBox()).y),0);
+    await view.evaluate(()=>{window.scrollTo({top:0,behavior:'instant'});});
     await view.getByRole('link',{name:'Set it up now',exact:true}).click();await expect(view).toHaveURL(/\/en\/account#two-factor-title$/);
     await expect(view.getByRole('heading',{name:'Two-factor sign-in',level:2})).toBeVisible();
     await view.context().close();
