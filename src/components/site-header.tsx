@@ -7,7 +7,7 @@ import { getCopy, type Locale } from '@/lib/i18n';
 import { ThemeToggle } from './theme-toggle';
 import { LanguageMenu } from './language-menu';
 import { ReadingButton } from './reading-settings';
-export function Brand() { return <span className="brand"><span className="brand-mark" aria-hidden="true"><span/><span/><span/></span>NERUMA</span>; }
+import { Brand } from './brand';
 export function SiteHeader({locale}:{locale:Locale}) {
   const t=getCopy(locale); const path=usePathname(); const [open,setOpen]=useState(false);
   // The first three jump to sections of the home page; from any other page they lead back to it.

@@ -93,6 +93,9 @@ try {
     await sidebar.getByRole('button',{name:'Collapse sidebar',exact:true}).click();
     await expect(sidebar.getByText('Fixture museum 1',{exact:true})).toBeHidden();
     await expect(sidebar.getByRole('link',{name:'Dashboard',exact:true})).toBeVisible();
+    // The logo folds to its mark: the word goes, the link keeps its name.
+    const folded=sidebar.getByRole('link',{name:'NERUMA',exact:true});
+    await expect(folded.locator('svg').first()).toBeVisible();await expect(folded.locator('svg').last()).toBeHidden();
     await page.reload();await expect(sidebar.getByRole('button',{name:'Expand sidebar',exact:true})).toBeVisible();
     await sidebar.getByRole('button',{name:'Expand sidebar',exact:true}).click();await expect(sidebar.getByText('Fixture museum 1',{exact:true})).toBeVisible();
     await page.getByRole('link',{name:'Create a location',exact:true}).click();

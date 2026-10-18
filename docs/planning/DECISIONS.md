@@ -217,6 +217,12 @@ Checkout first; invoice and bank transfer later. Stripe's webhook writes to the 
 secret, not with Supabase's all-powerful key. Payments stay off until a date is set in the database. Plan: brief
 `2026-10-18-payments.md`; how-to `docs/guides/PAYMENTS.md`.
 
+### The logo
+Owner, 2026-10-18. The owner drew the logo (mark, "Neruma", tagline "Know before you go"). The site shows the compact version (mark and name, no tagline) as inline vector
+shapes in the text colour, so it follows every theme; the folded sidebar shows only the mark; the browser icon is the mark in light on charcoal. The tagline stays text
+in each language because the one in the logo is English only. The lettering is custom (no matching font), kept as outlines. The logo spells the name "Neruma" while the
+rest of the site writes NERUMA: left as designed. The six source files are in `public/brand/`. Plan: brief `2026-10-18-logo.md`.
+
 ## Not yet discussed
 
 - `DESIGN-TASKS.md` sections 5, 6 (other items) and 7.
