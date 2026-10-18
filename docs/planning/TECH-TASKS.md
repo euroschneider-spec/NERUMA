@@ -109,7 +109,7 @@ image, no tracking pixels, no rewritten links. A text header "Neruma" in the log
   example file in step.
 - [ ] Translate the email templates into RO and DE (the confirmation already has all three; every new one needs them).
 - [x] A password-reset flow in EN/RO/DE with its email (brief `2026-10-18-password-reset.md`). Built and tested against the fake Supabase; **try it on the real site** (`TEST-PLAN.md` A12).
-- [ ] Change the password from the account page while signed in (asks for the current one, and the code with two-factor). Built in pull request 68 (brief `2026-10-18-change-password.md`); tick it after the merge, then **try it on the real site** (`TEST-PLAN.md` A12).
+- [x] Change the password from the account page while signed in (asks for the current one, and the code with two-factor). Merged (brief `2026-10-18-change-password.md`); **try it on the real site** (`TEST-PLAN.md` A12).
 
 ### The emails we need
 
@@ -177,7 +177,7 @@ on the request form are `required`.
   and a title and description per zone. Sensory levels may stay "not recorded". Alt text is required
   whenever there is a photo.
 - [ ] Error messages per field in EN/RO/DE, linked to the field (`aria-describedby`), not only a
-  message at the top.
+  message at the top. **Done for registration and sign-in** (brief `2026-10-18-form-warnings.md`, rule in `ACCESSIBILITY.md`); the password forms, the guide editor and the organisation request on the account page still use the browser's pop-up.
 
 ## 7. Password rules
 

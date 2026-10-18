@@ -911,7 +911,7 @@ try {
       await page.getByLabel('Your role in the organisation',{exact:true}).fill('Director');
       await page.getByLabel('How can your authority to represent the organisation be confirmed?',{exact:true}).fill('The registered office can independently confirm the director’s written mandate.');
       for(const checkbox of await page.locator('.organisation-form').getByRole('checkbox').all()) await checkbox.check();
-      await page.getByLabel('Work email',{exact:true}).fill(email);await page.locator('#account-password').fill(password);
+      await page.getByLabel('Work email',{exact:true}).fill(email);await page.getByLabel('Password',{exact:true}).fill(password);
     };
     for(const [label,password] of [['11 characters','a'.repeat(11)],['129 characters','a'.repeat(129)],['empty','']]) {
       await view.goto(base+'/en/register');await view.waitForLoadState('networkidle');await unlock();await view.getByLabel('Password',{exact:true}).evaluate(input=>{input.removeAttribute('required');});
@@ -927,8 +927,10 @@ try {
     await view.getByRole('button',{name:'Sign in',exact:true}).click();
     await expect(view.locator('main').getByRole('alert'),'a 129-character password at sign-in').toBeVisible();await expect(view).toHaveURL(/\/en\/login$/);
     for(const email of ['not-an-email','a@b','@example.test','a b@example.test','x'.repeat(250)+'@example.test','']) {
-      await view.goto(base+'/en/login');await view.waitForLoadState('networkidle');await view.getByRole('form',{name:'Sign in'}).evaluate(form=>{form.noValidate=true;form.querySelectorAll('[maxlength]').forEach(input=>input.removeAttribute('maxlength'));});
+      await view.goto(base+'/en/login');await view.waitForLoadState('networkidle');
       await view.getByLabel('Work email',{exact:true}).fill(email);await view.getByLabel('Password',{exact:true}).fill('Fixture-only-passphrase-123');
+      // The browser's own checks are switched off so that the server's are what answers.
+      await view.getByRole('form',{name:'Sign in'}).evaluate(form=>{form.querySelectorAll('input').forEach(input=>{input.removeAttribute('maxlength');input.removeAttribute('required');if(input.type==='email') input.type='text';});});
       await view.getByRole('button',{name:'Sign in',exact:true}).click();
       await expect(view.locator('main').getByRole('alert'),`an email address like “${email.slice(0,20)}”`).toBeVisible();
       await expect(view).toHaveURL(/\/en\/login$/);
@@ -957,6 +959,65 @@ try {
   // Password reset (docs/briefs/2026-10-18-password-reset.md): the fixture's Auth service issues one-time recovery tokens like Supabase's.
   const axeClean=async(target,label)=>{const result=await new AxeBuilder({page:target}).withTags(['wcag2a','wcag2aa','wcag21a','wcag21aa','wcag22aa']).analyze();assert.deepEqual(result.violations.map(v=>v.id),[],label);};
   const resetLink=async(email,locale='en')=>{const {token_hash:token}=await fixture(`last-recovery?email=${email}`);assert.ok(token,`a recovery token for ${email}`);return `${base}/${locale}/login/reset/continue?token_hash=${token}`;};
+  // Warnings on forms (docs/briefs/2026-10-18-form-warnings.md): the screen still jumps to the first field that needs attention, every such field says what to do,
+  // the warning goes when the field is right, and nothing is checked while typing or left showing after Back.
+  await check('registration and sign-in mark each field that needs filling or checking, in words, and the warning goes away when the field is right',async()=>{
+    const {context,view}=await newContext();
+    await view.goto(`${base}/en/register`);await view.waitForLoadState('networkidle');
+    const send=()=>view.getByRole('button',{name:'Request organisation access',exact:true}).click();
+    // Nothing is checked while typing or leaving a field.
+    await view.getByLabel('Organisation name',{exact:true}).focus();await view.getByLabel('Responsible representative',{exact:true}).focus();
+    await expect(view.locator('main').getByText('Fill in “',{exact:false})).toHaveCount(0);
+    await send();
+    const organisation=view.getByLabel('Organisation name',{exact:true});
+    await expect(organisation).toBeFocused();
+    await expect(organisation).toHaveAttribute('aria-invalid','true');
+    await expect(organisation).toHaveAccessibleDescription('Fill in “Organisation name”.');
+    for(const label of ['Responsible representative','Your role in the organisation','Official website (https://)','Country code (two letters)','How can your authority to represent the organisation be confirmed?','Work email','Password']) {
+      await expect(view.getByLabel(label,{exact:true}),label).toHaveAttribute('aria-invalid','true');
+      await expect(view.getByLabel(label,{exact:true}),label).toHaveAccessibleDescription(new RegExp(`Fill in “${label.replace(/[()?]/g,'\\$&')}”\\.$`));
+    }
+    await expect(view.getByRole('checkbox').first()).toHaveAccessibleDescription('Tick this box to continue.');
+    await axeClean(view,'the registration form with every warning showing');
+    // Fixing one field removes its warning at once; the others stay.
+    await organisation.fill('Verified fixture museum');
+    await expect(organisation).not.toHaveAttribute('aria-invalid','true');
+    await expect(view.getByText('Fill in “Organisation name”.',{exact:true})).toHaveCount(0);
+    await expect(view.getByLabel('Responsible representative',{exact:true})).toHaveAttribute('aria-invalid','true');
+    // A wrong format says what the format is, and a field still wrong keeps its warning while it is being fixed.
+    await view.getByLabel('Official website (https://)',{exact:true}).fill('museum.example');await view.getByLabel('Work email',{exact:true}).fill('not-an-email');await view.getByLabel('Password',{exact:true}).fill('short');
+    await send();
+    await expect(view.getByLabel('Official website (https://)',{exact:true})).toHaveAccessibleDescription('Enter the website address starting with https://.');
+    await expect(view.getByLabel('Work email',{exact:true})).toHaveAccessibleDescription('Enter an email address like name@example.org.');
+    await expect(view.getByLabel('Password',{exact:true})).toHaveAccessibleDescription(/Use at least 12 characters\.$/);
+    await view.getByLabel('Password',{exact:true}).fill('a-long-enough-passphrase');
+    await expect(view.getByLabel('Password',{exact:true})).not.toHaveAttribute('aria-invalid','true');
+    // Back and Forward leave no warning behind, and what was typed is still there.
+    await view.goto(`${base}/en/login`);await view.goBack();
+    await expect(view.locator('[aria-invalid="true"]')).toHaveCount(0);
+    await expect(view.getByLabel('Organisation name',{exact:true})).toHaveValue('Verified fixture museum');
+    // Sign-in: the same.
+    await view.goto(`${base}/en/login`);await view.waitForLoadState('networkidle');
+    await view.getByRole('button',{name:'Sign in',exact:true}).click();
+    await expect(view.getByLabel('Work email',{exact:true})).toBeFocused();
+    await expect(view.getByLabel('Work email',{exact:true})).toHaveAccessibleDescription('Fill in “Work email”.');
+    await expect(view.getByLabel('Password',{exact:true})).toHaveAccessibleDescription('Fill in “Password”.');
+    await view.getByLabel('Work email',{exact:true}).fill('owner1@example.test');
+    await expect(view.getByText('Fill in “Work email”.',{exact:true})).toHaveCount(0);
+    // A refusal from the server keeps what was typed.
+    await view.getByLabel('Password',{exact:true}).fill('not-the-right-password');
+    await view.getByRole('button',{name:'Sign in',exact:true}).click();
+    await expect(view.locator('main').getByRole('alert')).toBeVisible();
+    await expect(view.getByLabel('Work email',{exact:true})).toHaveValue('owner1@example.test');
+    // Romanian and German read in their own language.
+    for(const [locale,button,missing] of [['ro','Autentificare','Completează „Email profesional”.'],['de','Anmelden','Füllen Sie „Geschäftliche E-Mail“ aus.']]) {
+      await view.goto(`${base}/${locale}/login`);await view.waitForLoadState('networkidle');
+      await view.getByRole('button',{name:button,exact:true}).click();
+      await expect(view.locator('main').getByText(missing,{exact:true}),locale).toBeVisible();
+      await axeClean(view,`the sign-in warnings in ${locale}`);
+    }
+    await context.close();
+  });
   await check('a forgotten password is reset through an emailed link: the answer never says who has an account, the link is used by its button, and the old password stops working',async()=>{
     const {context,view}=await newContext();
     await view.goto(`${base}/en/login`);
