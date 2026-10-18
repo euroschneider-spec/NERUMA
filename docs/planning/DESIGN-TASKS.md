@@ -131,7 +131,7 @@ Done on 2026-10-12: the top bar keeps three controls and everything else lives i
 - [ ] Home feature grid: six cards make a row of four and a row of two at desktop. Use 3 × 2.
 - [ ] Two button systems: `.btn` (36px) and `.button` (48px), plus `.button-small` (32px), `.btn-lg`
   (48px) and a 40px phone override. Settle on three sizes in one system.
-- [ ] Inputs (36–37px) sit next to 48px buttons. Match the heights.
+- [x] Inputs (36–37px) sit next to 48px buttons. Match the heights. Done (PR #73): fields are 48px, 40px on phones like the buttons.
 - [x] (PR #16) Top bar on phones: language 32px, Cool/Warm 34px, Light 40px. The Light button picks up the
   phone `.button` override. Make all three the same height.
 - [x] The reading-settings tab (36px wide) covers content on phones: the tab is gone.
