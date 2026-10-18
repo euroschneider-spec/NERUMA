@@ -100,7 +100,7 @@ image, no tracking pixels, no rewritten links. A text header "Neruma" in the log
 
 - [x] Choose an SMTP provider and connect it in Supabase: Resend (see above). Delivery test passed.
 - [ ] **Set up the `support@lignorae.com` mailbox** (owner, 2026-10-18: the address is chosen). Either a forwarding address to an inbox you read (a few DNS records on `lignorae.com`, added in Vercel
-  DNS) or a real mailbox. It must exist and be read before any email says "write to support@lignorae.com" reaches a real person.
+  DNS) or a real mailbox. It must exist and be read before any email says "write to support@lignorae.com" reaches a real person. **Paused (no budget, 2026-10-18): the emails name no address for now**; when the mailbox exists, put the line back in both templates, the settings file and `email-template.test.ts`.
 - [x] Sending domain: SPF, DKIM and return-path records for `mail.lignorae.com` are in Vercel's DNS and Resend says verified. DMARC is not set yet: add a
   `_dmarc.mail` TXT record (`v=DMARC1; p=none; rua=mailto:<an address you read>`) once mail is flowing, and tighten it later.
 - [ ] Check that Supabase's Authentication → URL Configuration has the Site URL `https://neruma.lignorae.com` and `…/auth/callback` in the redirect list, and
@@ -109,7 +109,7 @@ image, no tracking pixels, no rewritten links. A text header "Neruma" in the log
   example file in step.
 - [ ] Translate the email templates into RO and DE (the confirmation already has all three; every new one needs them).
 - [x] A password-reset flow in EN/RO/DE with its email (brief `2026-10-18-password-reset.md`). Built and tested against the fake Supabase; **try it on the real site** (`TEST-PLAN.md` A12).
-- [ ] Change the password from the account page while signed in (asks for the current one). Not built.
+- [ ] Change the password from the account page while signed in (asks for the current one, and the code with two-factor). Built in pull request 68 (brief `2026-10-18-change-password.md`); tick it after the merge, then **try it on the real site** (`TEST-PLAN.md` A12).
 
 ### The emails we need
 

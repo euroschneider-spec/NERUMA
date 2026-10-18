@@ -204,7 +204,7 @@ createServer(async(req,res)=>{
       }
       return send(res,400,{msg:'Unsupported factor request'});
     }
-    if (url.pathname==='/auth/v1/logout') {tokens.delete(token);res.writeHead(204);return res.end();}
+    if (url.pathname==='/auth/v1/logout') {if(url.searchParams.get('scope')==='others') {for(const [other,owner] of tokens) if(owner.id===user.id && sessionIds.get(other)!==sessionIds.get(token)) tokens.delete(other);res.writeHead(204);return res.end();}tokens.delete(token);res.writeHead(204);return res.end();}
     // What a visitor may ask without signing in: schema checks, and the functions that return published data only.
     const anonymousRpc=['workspace_schema_version','organization_verification_schema_version','mandate_evidence_schema_version','publishing_schema_version','two_factor_schema_version','remember_device_schema_version','account_deletion_schema_version','superadmin_schema_version','account_profile_schema_version','payments_schema_version','billing_record_subscription','published_guide','published_places','resolve_qr'].map(name=>`/rest/v1/rpc/${name}`);
     if (!user && !anonymousRpc.includes(url.pathname) && !(req.method==='GET' && url.pathname.startsWith('/storage/v1/object/'))) return send(res,401,{code:'42501',message:'Sign in required'});

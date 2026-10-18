@@ -197,10 +197,11 @@ The machines test this against a fake Supabase (`scripts/workspace-fixture.mjs`)
 - [ ] Paste the two templates from `supabase/templates/auth-email-settings.example.json` into Supabase (*Authentication → Emails → Templates*: **Confirm sign up** and **Reset password**, with the
   subjects in the file) and check *Authentication → URL Configuration*: Site URL `https://neruma.lignorae.com`.
 - [ ] On the sign-in page click *Forgot your password?*, enter your own account's address: the same message appears as for an unknown address. The email arrives from `NERUMA <noreply@mail.lignorae.com>`, in your language, text and links only,
-  with the link also written out and "Questions? Write to support@lignorae.com."
+  with the link also written out.
 - [ ] Open the link: a page with one button. Press it: *Choose a new password*. Choose one of 12 or more characters: you land on sign-in with "Your password was changed", the old password is refused and the new one works.
 - [ ] Open the same link again and press the button: "That link has expired or was already used".
 - [ ] With an account that has two-factor: the page asks for the code first; a wrong code is refused; the right code saves.
+- [ ] Signed in, on the account page: *Change your password*. A wrong current password is refused; the right one (and the code, with two-factor) changes it. You stay signed in, a second device is signed out, and the old password no longer works.
 - [ ] Open the link on a **different device** than the one that asked (the phone): it works.
 - [ ] Look at the email on a phone in dark mode, and read it with a screen reader if you can.
 

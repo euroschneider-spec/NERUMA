@@ -31,10 +31,8 @@ describe.each(Object.entries(emails))('%s email', (name, html) => {
     expect(html).toContain('>Neruma</p>');
     expect(html).not.toMatch(/#304f41|#24392f|#fbf8f3|#c5d1c8/);
   });
-  it('says where to write, in every language', () => {
-    expect(html).toContain('Questions? Write to support@lignorae.com.');
-    expect(html).toContain('Întrebări? Scrie-ne la support@lignorae.com.');
-    expect(html).toContain('Fragen? Schreiben Sie an support@lignorae.com.');
+  it('names no mailbox: support@lignorae.com does not exist yet (TECH-TASKS section 4)', () => {
+    expect(html).not.toMatch(/support@|@lignorae\.com/);
   });
   it('tells someone who did not ask for it to ignore it', () => {
     expect(html).toMatch(/ignore this email/);
