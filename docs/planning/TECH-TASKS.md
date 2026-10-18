@@ -91,30 +91,32 @@ chose fall under that. **So no cookie banner is needed as things stand.**
 ## 4. Email
 
 **Where it stands (2026-10-18):** Resend is connected as Supabase's sender for the sign-in emails. The domain `mail.lignorae.com` is verified (region Ireland,
-click and open tracking off), a sending-only key was made, and Supabase sends from `NERUMA <noreply@mail.lignorae.com>` (Authentication → Emails → SMTP). **Still to
-confirm:** that a real test email arrives (Authentication → Users → *Send password recovery* on your own account, then check the inbox, the spam folder and Resend's
-Logs). The app itself sends nothing yet. **Provider:** Resend is used for now (owner, 2026-10-18); the owner's lean towards a European provider is still open
+click and open tracking off), a sending-only key was made, and Supabase sends from `NERUMA <noreply@mail.lignorae.com>` (Authentication → Emails → SMTP). **Delivery
+test passed** (owner, 2026-10-18): the Supabase test email arrived from `NERUMA <noreply@mail.lignorae.com>`, encrypted, in Gmail. The app itself sends nothing yet. **Provider:** Resend is used for now (owner, 2026-10-18); the owner's lean towards a European provider is still open
 (§15), and swapping is one SMTP setting.
 
 **Rule (owner, 2026-10-18; `DECISIONS.md`, "Emails are text and links only"):** every email is text and hyperlinks, in English, Romanian and German. No images, no logo
 image, no tracking pixels, no rewritten links. A text header "Neruma" in the logo's charcoal and off-white. `tests/unit/email-template.test.ts` enforces it.
 
-- [x] Choose an SMTP provider and connect it in Supabase: Resend (see above). Delivery test still to confirm (above).
+- [x] Choose an SMTP provider and connect it in Supabase: Resend (see above). Delivery test passed.
+- [ ] **Set up the `support@lignorae.com` mailbox** (owner, 2026-10-18: the address is chosen). Either a forwarding address to an inbox you read (a few DNS records on `lignorae.com`, added in Vercel
+  DNS) or a real mailbox. It must exist and be read before any email says "write to support@lignorae.com" reaches a real person.
 - [x] Sending domain: SPF, DKIM and return-path records for `mail.lignorae.com` are in Vercel's DNS and Resend says verified. DMARC is not set yet: add a
   `_dmarc.mail` TXT record (`v=DMARC1; p=none; rua=mailto:<an address you read>`) once mail is flowing, and tighten it later.
 - [ ] Check that Supabase's Authentication → URL Configuration has the Site URL `https://neruma.lignorae.com` and `…/auth/callback` in the redirect list, and
   `VIANORAE_SITE_URL` is set in Vercel (the friend with Vercel access is checking).
-- [ ] Restyle the confirmation email: text header, new colours (the green is the old brand), same wording. Keep `supabase/templates/` as the source and the pasted
+- [x] Restyle the confirmation email: text header, new colours, same wording, and the support address (brief `2026-10-18-password-reset.md`). **Paste the new template and subject into Supabase** (`TEST-PLAN.md` A12). Keep `supabase/templates/` as the source and the pasted
   example file in step.
 - [ ] Translate the email templates into RO and DE (the confirmation already has all three; every new one needs them).
-- [ ] Add a password-reset flow (Supabase `resetPasswordForEmail` + a "set new password" page) in EN/RO/DE, and its email.
+- [x] A password-reset flow in EN/RO/DE with its email (brief `2026-10-18-password-reset.md`). Built and tested against the fake Supabase; **try it on the real site** (`TEST-PLAN.md` A12).
+- [ ] Change the password from the account page while signed in (asks for the current one). Not built.
 
 ### The emails we need
 
 Sent by Supabase through Resend (templates pasted in the dashboard, one per type, language chosen with `preferred_locale`):
 
 1. [x] **Confirm your email** (registration). Exists in three languages; restyle (above).
-2. [ ] **Reset your password.** Needs the reset flow (above). Before launch.
+2. [x] **Reset your password.** Built (above); paste the template into Supabase and try it (`TEST-PLAN.md` A12).
 3. [ ] **Security notices** (optional in Supabase, cheap to add): password changed, email address changed, two-factor added or removed. Tells someone when their
    account was touched by somebody else.
 

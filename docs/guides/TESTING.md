@@ -31,6 +31,7 @@ npm run typecheck && npm run lint && npm run test:unit
 | `supabase/config.toml`, `supabase/templates/` | `npm run test:unit` (`auth-config`, `email-template`) |
 | `billing`, `stripe-server`, `api/stripe/webhook`, `workspace/billing`, the payments migration | `npm run test:db` + `npm run test:unit` (`billing.test.ts`) + `npm run test:workspace` (Checkout, webhook, grace, publish needs a plan); by hand: `PAYMENTS.md` section 3 |
 | `brand`, `public/favicon.svg`, `public/brand/` | `tests/platform.spec.ts` (the logo in every theme) + `npm run test:workspace` (the folded sidebar) |
+| `password-reset`, `password-actions`, the reset pages, `supabase/templates/` (the emails) | `npm run test:unit` (`password-reset`, `email-template`, `storage-disclosure`) + `npm run test:workspace` (the whole reset, with and without two-factor); by hand: `TEST-PLAN.md` A12 |
 | `verification.ts`, the registration form | `npm run test:unit` (`verification.test.ts`) + `npm run test:workspace` |
 | Design tokens or palette in `globals.css` | **everything** — the axe WCAG contrast sweeps are spread across all three spec files |
 

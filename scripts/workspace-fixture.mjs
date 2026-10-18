@@ -33,6 +33,9 @@ if (demo) {
 if(process.env.VIANORAE_BILLING_SECRET) await db.query("update private.billing_policy set webhook_secret_sha256=sha256(convert_to($1,'UTF8'))",[process.env.VIANORAE_BILLING_SECRET]);
 // A fake Stripe API (scripts/workspace-fixture-fetch.mjs sends api.stripe.com here): Checkout and the customer page answer with Stripe's
 // addresses, which the browser test intercepts. The last request of each kind can be read back, to check what the app sent.
+// Password reset, as Supabase Auth does it: a recovery email carries a one-time token hash; verifying it signs the person in (aal1), and an account with a
+// verified authenticator app can't change its password from there without passing the code (insufficient_aal). Tests read the token back below.
+const passwords=new Map();const recoveries=new Map();const lastRecovery=new Map();
 const stripeRequests=new Map();const stripeSubscriptions=new Map();let stripeCustomers=0;
 // Two-factor sign-in as Supabase Auth does it: factors on the user, the assurance level (aal) in the access token.
 const factorRows=userId=>locked(async()=>(await db.query('select id,friendly_name,factor_type,status,secret,created_at,updated_at from auth.mfa_factors where user_id=$1 order by created_at',[userId])).rows);
@@ -112,9 +115,24 @@ createServer(async(req,res)=>{
       if(url.pathname==='/auth/v1/resend') return send(res,200,{});
       return send(res,200,{id:id(20),aud:'authenticated',role:'authenticated',email:payload.email,email_confirmed_at:null,is_anonymous:false,app_metadata:{provider:'email'},user_metadata:payload.data||{},identities:[],created_at:new Date().toISOString()});
     }
+    if(url.pathname==='/auth/v1/recover' && req.method==='POST') {
+      const payload=JSON.parse(body.toString());
+      if(payload.email==='limited@example.test') return send(res,429,{error_code:'over_email_send_rate_limit',msg:'Email rate limit exceeded'});
+      // As Supabase: the answer is the same for an unknown address, and nothing is sent.
+      const known=users.find(u=>u.email===payload.email && u.email_confirmed_at);
+      if(known) {const hash='pkce_'+randomBytes(24).toString('hex');recoveries.set(hash,{email:known.email,used:false});lastRecovery.set(known.email,hash);}
+      return send(res,200,{});
+    }
+    if(url.pathname==='/auth/v1/verify' && req.method==='POST') {
+      const payload=JSON.parse(body.toString());const entry=recoveries.get(payload.token_hash);
+      if(payload.type!=='recovery' || !entry || entry.used) return send(res,403,{error_code:'otp_expired',msg:'Email link is invalid or has expired'});
+      entry.used=true;return send(res,200,session(await withFactors(users.find(u=>u.email===entry.email))));
+    }
+    if(url.pathname==='/__fixture/last-recovery' && req.method==='GET') return send(res,200,{token_hash:lastRecovery.get(url.searchParams.get('email'))||null});
+    if(url.pathname==='/__fixture/reset-passwords' && req.method==='POST') {passwords.clear();recoveries.clear();lastRecovery.clear();return send(res,200,{reset:true});}
     if (url.pathname==='/auth/v1/token') {
       const payload=JSON.parse(body.toString());const refreshing=url.searchParams.get('grant_type')==='refresh_token';
-      const user=refreshing?tokens.get(payload.refresh_token):users.find(u=>u.email===payload.email && payload.password===FIXTURE_PASSWORD);
+      const user=refreshing?tokens.get(payload.refresh_token):users.find(u=>u.email===payload.email && payload.password===(passwords.get(u.email)||FIXTURE_PASSWORD));
       if(!user) return send(res,400,{error:'invalid_grant',error_description:'Invalid fixture credentials'});
       // As Supabase Auth: an erased account is unknown, and a banned one (deletion in progress) is refused, also on refresh.
       const account=(await locked(async()=>(await db.query('select banned_until from auth.users where id=$1',[user.id])).rows))[0];
@@ -125,6 +143,17 @@ createServer(async(req,res)=>{
       const fresh=refreshing?session(await withFactors(user),levels.get(payload.refresh_token),sessionIds.get(payload.refresh_token)):session(await withFactors(user));return send(res,200,fresh);
     }
     const token=(req.headers.authorization || '').replace(/^Bearer /,'');const user=tokens.get(token);
+    if (url.pathname==='/auth/v1/user' && req.method==='PUT') {
+      if(!user) return send(res,401,{msg:'Invalid token'});
+      const change=JSON.parse(body.toString());
+      if(typeof change.password==='string') {
+        if((await factorRows(user.id)).some(row=>row.factor_type==='totp' && row.status==='verified') && levels.get(token)!=='aal2') return send(res,422,{error_code:'insufficient_aal',msg:'AAL2 session is required to update email or password when MFA is enabled.'});
+        if(change.password.length<12) return send(res,422,{error_code:'weak_password',msg:'Password should be at least 12 characters.'});
+        if(change.password===(passwords.get(user.email)||FIXTURE_PASSWORD)) return send(res,422,{error_code:'same_password',msg:'New password should be different from the old password.'});
+        passwords.set(user.email,change.password);
+      }
+      return send(res,200,await withFactors(user));
+    }
     if (url.pathname==='/auth/v1/user') return user?send(res,200,await withFactors(user)):send(res,401,{msg:'Invalid token'});
     // Backup codes, as Supabase's (experimental) recovery codes: ten single-use codes, a lock after five wrong tries.
     const backupPath=url.pathname.match(/^\/auth\/v1\/factors\/recovery-codes(?:\/(verify|regenerate))?$/);

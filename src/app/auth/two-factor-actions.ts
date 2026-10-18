@@ -6,7 +6,7 @@ import { landingPath } from '@/lib/roles';
 import { authConfigured } from '@/lib/supabase/config';
 import { confirmedUser, createClient, type SupabaseClient } from '@/lib/supabase/server';
 import { backupCode, getTwoFactorCopy, secondFactorCode } from '@/lib/two-factor';
-import { forgetThisBrowser, getRememberedDevices, newBackupCodes, rememberThisDevice } from '@/lib/two-factor-server';
+import { forgetThisBrowser, getRememberedDevices, newBackupCodes, rememberThisDevice, verifyTotp } from '@/lib/two-factor-server';
 import { revalidatePath } from 'next/cache';
 import { getViewer } from '@/lib/viewer-server';
 import { uuidPattern } from '@/lib/workspace';
@@ -38,10 +38,7 @@ export async function verifySecondFactor(locale: string, _previous: TwoFactorSta
     const supabase = await createClient();
     const user = await confirmedUser(supabase);
     if (!user) return { message: t.error };
-    const factors = await supabase.auth.mfa.listFactors();
-    const factor = factors.data?.totp[0];
-    if (factors.error || !factor) return { message: t.error };
-    const failure = await verifyCode(supabase, factor.id, code);
+    const failure = await verifyTotp(supabase, code);
     if (failure) return { message: failure === 'wrong' ? t.wrong : t.error };
     // The database refuses platform administrators; the box isn't shown to them either.
     if (form.get('remember') === 'on') await rememberThisDevice(supabase);
