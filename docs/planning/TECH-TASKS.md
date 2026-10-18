@@ -4,6 +4,26 @@ Collected on 2026-10-11. Each section says what exists today (checked in the cod
 Design work is in `docs/planning/DESIGN-TASKS.md`. Plan prices and limits below are from Supabase's published
 plans; check them on supabase.com/pricing before deciding.
 
+**Tidied on 2026-10-18:** what was finished since the 11th is ticked (ticked items stay, for the history); new items are in sections 15
+and 16; the order below is a proposal for the owner to confirm.
+
+## Suggested order (proposal, 2026-10-18)
+
+1. **Small things that protect you** (minutes each, no code): turn on branch protection for `main` (§11); install
+   `20261017120000_account_profile.sql` in the live database (§12, job 8); check the password minimum in the hosted project (§7, §13).
+2. **Decide the provider principle** (§15): European providers, German preferred, not French (owner's lean, 2026-10-18). It settles
+   email, payment and the hosting questions together.
+3. **Rename the site address** to `neruma.lignorae.com` (§17), before the email DNS records are made and before any QR code is printed.
+4. **Email** (§4), once the provider is chosen. It unlocks real confirmation emails, password reset, approval notices, team
+   invitations, the Contact form and the administrator's report notification.
+5. **The first visit of a new organisation** (`DESIGN-TASKS.md` §8): people meet it now, as soon as someone registers.
+6. **Pin the Vercel region** (§15), one setting, after the principle is decided.
+7. **Privacy and terms text** (§15, §16), with a lawyer. Needed before real organisations and before any payment.
+8. **Features:** live preview in a second tab, team invitations, visit counts (after the privacy decision), the organisations list for
+   administrators.
+9. **Payment** (§8): after email, the privacy and terms text, and the provider principle.
+10. **Later:** a consistent read-aloud voice (§9), a storage plan and photo limits (§5), the table of every field (§6), test hardening (§11).
+
 ## 1. Mock data and mock users
 
 **Today:** `supabase/seed.sql` creates one fictional organisation and place (Willow Museum, five
@@ -69,12 +89,14 @@ chose fall under that. **So no cookie banner is needed as things stand.**
 **Today:** Supabase's built-in email sends the confirmation mail. It is for development only: it is
 limited to a few emails per hour, and Supabase restricts it to the project team's own addresses. So
 real applicants may not receive their confirmation email. There is a template in
-`supabase/templates/confirmation.html`.
+`supabase/templates/confirmation.html`. **Owner, 2026-10-18:** leaning towards a European provider, not French, German if there is one
+(the same for payment, §8). Resend was being tried (its EU region is Ireland only; no Frankfurt); nothing is decided or connected.
 
 Missing: password reset (no recovery flow exists in the code), team invitations, and notifying
 applicants of an administrator's decision.
 
-- [ ] Choose an SMTP provider and connect it in Supabase (Authentication → Emails → SMTP settings):
+- [ ] Choose an SMTP provider and connect it in Supabase (Authentication → Emails → SMTP settings). Research European providers,
+  German first, before settling (§15); the list below is the first pass, not a shortlist:
   - **Brevo**: EU company, free tier around 300 emails/day. Simplest fit for GDPR.
   - **Resend**: free tier around 3,000/month; good developer experience; US company with an EU
     sending region.
@@ -145,7 +167,8 @@ the form can therefore set a 6-character password.
 Suggested flow: request access → administrator approves → **choose a plan and pay** → publishing
 unlocks. Drafting and preview stay free, so organisations can try the builder first.
 
-- [ ] Choose a provider:
+- [ ] Choose a provider. Owner's lean, 2026-10-18: a European provider, German if there is one, not French (§15); research before
+  settling. The first pass:
   - **Stripe** (Checkout + Customer Portal + Stripe Tax). Most control; you handle EU VAT and
     invoices. Collect a VAT ID for B2B reverse charge.
   - **Paddle** or **Lemon Squeezy** as "merchant of record". They handle VAT and invoices; higher fees.
@@ -207,7 +230,7 @@ works offline once loaded. Browser speech stays as the fallback until a file exi
   accept SSML to fix individual words.
 - [ ] **Accessibility:** keep the text-only view and the browser fallback; audio is an addition. A
   transcript is already the page text. Check the player with a screen reader.
-- [ ] **Privacy:** use an EU region (for Azure, West Europe or Sweden Central), sign the provider's data
+- [ ] **Privacy:** prefer a European provider (owner's lean, 2026-10-18; §15), use an EU region (for Azure, West Europe or Sweden Central), sign the provider's data
   processing agreement, and add the provider to the privacy page. Only guide text is sent, never visitor
   data.
 - [ ] **Reading the whole web app aloud** (the "listen to this page" option): this works for the fixed
@@ -221,6 +244,8 @@ Found on 2026-10-11. None are bugs.
 - [ ] Four illustrations (`collection`, `interactive`, `quiet-room`, `reception`) look unused but are
   loaded by zone name in `src/lib/demo.ts`. Keep them.
 - [x] `readPreferences` and `dictionaries` are no longer exported. (`validApplication` stays: a unit test uses it.)
+- [ ] `npm audit` reports five high-severity findings in the development-only `eslint-config-next` chain, with no fix offered
+  (`NEXT-STEPS.md`). Re-check when a new version appears.
 
 ## 11. Test strategy
 
@@ -271,6 +296,9 @@ locally is in `docs/guides/TESTING.md`.
   a normal build. Running it and then the browser tests makes the registration and publication tests fail,
   with no relation to the code. Build the fixture version into a different folder (`distDir`), or have the
   scripts delete `.next` when they finish. Add this to `GOTCHA.md` once fixed.
+- [ ] **Queries are never sent to a real PostgREST.** The fixture fakes the REST layer, so a query PostgREST would refuse passed every test
+  (the dashboard failed in production on 2026-10-17, GOTCHA.md). `test:db` now checks that every table embedded under a place has a
+  foreign key to it; the wider fix is to run the workspace tests against a real PostgREST over the migrated database.
 - [ ] No test covers email delivery, password reset, billing or audio, because none exist yet. Each of
   sections 4, 8 and 9 needs its tests defined before the feature is built.
 - [ ] No visual regression tests. A few full-page screenshot comparisons (home, guide, login at 390 and
@@ -286,7 +314,7 @@ locally is in `docs/guides/TESTING.md`.
 Added on 2026-10-11, after the dashboard cards (PR #29). Decisions are in `DECISIONS.md`; the brief is
 `docs/briefs/2026-10-11-organisation-app.md`.
 
-**Publishing, built 2026-10-13** (brief `docs/briefs/2026-10-13-publishing.md`; choices in `DECISIONS.md`, "QR codes" and "Publishing goes live straight away"). Still to do: install `supabase/migrations/20261013090000_publishing.sql` (see the job below), then check it on the dev project.
+**Publishing, built 2026-10-13** (brief `docs/briefs/2026-10-13-publishing.md`; choices in `DECISIONS.md`, "QR codes" and "Publishing goes live straight away"). Installed on production on 2026-10-17 (see the job below).
 
 
 - [x] **QR registry migration.** Today `qr_redirects` has a text `public_code` that points at one guide, which
@@ -309,15 +337,14 @@ Added on 2026-10-11, after the dashboard cards (PR #29). Decisions are in `DECIS
 - [ ] **Visit counts (brief 1e).** Nothing is counted today. Decide first what may be counted (for example a
   total per location, with no IP address and no cookie), then check section 3 and update the privacy page.
 - [ ] **Plan & billing page (brief 1d).** A placeholder for owners only, until payments exist (section 8).
-- [ ] **Apply `supabase/migrations/20261011120000_step_fields.sql`** to the real Supabase project. The app works
-  without it but hides the × and "Add a field" controls.
+- [x] **Apply `supabase/migrations/20261011120000_step_fields.sql`** to the real Supabase project. Installed (checked 2026-10-17).
 
 **Test fixture limits found while building:**
 
-- [ ] `scripts/workspace-fixture.mjs` fakes the database's REST layer by hand. It now serves embedded
-  `place_translations`, `zones`, `zone_translations` and `media_assets` on `places`, and nothing else. A new
-  nested `select(...)` elsewhere fails with a 500 in `dev:mock` and `test:workspace`, not on the real database.
-  Say so in the fixture's header comment, or replace the hand-written layer with PostgREST.
+- [ ] `scripts/workspace-fixture.mjs` fakes the database's REST layer by hand. It serves embedded `place_translations`, `zones`,
+  `media_assets` and `qr_redirects` on `places`, and the `in` filter, and nothing else. A new nested `select(...)` elsewhere fails with a
+  500 in `dev:mock` and `test:workspace`, and a query the fake accepts can still be refused by the real PostgREST (§11). Say so in the
+  fixture's header comment, or replace the hand-written layer with PostgREST.
 - [ ] The fixture's port 3012 is written into four scripts, so a second copy can't run beside a running
   `dev:mock`. Read it from one `FIXTURE_PORT` setting. A copy has to sed it today.
 - [ ] Editing code that talks to the database while `dev:mock` runs breaks the page until the mock is restarted,
@@ -333,8 +360,8 @@ Added on 2026-10-11, after the dashboard cards (PR #29). Decisions are in `DECIS
   so it can't be used to flood the table. Show a confirmation that says plainly it was saved, not emailed.
 - [x] **The admin list.** A page in the admin area with open reports, newest first, and a "closed" button.
 - [ ] **Later, with email (section 4):** a notification to the administrator when a report arrives.
-- [ ] **Visitor reports** ("something here is wrong" in the public guide, shown to the organisation) wait for
-  publishing.
+- [ ] **Visitor reports** ("something here is wrong" in the public guide, shown to the organisation). Publishing now exists, so
+  this can be started.
 
 **Order of work after the dashboard (owner, 2026-10-11):**
 
@@ -343,35 +370,40 @@ Added on 2026-10-11, after the dashboard cards (PR #29). Decisions are in `DECIS
 2. [ ] **Plan & billing placeholder** (brief 1d): owners only, until payments exist (section 8).
 3. [ ] **Visit counts privacy decision.** Suggested: one number per location per day, no IP address, no cookie,
    counting each time the guide opens. Needs the owner's yes, then section 3 and the privacy page.
-4. [ ] **Publishing** (needs Opus): the QR registry above, the "isn't available" page, language choice, the real QR
-   pop-up and visit counts on the card.
+4. [x] **Publishing**: built 2026-10-13 (the QR registry, the "isn't available" page, language choice, the QR pop-up). Visit counts
+   on the card wait for item 3.
 
-**Job for the owner's friend: apply five migrations to the real Supabase project** (the app hides the matching
+**Job for the owner's friend: apply the migrations to the real Supabase project** (done through 7 on 2026-10-17 by the owner, who ran each file in
+the SQL Editor and checked the version functions; the account-deletion file was not tried on `neruma-dev` first) (the app hides the matching
 controls until each is installed, so nothing breaks while they wait). Needs access to the VIANORAE Supabase project
 (`ywbcsvswisorlgajbkev`, see the README), nothing else.
 
-- [ ] **1. Field controls** (`supabase/migrations/20261011120000_step_fields.sql`): adds the × and *Add a field* controls
+- [x] **1. Field controls** (`supabase/migrations/20261011120000_step_fields.sql`): adds the × and *Add a field* controls
   in the step editor.
-- [ ] **2. Report a problem** (`supabase/migrations/20261012090000_problem_reports.sql`): adds the *Report a problem*
+- [x] **2. Report a problem** (`supabase/migrations/20261012090000_problem_reports.sql`): adds the *Report a problem*
   button for organisations and the administrator's list at `/admin/reports`.
-- [ ] **3. Publishing** (`supabase/migrations/20261013090000_publishing.sql`): switches on *Publish* and *Unpublish*,
+- [x] **3. Publishing** (`supabase/migrations/20261013090000_publishing.sql`): switches on *Publish* and *Unpublish*,
   the QR code on the dashboard cards, public guide addresses and Explore. It also changes the example place's internal
   address if it was ever created from the old seed; nothing else is touched.
-- [ ] **4. Two-factor sign-in** (`supabase/migrations/20261014090000_two_factor.sql`). **Only after the app version with
+- [x] **4. Two-factor sign-in** (`supabase/migrations/20261014090000_two_factor.sql`). **Only after the app version with
   two-factor is live on the site**: from this moment platform administrators must enter an authenticator code, and only
   that app version can set one up. First check **Authentication → Multi-Factor** (or *Sign In / Providers*): *TOTP
   (App Authenticator)* must be enabled. If the same page offers *Recovery codes* (backup codes), switch them on too; if it
   doesn't, the site hides backup codes until Supabase offers them. Organisation owners and admins get 30 days; see
   `docs/guides/TWO-FACTOR.md`.
-- [ ] **5. Remember this device** (`supabase/migrations/20261015090000_remember_device.sql`), right after 4: adds the
+- [x] **5. Remember this device** (`supabase/migrations/20261015090000_remember_device.sql`), right after 4: adds the
   *Remember this device for 30 days* box on the code step for organisation owners and admins.
-- [ ] **6. Account deletion** (`supabase/migrations/20261016090000_account_deletion.sql`), after 5: adds *Delete my account* and the
+- [x] **6. Account deletion** (`supabase/migrations/20261016090000_account_deletion.sql`), after 5: adds *Delete my account* and the
   administrators' *Account deletions* page. **Try it on `neruma-dev` first with a test account**: it adds the first functions that
   change `auth.users` (to lock an account) and delete from it (to erase one). Installing changes nothing; the first deletion shows
   whether Supabase allows it. If *Delete my account* or *Erase now* reports an error, nothing was locked or erased (each runs as one
   transaction); tell the owner.
 
-How, for each file, in this order (1 to 6):
+- [x] **7. Superadmin** (`supabase/migrations/20261017090000_superadmin.sql`): the administration dashboard, accounts list and administrators list.
+- [ ] **8. Account profile** (`supabase/migrations/20261017120000_account_profile.sql`), after 7: the profile page at `/admin/accounts/<id>`. Until it is
+  installed that page says the tools are being activated. Check: `select public.account_profile_schema_version();` should give `1`.
+
+How, for each file, in this order (1 to 8):
 
 1. Open the project in Supabase, then **SQL Editor → New query**.
 2. Paste the whole file and press **Run**. Each file starts with a check and stops with a "STOP: … must already be
@@ -400,15 +432,10 @@ no IP addresses, device details, date of birth, home address or national ID.
 
 Each step is its own small pull request. When it is merged, remove its task from this list.
 
-0. [ ] **Registration doesn't work on production** (found by the owner, 2026-10-13: `vianorae.lignorae.com/en/register` shows
-   the form but it can't be submitted). Cause found: the Supabase project reference written in the docs and in Vercel
-   (`uzl…`) doesn't exist; the real `neruma-prod` is `ywbcsvswisorlgajbkev`. The site switches the form off when its
-   three settings don't name one project. The owner's steps in Vercel, Production: `NEXT_PUBLIC_SUPABASE_URL` =
-   `https://ywbcsvswisorlgajbkev.supabase.co`, `VIANORAE_SUPABASE_PROJECT_REF` = `ywbcsvswisorlgajbkev`,
-   `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` = the publishable key of that project (Supabase → *Get Connected*), then redeploy
-   without the build cache. Preview still points at production's project with a placeholder key; it should use `neruma-dev`
-   (`DATABASE-ENVIRONMENTS.md`). Docs corrected in the same pull request. Then check registration, the confirmation email
-   and sign-in end to end. Do this before the migrations in the friend's job below.
+0. [ ] **Registration on production, end to end.** The cause of the 2026-10-13 failure (a Supabase project reference in Vercel that didn't exist) is
+   fixed: the three Vercel values name `ywbcsvswisorlgajbkev` and `npm run test:smoke` checks a deployed site for exactly that (GOTCHA.md).
+   Open: a real applicant registering, receiving the confirmation email and signing in, which needs an email provider (§4); and Preview
+   should use `neruma-dev` instead of production's project (`DATABASE-ENVIRONMENTS.md`).
 1. [ ] **Password rules in the hosted projects** (the owner's steps, no code; also section 7). Minimum 12 characters and, if
    the plan offers it, *Prevent use of leaked passwords*, on `neruma-dev` first, then production (the friend's project
    access). Also set the minimum in `supabase/config.toml` so local matches.
@@ -435,3 +462,61 @@ The dashboard, accounts list and administrators list exist (brief `2026-10-17-su
 4. [x] **Mark that you are in the administration area.** Done: a strip on every administration page (icon, "Platform administration",
    the signed-in email) and a warm yellow for the whole area in dark and light (`admin-area`; high contrast keeps its palette). The profile page (item 1) says "you are viewing this account as a platform administrator".
 5. [ ] **"Organisation account" in the administration menu** reads better as "My account".
+
+## 15. Hosting, providers and where the data goes (owner, 2026-10-18; pinned)
+
+The owner leans towards European providers, not French, German where there is one, for email and payment too. **Pinned, not decided.**
+Decision D5 in `docs/guides/PERSONAL-DATA.md` is the same question. Supabase, Vercel and Resend are US companies; what matters in law is
+where the data is stored and processed, and what covers a transfer (a signed data-processing agreement with standard contractual clauses,
+and the EU–US Data Privacy Framework if the provider is certified; check, don't assume).
+
+- [ ] **Decide the principle**, with a lawyer: EU data location with US providers under signed agreements, or European-owned providers only.
+  Then write it in `DECISIONS.md`.
+- [ ] **Pin the Vercel function region to Frankfurt** (`"regions": ["fra1"]` in `vercel.json`, or Settings → Functions → Region). Dynamic pages (sign-in,
+  registration, the workspace, administration) run in the US today, so form contents cross the Atlantic before reaching an EU database
+  (PERSONAL-DATA finding 5). Also faster, because each page makes several database requests. Worth doing under either answer.
+- [ ] **Confirm the production database region** (Supabase → Project Settings; the docs say West EU, Ireland, unverified). Moving it to Frankfurt means a
+  new project (`DATABASE-ENVIRONMENTS.md`); decide with the principle.
+- [ ] **Research European email and payment providers**, German first (§4, §8): where they are incorporated, where they process data, SMTP and
+  subscription support, price, data-processing agreement, and what they do with tracking.
+- [ ] **Sign the data-processing agreements** with every processor that stays (Supabase, Vercel, the email and payment providers) and name them on the privacy page.
+
+## 16. Other things a person can notice today (`docs/PRODUCT.md` §8)
+
+- [ ] **Explore filters.** Country and city are shown and do nothing; the category filter offers Theatre and Clinic (which no location can be) and misses
+  institution, public service and other.
+- [ ] **Privacy page** still describes "the demonstration, before live accounts" and doesn't name the data controller, retention or processors. **Terms** are a
+  draft for the demonstration. Both need a lawyer before real organisations (see §15).
+- [ ] **Contact** prepares a message but doesn't send it (needs email, §4).
+- [ ] **Teams:** no way to invite a colleague. Owner and admin are the only roles; invitations need email.
+- [ ] **Methodology** describes on-site and independent assessments; none can be recorded in the app yet (the pilot trust workflow, `NEXT-STEPS.md` §6).
+- [ ] **The first visit of a new organisation** (found in the owner's test run): `DESIGN-TASKS.md` §8.
+
+## 17. Rename the site address to `neruma.lignorae.com` (owner, 2026-10-18)
+
+The site lives at `vianorae.lignorae.com`; the brand shown to people is NERUMA, and VIANORAE is the repository and infrastructure name (`README.md`). The owner
+wants the subdomain to say neruma, and to change the name in GitHub and Vercel too. **To confirm before starting:** only the site address, or also the GitHub
+repository (`euroschneider-spec/Vianorae`) and the Vercel project (`vianorae-platform`)? Renaming those is optional: a repository rename is redirected by GitHub
+and a project rename by Vercel, but every clone needs its remote updated, and `README.md` and `CLAUDE.md` currently say VIANORAE is the repository name
+(a rename would change that rule).
+
+**The one thing that must not break: QR codes.** A QR code opens `/q/<code>` on the site's address, codes are kept forever, and organisations will print them.
+The old address has to keep redirecting to the new one permanently (a 301), not just for a few weeks. Do the rename before the first QR code is printed if at
+all possible.
+
+The owner's steps (no code):
+- [ ] **DNS:** at the place that manages `lignorae.com`, add the record Vercel asks for `neruma.lignorae.com` (a CNAME to Vercel). Keep the old
+  `vianorae` record.
+- [ ] **Vercel → Settings → Domains:** add `neruma.lignorae.com` and make it the primary address; set `vianorae.lignorae.com` to redirect (permanent) to it. Rename
+  the project only if confirmed above.
+- [ ] **Supabase → Authentication → URL Configuration:** set the Site URL to the new address and add it to the redirect allowlist next to the old one
+  (confirmation and reset links use these); remove the old one only much later.
+- [ ] **Vercel environment variables:** anything that holds the old address (the code reads the Supabase values; check for others), then redeploy.
+- [ ] **Email:** if the sending subdomain is `mail.lignorae.com` nothing changes; if it is under the old name, do the email DNS after this rename (§4).
+- [ ] **GitHub:** rename the repository only if confirmed above (Settings → General → Repository name); then update every clone's remote.
+
+What changes in the code (one small pull request, after the owner has done the steps above):
+- [ ] The default address in `tests/smoke.spec.ts`, and the examples in `README.md`, `.env.example`, `docs/guides/TESTING.md`, `docs/guides/TEST-PLAN.md`,
+  `docs/planning/NEXT-STEPS.md`, `docs/architecture/ORGANISATION-FLOW.md` and `GOTCHA.md` (history entries stay as written).
+- [ ] After deploying: `SMOKE_URL=https://neruma.lignorae.com npm run test:smoke`, then check that an old QR address, `https://vianorae.lignorae.com/q/<code>`, still ends
+  on the right guide.
