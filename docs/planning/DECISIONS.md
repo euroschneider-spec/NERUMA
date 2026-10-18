@@ -234,6 +234,9 @@ server; images are often blocked anyway; and text works for screen readers and e
 Owner, 2026-10-18. People write to **`support@lignorae.com`** (the company domain). Emails come from `noreply@mail.lignorae.com` and say in their text where to write,
 because Supabase's emails can't carry a reply-to. The mailbox itself (a forwarding address or a real mailbox) is still to be set up (TECH-TASKS §4).
 
+**Update, 2026-10-18:** there is no money for a mailbox yet, so the emails name no address at all. The two templates and a unit test keep it that way until the mailbox exists; then the
+line goes back in ("Questions? Write to support@lignorae.com.", in each language).
+
 ## Not yet discussed
 
 - `DESIGN-TASKS.md` sections 5, 6 (other items) and 7.
