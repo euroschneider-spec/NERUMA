@@ -4,7 +4,8 @@ const paths=['','for-organisations','methodology','places/willow-museum/guide','
 for(const locale of ['en','ro','de']) {
  test(`${locale}: routes and document language`,async({page})=>{const errors:string[]=[];page.on('pageerror',e=>errors.push(e.message));for(const path of paths){const response=await page.goto(`/${locale}/${path}`);expect(response?.status(),path).toBe(200);await expect(page.locator('html')).toHaveAttribute('lang',locale);await expect(page.locator('main h1')).toBeVisible();}expect(errors).toEqual([]);});
 }
-for(const path of ['/en','/en/places/willow-museum/guide','/en/contact','/en/demo','/en/demo/d0000000-0000-4000-8000-0000000000a1','/en/demo/d0000000-0000-4000-8000-0000000000a1/preview','/ro','/de']) {
+// The demo pages are checked in every theme by tests/demo-workspace.spec.ts.
+for(const path of ['/en','/en/places/willow-museum/guide','/en/contact','/ro','/de','/en/register','/ro/register','/de/register','/en/login']) {
  test(`WCAG A/AA checks ${path}`,async({page})=>{await page.goto(path);const results=await new AxeBuilder({page}).withTags(['wcag2a','wcag2aa','wcag21a','wcag21aa','wcag22aa']).analyze();expect(results.violations).toEqual([]);});
 }
 test('guide navigation, skip and completion work by keyboard',async({page})=>{await page.goto('/en/places/willow-museum/guide');await expect(page.getByRole('heading',{name:'The main entrance',exact:true})).toBeVisible();const next=page.getByRole('button',{name:'Next step',exact:true});await next.focus();await page.keyboard.press('Enter');await expect(page.getByRole('heading',{name:'Reception & the foyer',exact:true})).toBeFocused();await page.getByRole('button',{name:'Guide options',exact:true}).click();await page.getByRole('button',{name:'The quiet room',exact:false}).click();await expect(page.getByRole('heading',{name:'The quiet room',exact:true})).toBeVisible();await page.getByRole('button',{name:'Finish the guide'}).click();await expect(page.getByRole('heading',{name:'You have explored the guide.'})).toBeFocused();await page.getByRole('button',{name:'Start again'}).click();await expect(page.getByRole('heading',{name:'The main entrance',exact:true})).toBeVisible();});
@@ -53,10 +54,6 @@ test('registration is discoverable and inactive without the separate auth config
 test('auth callbacks cannot redirect to an external next parameter without configuration',async({request})=>{
  const response=await request.get('/auth/callback?code=invalid&locale=https://evil.example&next=https://evil.example',{maxRedirects:0});expect(response.status()).toBe(307);expect(response.headers().location).toContain('/en/login?confirmation=failed');expect(response.headers().location).not.toContain('evil.example');
 });
-
-for(const path of ['/en/register','/ro/register','/de/register','/en/login']){
- test(`organisation WCAG A/AA checks ${path}`,async({page})=>{await page.goto(path);const result=await new AxeBuilder({page}).withTags(['wcag2a','wcag2aa','wcag21a','wcag21aa','wcag22aa']).analyze();expect(result.violations).toEqual([]);});
-}
 
 
 // How it works is a section of the home page; the menu jumps to it from anywhere and the old address redirects.

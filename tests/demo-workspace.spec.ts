@@ -35,10 +35,8 @@ test('the dashboard has a published museum with a QR code and an unfinished pavi
   await museum.getByRole('button', { name: 'QR code and link' }).click();
   const dialog = page.getByRole('dialog', { name: 'QR code and link' });
   await expect(dialog.locator('img.qr-image')).toHaveAttribute('src', '/api/qr/willow-museum');
+  // Where /q/willow-museum leads is checked in tests/platform.spec.ts.
   await expect(dialog).toContainText('/q/willow-museum');
-  // The code leads to the example guide.
-  const response = await page.request.get('/q/willow-museum?locale=en', { maxRedirects: 0 });
-  expect(response.headers().location).toContain('/en/places/willow-museum/guide');
 });
 
 test('a change is kept in this browser, shows in the preview, and is not seen by anyone else', async ({ page, browser }) => {

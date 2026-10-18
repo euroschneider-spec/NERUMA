@@ -16,41 +16,30 @@ const deviceState = (page: Page) => page.evaluate(async () => ({
 }));
 
 test.describe('a first visit', () => {
+  // One visit per page answers all three questions: waiting for the network to go quiet is the slow part.
   for (const path of publicPages) {
-    test(`${path}: sets no cookie and stores nothing on the device`, async ({ page, context }) => {
-      await page.goto(path);
-      await page.waitForLoadState('networkidle');
-      expect(await context.cookies()).toEqual([]);
-      expect(await deviceState(page)).toEqual({ local: [], session: [], databases: [] });
-    });
-
-    test(`${path}: talks only to the site itself`, async ({ page, baseURL }) => {
+    test(`${path}: sets no cookie, stores nothing, talks only to the site and loads no tracker or embed`, async ({ page, context, baseURL }) => {
       const origin = new URL(baseURL!).origin;
       const outside: string[] = [];
+      const markup: Promise<string>[] = [];
       page.on('request', (request) => {
         const url = request.url();
         if (!url.startsWith('data:') && !url.startsWith('blob:') && new URL(url).origin !== origin) outside.push(url);
       });
+      page.on('response', (response) => {
+        const type = response.headers()['content-type'] ?? '';
+        if (/html|javascript/.test(type)) markup.push(response.text().catch(() => ''));
+      });
       await page.goto(path);
       await page.waitForLoadState('networkidle');
+      expect(await context.cookies()).toEqual([]);
+      expect(await deviceState(page)).toEqual({ local: [], session: [], databases: [] });
       expect(outside).toEqual([]);
+      const all = (await Promise.all(markup)).join('\n');
+      expect(all).not.toMatch(/googletagmanager|google-analytics|gtag\(|plausible\.io|matomo|hotjar|fullstory|clarity\.ms|posthog|mixpanel|facebook\.net|connect\.facebook/i);
+      expect(all).not.toMatch(/<iframe\b/i);
     });
   }
-
-  test('contains no tracker, analytics or embed in any page it loads', async ({ page }) => {
-    const markup: string[] = [];
-    page.on('response', async (response) => {
-      const type = response.headers()['content-type'] ?? '';
-      if (/html|javascript/.test(type)) markup.push(await response.text().catch(() => ''));
-    });
-    for (const path of ['/en', '/en/places/willow-museum/guide', '/en/explore']) {
-      await page.goto(path);
-      await page.waitForLoadState('networkidle');
-    }
-    const all = markup.join('\n');
-    expect(all).not.toMatch(/googletagmanager|google-analytics|gtag\(|plausible\.io|matomo|hotjar|fullstory|clarity\.ms|posthog|mixpanel|facebook\.net|connect\.facebook/i);
-    expect(all).not.toMatch(/<iframe\b/i);
-  });
 });
 
 test('changing a reading setting stores one named key on the device and no cookie', async ({ page, context }) => {
