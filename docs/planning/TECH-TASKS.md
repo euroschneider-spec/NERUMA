@@ -9,8 +9,11 @@ and 16; the order below is a proposal for the owner to confirm.
 
 ## Suggested order (proposal, 2026-10-18)
 
-1. **Small things that protect you** (minutes each, no code): turn on branch protection for `main` (§11); install
-   `20261017120000_account_profile.sql` in the live database (§12, job 8); check the password minimum in the hosted project (§7, §13).
+1. **Small things that protect you** (minutes each, no code):
+   - [ ] Turn on branch protection for `main` (§11). Needs someone with admin rights on the repository; a friend is doing it.
+   - [x] Install `20261017120000_account_profile.sql` in the live database (§12). Installed (checked 2026-10-18).
+   - [x] Install `20261018090000_payments.sql` in the live database (§8). Installed (checked 2026-10-18); payments are off and no plan exists.
+   - [x] Check the password minimum in the hosted project (§7, §13). Production says 12, length only (checked 2026-10-18); `neruma-dev` is left in §13.
 2. **Decide the provider principle** (§15): European providers, German preferred, not French (owner's lean, 2026-10-18). It settles
    email, payment and the hosting questions together.
 3. **Rename the site address** to `neruma.lignorae.com` (§17), before the email DNS records are made and before any QR code is printed.
@@ -150,15 +153,10 @@ on the request form are `required`.
 
 ## 7. Password rules
 
-**Today:** the register form asks for at least 12 characters, but only in the browser. The Supabase
-config in this repo (`supabase/config.toml`) allows 6 characters with no other rules. Anyone who skips
-the form can therefore set a 6-character password.
+**Today:** the minimum is 12 characters, length only (no forced symbols or numbers, as NIST 800-63B advises), in the register form, in
+`supabase/config.toml` and in the production project (checked 2026-10-18).
 
-- [ ] Set the minimum to 12 in the hosted project (Authentication → Policies or Providers → Email →
-  minimum password length), and in `config.toml` so local matches.
-- [ ] Keep it to length only. Current guidance (NIST 800-63B) advises against forced symbol/number
-  rules. Low effort, and fits the low-risk assessment.
-- [ ] Optional on Pro: leaked-password protection (checks against known breached passwords).
+- [ ] Optional on Pro: leaked-password protection (checks against known breached passwords). Not available on the free plan.
 
 ## 8. Subscription flow for institutions
 
@@ -176,7 +174,7 @@ until a start date is set. Decisions: `DECISIONS.md`, "Payments go through Strip
       sooner, but the owner would rather open it once, in the right name. Stripe's country can't be changed later.)
 - [ ] **Decide who sells** (which company, which country): it decides VAT registration, the invoice format, and in whose name the Stripe
       account is opened. Needed to unblock the item above.
-- [ ] **Set up Stripe** in test mode and test by hand (`PAYMENTS.md` sections 2 and 3). Install `20261018090000_payments.sql`.
+- [ ] **Set up Stripe** in test mode and test by hand (`PAYMENTS.md` sections 2 and 3).
 - [ ] Update the terms and privacy pages (Stripe as a processor) before taking any payment; then go live (`PAYMENTS.md` section 5)
       and set the start date (section 4), telling organisations at least 30 days before.
 - [x] Nobody is erased while Stripe still charges them: the deletions page and the database refuse to erase an organisation, or its last
@@ -336,7 +334,6 @@ Added on 2026-10-11, after the dashboard cards (PR #29). Decisions are in `DECIS
 
 - [ ] **Visit counts (brief 1e).** Nothing is counted today. Decide first what may be counted (for example a
   total per location, with no IP address and no cookie), then check section 3 and update the privacy page.
-- [ ] **Plan & billing page (brief 1d).** A placeholder for owners only, until payments exist (section 8).
 - [x] **Apply `supabase/migrations/20261011120000_step_fields.sql`** to the real Supabase project. Installed (checked 2026-10-17).
 
 **Test fixture limits found while building:**
@@ -367,8 +364,7 @@ Added on 2026-10-11, after the dashboard cards (PR #29). Decisions are in `DECIS
 
 1. [ ] **Live preview in a second tab** (brief, Task 2): the preview beside the editor, from unsaved changes, with
    the guide component visitors see. Narrow screens get a *Preview* button only.
-2. [ ] **Plan & billing placeholder** (brief 1d): owners only, until payments exist (section 8).
-3. [ ] **Visit counts privacy decision.** Suggested: one number per location per day, no IP address, no cookie,
+2. [ ] **Visit counts privacy decision.** Suggested: one number per location per day, no IP address, no cookie,
    counting each time the guide opens. Needs the owner's yes, then section 3 and the privacy page.
 4. [x] **Publishing**: built 2026-10-13 (the QR registry, the "isn't available" page, language choice, the QR pop-up). Visit counts
    on the card wait for item 3.
@@ -400,8 +396,8 @@ controls until each is installed, so nothing breaks while they wait). Needs acce
   transaction); tell the owner.
 
 - [x] **7. Superadmin** (`supabase/migrations/20261017090000_superadmin.sql`): the administration dashboard, accounts list and administrators list.
-- [ ] **8. Account profile** (`supabase/migrations/20261017120000_account_profile.sql`), after 7: the profile page at `/admin/accounts/<id>`. Until it is
-  installed that page says the tools are being activated. Check: `select public.account_profile_schema_version();` should give `1`.
+- [x] **8. Account profile** (`supabase/migrations/20261017120000_account_profile.sql`), after 7: the profile page at `/admin/accounts/<id>`. Installed
+  (checked 2026-10-18). **9. Payments** (`20261018090000_payments.sql`) is installed too (checked 2026-10-18; payments are off and no plan exists).
 
 How, for each file, in this order (1 to 8):
 
@@ -436,9 +432,8 @@ Each step is its own small pull request. When it is merged, remove its task from
    fixed: the three Vercel values name `ywbcsvswisorlgajbkev` and `npm run test:smoke` checks a deployed site for exactly that (GOTCHA.md).
    Open: a real applicant registering, receiving the confirmation email and signing in, which needs an email provider (§4); and Preview
    should use `neruma-dev` instead of production's project (`DATABASE-ENVIRONMENTS.md`).
-1. [ ] **Password rules in the hosted projects** (the owner's steps, no code; also section 7). Minimum 12 characters and, if
-   the plan offers it, *Prevent use of leaked passwords*, on `neruma-dev` first, then production (the friend's project
-   access). Also set the minimum in `supabase/config.toml` so local matches.
+1. [ ] **Password rules on `neruma-dev`** (the owner's steps, no code; also section 7). Production is done (12 characters, length only).
+   Check that `neruma-dev` says 12 too.
 3. [ ] **Delete my account and export my data.** *Step 1 built (delete, export, restore, erase; `docs/guides/ACCOUNT-DELETION.md`).
    Left: hand an organisation to a verified colleague, and the emails.* *Start from `docs/guides/PERSONAL-DATA.md`: a user can't be deleted today (15 foreign
    keys with "no action"), the same data is copied in several tables, and some records are immutable by design. Each blocking row needs
