@@ -254,6 +254,14 @@ so long passages are not cut off, and tells visitors how to install a better voi
 devices, and an old phone with only a basic voice still sounds basic. Not chosen for now: audio generated once at publishing,
 organisations' own recordings, a self-hosted open-source voice (research in TECH-TASKS §9).
 
+### CI runs its checks in parallel, once per change
+
+The workflow was one job that ran the static checks, the browser specs and `test:workspace` in series
+(6 min 34 s on 18 October 2026: 60 s, 129 s and 170 s of that). It is now three jobs that run side by side
+(`static`, `e2e`, `workspace`) plus a `checks` job that passes only if all three do, so the name branch
+protection looks for is unchanged. Pushes to branches run only through their pull request; `main` still
+runs on push. A branch without a pull request gets no CI until one is opened.
+
 ## Not yet discussed
 
 - `DESIGN-TASKS.md` sections 5, 6 (other items) and 7.
