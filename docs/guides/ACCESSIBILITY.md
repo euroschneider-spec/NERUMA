@@ -48,5 +48,7 @@ field at a time and is not reliably announced.
 - **Server checks stay.** The same rules are checked again on the server; this only makes the browser's side clear.
 
 How to build a form this way: `useFormWarnings` and `Field` / `CheckField` in `src/components/form-field.tsx`, the words in `src/lib/form-warnings.ts`
-(add a language there with the others). Used by registration and sign-in (`src/components/organisation-form.tsx`); other forms move over one by one.
-Tests: `tests/unit/form-warnings.test.ts` and the workspace check "registration and sign-in mark each field…".
+(add a language there with the others). Used by registration, sign-in and the organisation request (`src/components/organisation-form.tsx`), the password forms (`password-reset-forms.tsx`) and the
+guide editor (`online-builder.tsx`, where `reveal` opens a folded step first). Other forms move over one by one.
+Tests: `tests/unit/form-warnings.test.ts`, the workspace checks "registration and sign-in mark each field…" and "the password forms mark each field…",
+and `tests/demo-workspace.spec.ts` (the editor).
