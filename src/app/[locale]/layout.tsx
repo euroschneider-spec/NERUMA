@@ -9,7 +9,7 @@ import { hyperlegible } from '@/lib/fonts';
 import '../globals.css';
 export function generateStaticParams(){return locales.map(locale=>({locale}));}
 export const viewport:Viewport={width:'device-width',initialScale:1,themeColor:[{media:'(prefers-color-scheme: dark)',color:'#131519'},{media:'(prefers-color-scheme: light)',color:'#f6f7f9'}]};
-export async function generateMetadata({params}:{params:Promise<{locale:string}>}):Promise<Metadata>{const {locale}=await params;if(!isLocale(locale)) return {}; const t=getCopy(locale);return {title:{default:'NERUMA — '+t.footerLine,template:'%s | NERUMA'},description:t.heroDescription,robots:{index:false,follow:false},icons:{icon:'/favicon.svg'}};}
+export async function generateMetadata({params}:{params:Promise<{locale:string}>}):Promise<Metadata>{const {locale}=await params;if(!isLocale(locale)) return {}; const t=getCopy(locale);return {title:{default:'NERUMA — '+t.footerLine,template:'%s | NERUMA'},description:t.heroDescription,robots:{index:false,follow:false},icons:{icon:[{url:'/favicon.svg',type:'image/svg+xml'},{url:'/favicon-32.png',sizes:'32x32',type:'image/png'},{url:'/icon-192.png',sizes:'192x192',type:'image/png'}],apple:'/apple-touch-icon.png'}};}
 
 // The reading preferences live in localStorage, so the stored theme, text size and spacing
 // are reapplied before first paint. Without this, a visitor who chose light or high contrast
