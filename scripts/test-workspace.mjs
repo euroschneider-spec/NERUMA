@@ -491,6 +491,12 @@ try {
   let mandatePath;
   await check('confirmed applicant sees verification form and cannot access the editor',async()=>{
     await login(applicant,4);await expect(applicant.getByRole('button',{name:'Submit for manual review',exact:true})).toBeVisible();
+    const steps=applicant.getByRole('list',{name:'Your first steps',exact:true});
+    await expect(steps.getByRole('listitem')).toHaveText([/Email confirmed/,/Send your request/,/Wait for approval/]);
+    await expect(steps.locator('[aria-current=step]')).toHaveText(/Send your request/);
+    await expect(applicant.getByRole('link',{name:'Delete my account…'})).toHaveCount(0);await expect(applicant.getByRole('link',{name:'Open demo workspace'})).toHaveCount(0);
+    await expect(applicant.getByText('Upload your mandate document to continue.',{exact:true})).toBeVisible();
+    await expect(applicant.getByRole('button',{name:'Submit for manual review',exact:true})).toHaveAccessibleDescription('Upload your mandate document to continue.');
     await applicant.goto(`${base}/en/workspace`);await expect(applicant).toHaveURL(/\/en\/account$/);
     await expect(applicant.getByRole('link',{name:'Organisation workspace',exact:true})).toHaveCount(0);
     await fillApplication();
@@ -504,6 +510,8 @@ try {
     await applicant.getByRole('button',{name:'Submit for manual review',exact:true}).click();
     await expect(applicant.getByRole('heading',{name:'Awaiting manual verification',exact:true})).toBeVisible();
     await expect(applicant.getByRole('button',{name:'Submit for manual review',exact:true})).toHaveCount(0);
+    await expect(applicant.getByRole('list',{name:'Your first steps',exact:true}).locator('[aria-current=step]')).toHaveText(/Wait for approval/);
+    await expect(applicant.getByRole('link',{name:'Delete my account…'})).toBeVisible();
   });
   await check('mandate download is private, immutable and served as an attachment',async()=>{
     const owner=await applicantContext.request.get(base+mandatePath);assert.equal(owner.status(),200);assert.deepEqual(await owner.body(),pdf);assert.match(owner.headers()['content-disposition'],/^attachment;/);assert.equal(owner.headers()['cache-control'],'private, no-store');

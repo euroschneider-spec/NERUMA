@@ -1,4 +1,5 @@
 import { getAuthFeedback } from '@/lib/auth-feedback';
+import { OnboardingSteps } from '@/components/onboarding-steps';
 import Link from 'next/link';
 import { notFound, redirect } from 'next/navigation';
 import { getCopy, isLocale, longDate } from '@/lib/i18n';
@@ -53,6 +54,8 @@ export default async function Account({ params }: { params: Promise<{ locale: st
   const application=applicationResult.data as OrganizationApplication|null;
   // A platform administrator with no organisation of their own is not applying for one: the registration side of this page is for everyone else.
   const operatorOnly=viewer.isPlatformAdmin && !application && !ownOrganizations.length;
+  // Nothing to delete yet before a request has been sent.
+  const firstVisit=!operatorOnly && !application && !ownOrganizations.length;
   const documentsEnabled=await evidenceReady(supabase);
   const documentsResult=documentsEnabled ? await supabase.from('organization_evidence_documents').select('*').eq('applicant_id',user.id).order('created_at').limit(30) : null;
   const documents=((documentsResult?.data||[]) as MandateDocument[]).filter(doc=>doc.uploaded_at && application?.evidence_document_ids?.includes(doc.id));
@@ -68,7 +71,7 @@ export default async function Account({ params }: { params: Promise<{ locale: st
   };
   return <main id="main-content" className="container verification-page"><div className="page-heading"><h1>{t.account}</h1></div><div className="content-body">
     {viewer.isPlatformAdmin && <p><Link className="button" href={`/${locale}/admin`}>{getSuperadminCopy(locale).title}</Link></p>}
-    {!operatorOnly && !application && !ownOrganizations.length && <p className="auth-feedback" role="status">{getAuthFeedback(locale).confirmed}</p>}
+    {!operatorOnly && !ownOrganizations.length && <OnboardingSteps locale={locale} application={application}/>}
     {application && <section className="notice" aria-labelledby="application-status"><h2 id="application-status">{v.statuses[application.status]}</h2><p>{application.organization_name}</p>{application.status==='pending' && <p>{getAuthFeedback(locale).pending}</p>}{application.applicant_note && <p>{application.applicant_note}</p>}{application.status!=='approved' && <p>{v.gate}</p>}</section>}
     {application && documentsEnabled && <MandateDocuments locale={locale} documents={documents}/>}
     {!operatorOnly && !documentsEnabled && !ownOrganizations.length && <p className="notice notice-warning" role="status">{getEvidenceCopy(locale).setup}</p>}
@@ -76,8 +79,7 @@ export default async function Account({ params }: { params: Promise<{ locale: st
     {!operatorOnly && (!application || ['needs_information','rejected'].includes(application.status)) && !ownOrganizations.length && <OrganisationForm key={application?.revision || 'new'} locale={locale} mode="onboard" enabled={documentsEnabled && !documentsResult?.error} initial={initial} initialDocuments={initialDocuments}/>}
     {await twoFactorReady(supabase) && <TwoFactorSetup locale={locale} enrolled={twoFactor.enrolled} required={false}>{backup.state!=='off' && <BackupCodesPanel locale={locale} backup={backup}/>}{devices && <RememberedDevices locale={locale} devices={devices}/>}</TwoFactorSetup>}
     <ChangePasswordForm locale={locale} needsCode={twoFactor.enrolled}/>
-    {await accountDeletionReady(supabase) && <section className="notice" aria-labelledby="delete-account"><h2 id="delete-account">{getDeletionCopy(locale).sectionTitle}</h2><p>{getDeletionCopy(locale).sectionIntro}</p><p><Link className="quiet-link" href={`/${locale}/account/delete`}>{getDeletionCopy(locale).sectionLink}</Link></p></section>}
-    <p><Link className="quiet-link" href={`/${locale}/demo`}>{getCopy(locale).openWorkspace}</Link></p>
+    {!firstVisit && await accountDeletionReady(supabase) && <section className="notice" aria-labelledby="delete-account"><h2 id="delete-account">{getDeletionCopy(locale).sectionTitle}</h2><p>{getDeletionCopy(locale).sectionIntro}</p><p><Link className="quiet-link" href={`/${locale}/account/delete`}>{getDeletionCopy(locale).sectionLink}</Link></p></section>}
     <form action={signOut.bind(null,locale)}><button className="text-button" type="submit">{t.signOut}</button></form>
   </div></main>;
 }

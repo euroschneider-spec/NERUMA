@@ -90,6 +90,9 @@ Languages everywhere: **English, Romanian, German.** Root `/` opens English; an 
   Until NERUMA has its own email provider, Supabase only sends to the project team's addresses.
 - After signing in: attach **1 to 3 documents** proving the mandate (PDF, JPEG or PNG, up to 3 MB each; images are re-encoded and
   stripped of hidden data; PDFs are checked), then submit for **manual review**.
+- The account page opens with **three steps** (email confirmed ✓, send your request, wait for approval), the current one marked, with the
+  form right under them. Until a document is attached, *Submit for manual review* is greyed out and a line under it says why
+  (read by screen readers). *Delete my account* is not shown until a request has been sent. The demo workspace link is not on this page.
 - While pending, editing is locked. If asked for more information, they correct and resubmit.
 
 ---
