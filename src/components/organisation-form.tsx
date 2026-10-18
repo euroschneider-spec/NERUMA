@@ -26,6 +26,7 @@ export function OrganisationForm({ locale, mode, enabled, initial, initialDocume
   const e=getEvidenceCopy(locale);const feedback=getAuthFeedback(locale);
   const [documents,setDocuments]=useState(initialDocuments);const [uploading,setUploading]=useState(false);
   const hasOrganisation = mode !== 'login';
+  const needsDocument = mode === 'onboard' && !documents.length;
   const button = mode === 'onboard' ? v.submit : mode === 'register' ? v.request : t.login;
 
   if(mode==='register' && state.confirmation) return <section className="auth-feedback" role="status" aria-labelledby="email-confirmation-heading"><h2 id="email-confirmation-heading">{feedback.email}</h2><p>{state.message}</p><p>{feedback.notSubmitted}</p><Link className="button" href={`/${locale}/login`}>{t.login}</Link></section>;
@@ -58,7 +59,8 @@ export function OrganisationForm({ locale, mode, enabled, initial, initialDocume
         <CheckField w={w} name="authority" label={t.authority}/>
         <CheckField w={w} name="responsibility" label={t.accept}/>
       </>}
-      <button className="button" type="submit" disabled={uploading || (mode==='onboard' && !documents.length)}>{button}</button>
+      {needsDocument && <p id="submit-reason" className="submit-reason">{e.needed}</p>}
+      <button className="button" type="submit" disabled={uploading || needsDocument} aria-describedby={needsDocument ? 'submit-reason' : undefined}>{button}</button>
     </fieldset>
 
   </form>;

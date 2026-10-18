@@ -1,5 +1,5 @@
 ---
-status: idea   # idea → building → done
+status: building   # idea → building → done
 date: 2026-10-18
 ---
 
@@ -32,5 +32,15 @@ On a phone first:
 ## Decisions
 Choices made while building, with the reason. Copy the lasting ones into `docs/planning/DECISIONS.md`.
 
+- The steps replace the "Your email is confirmed" box: step 1 says the same. A person asked for more information, or rejected, is shown at step 2 again, because the form is there.
+- "Nothing to delete" means no request and no organisation yet. Platform administrators with no organisation keep seeing the deletion section.
+- The error page can't know what failed, only where: on the dashboard it says the dashboard couldn't load, on any other workspace page it says the page couldn't load. "Your draft was not saved" is left to the editor's own save message.
+
 ## Result
-Filled in at the end: the pull request, what changed, what was run, what was not run.
+Pull request: euroschneider-spec/vianorae#77.
+
+Changed: `account/page.tsx`, `organisation-form.tsx`, `workspace/error.tsx`, new `onboarding-steps` (component and copy, EN/RO/DE), `globals.css`, `docs/PRODUCT.md`.
+
+Run: typecheck, lint, `test:unit` (279), `test:db`, `test:workspace` (73, with new checks for the steps, the hidden links and the reason under the button), `tests/platform.spec.ts`.
+
+Not run: the other browser specs; the workspace error page has no automated check (it needs a failing server render); not looked at on a real phone.

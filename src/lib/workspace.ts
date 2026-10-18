@@ -116,7 +116,7 @@ export function parsePlaceDraft(value: unknown, org: string): PlaceDraft | null 
 }
 
 const en = {
-  dashboard: 'Dashboard', locationsHeading: 'Locations', roleOwner: 'Owner', roleAdmin: 'Admin',
+  dashboard: 'Dashboard', loadErrorDashboard: 'The dashboard could not be loaded. Anything you saved earlier is safe. Try again.', loadError: 'This page could not be loaded. Anything you saved earlier is safe. Try again.', locationsHeading: 'Locations', roleOwner: 'Owner', roleAdmin: 'Admin',
   statusDraft: 'Draft', statusPublished: 'Published', addressMissing: 'No address yet', sidebarLabel: 'Organisation', collapseSidebar: 'Collapse sidebar', expandSidebar: 'Expand sidebar', stepComplete: 'Complete', stepIncomplete: 'Needs details',
   attentionHeading: 'Needs attention', attentionClear: 'Nothing needs attention.', attentionFewSteps: 'Add at least 3 steps', attentionMissingText: 'Some steps have no name or description in this language', attentionMissingAlt: 'Some photos have no description for screen readers', cardPhotoAlt: 'Photo from', cardNoPhoto: 'No photo yet',
   qrButton: 'QR code and link', qrTitle: 'QR code and link', qrBody: 'Visitors scan this code or open the link to read the guide on their phone. Print the code for the entrance.', qrLink: 'Link', qrCopy: 'Copy link', qrCopied: 'Link copied', qrDownload: 'Download QR code (SVG)', qrClose: 'Close', qrAlt: 'QR code for the guide of', visitsLabel: 'Visits, last 30 days', visitsSample: 'Sample numbers',
@@ -155,7 +155,7 @@ const en = {
 };
 type WorkspaceCopy = { [K in keyof typeof en]: string };
 const ro: WorkspaceCopy = {
-  dashboard:'Panou', locationsHeading:'Locații', roleOwner:'Proprietar', roleAdmin:'Administrator',
+  dashboard:'Panou', loadErrorDashboard:'Panoul nu a putut fi încărcat. Ce ai salvat mai devreme este în siguranță. Încearcă din nou.', loadError:'Pagina nu a putut fi încărcată. Ce ai salvat mai devreme este în siguranță. Încearcă din nou.', locationsHeading:'Locații', roleOwner:'Proprietar', roleAdmin:'Administrator',
   statusDraft:'Ciornă', statusPublished:'Publicat', addressMissing:'Fără adresă încă', sidebarLabel:'Organizație', collapseSidebar:'Restrânge bara laterală', expandSidebar:'Extinde bara laterală', stepComplete:'Complet', stepIncomplete:'Necesită detalii',
   attentionHeading:'Necesită atenție', attentionClear:'Nimic nu necesită atenție.', attentionFewSteps:'Adăugați cel puțin 3 pași', attentionMissingText:'Unii pași nu au nume sau descriere în această limbă', attentionMissingAlt:'Unele fotografii nu au descriere pentru cititoarele de ecran', cardPhotoAlt:'Fotografie de la', cardNoPhoto:'Încă fără fotografie',
   qrButton:'Cod QR și link', qrTitle:'Cod QR și link', qrBody:'Vizitatorii scanează acest cod sau deschid linkul pentru a citi ghidul pe telefon. Tipăriți codul pentru intrare.', qrLink:'Link', qrCopy:'Copiază linkul', qrCopied:'Link copiat', qrDownload:'Descarcă codul QR (SVG)', qrClose:'Închide', qrAlt:'Cod QR pentru ghidul', visitsLabel:'Vizite, ultimele 30 de zile', visitsSample:'Cifre de exemplu',
@@ -189,7 +189,7 @@ const ro: WorkspaceCopy = {
   demoPhotoAdded:'Fotografie adăugată pe acest dispozitiv. Completează detaliile și salvează pentru a o atașa.', demoPhotoPrivacy:'În demo, fotografiile rămân pe acest dispozitiv. Nu se încarcă nimic.',
 };
 const de: WorkspaceCopy = {
-  dashboard:'Übersicht', locationsHeading:'Orte', roleOwner:'Eigentümer', roleAdmin:'Admin',
+  dashboard:'Übersicht', loadErrorDashboard:'Die Übersicht konnte nicht geladen werden. Was Sie zuvor gespeichert haben, ist sicher. Versuchen Sie es erneut.', loadError:'Diese Seite konnte nicht geladen werden. Was Sie zuvor gespeichert haben, ist sicher. Versuchen Sie es erneut.', locationsHeading:'Orte', roleOwner:'Eigentümer', roleAdmin:'Admin',
   statusDraft:'Entwurf', statusPublished:'Veröffentlicht', addressMissing:'Noch keine Adresse', sidebarLabel:'Organisation', collapseSidebar:'Seitenleiste einklappen', expandSidebar:'Seitenleiste ausklappen', stepComplete:'Vollständig', stepIncomplete:'Details fehlen',
   attentionHeading:'Braucht Aufmerksamkeit', attentionClear:'Nichts braucht Aufmerksamkeit.', attentionFewSteps:'Mindestens 3 Schritte hinzufügen', attentionMissingText:'Manchen Schritten fehlen Name oder Beschreibung in dieser Sprache', attentionMissingAlt:'Manchen Fotos fehlt eine Beschreibung für Screenreader', cardPhotoAlt:'Foto von', cardNoPhoto:'Noch kein Foto',
   qrButton:'QR-Code und Link', qrTitle:'QR-Code und Link', qrBody:'Besucherinnen und Besucher scannen diesen Code oder öffnen den Link, um den Guide auf dem Handy zu lesen. Drucken Sie den Code für den Eingang aus.', qrLink:'Link', qrCopy:'Link kopieren', qrCopied:'Link kopiert', qrDownload:'QR-Code herunterladen (SVG)', qrClose:'Schließen', qrAlt:'QR-Code für den Guide von', visitsLabel:'Besuche, letzte 30 Tage', visitsSample:'Beispielzahlen',
