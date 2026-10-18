@@ -12,7 +12,7 @@ export type LanguageCheck = {
   locale: Locale; started: boolean; ready: boolean; published: boolean;
   steps: number; missingText: number; missingAlt: number; hasName: boolean;
 };
-export type PublishResult = { ok: true; live: Locale[]; slug: string; code: string } | { ok: false; error: 'invalid' | 'conflict' | 'auth' | 'nothing' | 'error' };
+export type PublishResult = { ok: true; live: Locale[]; slug: string; code: string } | { ok: false; error: 'invalid' | 'conflict' | 'auth' | 'nothing' | 'plan' | 'error' };
 export type UnpublishResult = { ok: boolean };
 /** What the editor needs to know about a location's publication; absent before the publishing migration exists. */
 export type Publication = { published: boolean; slug?: string };

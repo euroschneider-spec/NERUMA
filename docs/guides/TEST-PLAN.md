@@ -184,6 +184,12 @@ Waiting for "Delete my account and export my data" (TECH-TASKS §13 step 3). Reh
   Expected: layout holds, the code field offers the numeric keyboard, the QR code scans from another phone.
 - [ ] The password manager (1Password, iCloud Keychain) fills the email and password, and offers to fill the one-time code.
 
+### A11. Payments in Stripe's test mode — 30 minutes
+
+- [ ] Follow `docs/guides/PAYMENTS.md` section 3: pay with a test card, see the plan active, open Stripe's customer page and cancel, an
+  admin sees no *Plan & billing*, a failed renewal with a test clock shows the 30 days, and (on a dev database only) switching payments
+  on hides an unpaid organisation's guide until it pays. In Romanian and German too.
+
 ---
 
 ## Part B: what is already tested by machines

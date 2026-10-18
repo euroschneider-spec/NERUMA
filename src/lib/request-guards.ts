@@ -1,4 +1,13 @@
 import 'server-only';
+import { headers } from 'next/headers';
+
+// The site's own address, for links that leave and come back (confirmation emails, Stripe). VIANORAE_SITE_URL, when set, is the only
+// answer, so a forged Host/Origin cannot send anyone elsewhere. Without it (local runs, previews) the request Origin is used.
+export async function siteOrigin(): Promise<string | null> {
+  const origin = process.env.VIANORAE_SITE_URL || (await headers()).get('origin');
+  if (!origin || !/^https?:\/\//.test(origin)) return null;
+  try { return new URL(origin).origin; } catch { return null; }
+}
 
 // Browsers send Origin on every POST, so a missing header is treated as cross-site too. This
 // stops other sites from spending a signed-in user's upload quota through their cookies.

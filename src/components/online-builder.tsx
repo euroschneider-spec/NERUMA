@@ -15,6 +15,7 @@ import { ChoiceGroup } from './choice-group';
 import { PublishButton } from './publish-button';
 import { PublishDialog } from './publish-dialog';
 import { getPublishingCopy, type Publication } from '@/lib/publishing';
+import { getBillingCopy } from '@/lib/billing';
 import { unpublishPlace } from '@/app/workspace/actions';
 import { ConfirmDialog } from './confirm-dialog';
 
@@ -197,7 +198,7 @@ export function OnlineBuilder({locale,org,initial,persistedZoneIds,missingTransl
     </form>
     {canPublish && <PublishDialog open={publishOpen} locale={locale} org={org} placeId={draft.id} revision={draft.revision} onClose={()=>setPublishOpen(false)}
       onPublished={result=>{setLive({published:true,slug:result.slug});setError(null);setMessage(p.publishDone);router.refresh();}}
-      onFailed={failure=>{setError(failure==='auth'?'auth':failure==='conflict'?'conflict':'other');setMessage(failure==='conflict'?p.publishConflict:failure==='auth'?p.publishAuth:failure==='nothing'?p.publishNothing:p.publishError);}}/>}
+      onFailed={failure=>{setError(failure==='auth'?'auth':failure==='conflict'?'conflict':'other');setMessage(failure==='conflict'?p.publishConflict:failure==='auth'?p.publishAuth:failure==='nothing'?p.publishNothing:failure==='plan'?getBillingCopy(locale).publishNeedsPlan:p.publishError);}}/>}
     {canPublish && <ConfirmDialog open={takeDown} title={p.unpublishTitle} body={p.unpublishBody} confirm={p.unpublish} cancel={t.cancel} onCancel={()=>setTakeDown(false)}
       onConfirm={async()=>{
         setTakeDown(false);

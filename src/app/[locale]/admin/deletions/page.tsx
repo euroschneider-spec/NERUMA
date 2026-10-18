@@ -9,9 +9,11 @@ import { authConfigured } from '@/lib/supabase/config';
 import { confirmedUser, createClient } from '@/lib/supabase/server';
 import { accountDeletionReady, verificationReady } from '@/lib/verification-server';
 import { requireSecondFactor } from '@/lib/two-factor-server';
-import { fill, getDeletionCopy, longDate, parseOrganisationHolds, parsePendingDeletions } from '@/lib/account-deletion';
+import { fill, getDeletionCopy, longDate, parseBillingBlocks, parseOrganisationHolds, parsePendingDeletions } from '@/lib/account-deletion';
 import { eraseAccount, eraseOrganisation, restoreAccount } from '@/app/admin/deletion-actions';
 import { ConfirmForm } from '@/components/confirm-form';
+// The inactive button with its reason on hover or focus (first made for Publish), here for an erase that waits for Stripe.
+import { PublishButton } from '@/components/publish-button';
 import { StartDeletionForm } from '@/components/start-deletion-form';
 
 export const dynamic = 'force-dynamic';
@@ -39,10 +41,12 @@ export default async function AccountDeletions({ params }: { params: Promise<{ l
   if (!await accountDeletionReady(supabase)) {
     return <main id="main-content" className="container verification-page"><div className="page-heading"><h1>{t.adminTitle}</h1></div><div className="content-body">{nav}<p className="notice">{t.unavailable}</p></div></main>;
   }
-  const [pendingResult, holdsResult] = await Promise.all([supabase.rpc('account_deletions'), supabase.rpc('organisation_holds')]);
+  const [pendingResult, holdsResult, blocksResult] = await Promise.all([supabase.rpc('account_deletions'), supabase.rpc('organisation_holds'), supabase.rpc('erasure_blocked_by_billing')]);
   if (pendingResult.error || holdsResult.error) return <main id="main-content" className="container verification-page"><p role="alert">{t.adminError}</p></main>;
   const pending = parsePendingDeletions(pendingResult.data);
   const holds = parseOrganisationHolds(holdsResult.data);
+  // Before the payments migration the function doesn't exist: nothing waits for Stripe then.
+  const blocked = parseBillingBlocks(blocksResult.error ? null : blocksResult.data);
   const restore = restoreAccount.bind(null, locale);
   const erase = eraseAccount.bind(null, locale);
   const eraseOrg = eraseOrganisation.bind(null, locale);
@@ -66,7 +70,9 @@ export default async function AccountDeletions({ params }: { params: Promise<{ l
                 {entry.organisations.length > 0 && <p>{fill(t.alsoHeld, { names: entry.organisations.map((org) => org.name).join(', ') })}</p>}
                 <div className="button-row">
                   <a className="quiet-link" href={`/api/admin/export?user=${entry.userId}&locale=${locale}`} download>{t.downloadTheirs}</a>
-                  {entry.due ? (
+                  {entry.due && blocked.users.has(entry.userId) ? (
+                    <PublishButton label={t.erase} hint={t.billingBlocked} />
+                  ) : entry.due ? (
                     <ConfirmForm action={erase} fields={{ user: entry.userId }} label={t.erase} title={t.eraseTitle} body={t.eraseBody} confirm={t.erase} cancel={t.cancel} />
                   ) : (
                     <ConfirmForm action={restore} fields={{ user: entry.userId }} label={t.restoreButton} title={t.restoreTitle} body={t.restoreBody} confirm={t.restoreButton} cancel={t.cancel} />
@@ -89,7 +95,8 @@ export default async function AccountDeletions({ params }: { params: Promise<{ l
                 ) : (
                   <>
                     <p><strong>{hold.due ? t.dueNow : fill(t.dueOn, { date: longDate(hold.deleteAfter, locale) })}</strong></p>
-                    {hold.due && <ConfirmForm action={eraseOrg} fields={{ organisation: hold.id }} label={t.eraseOrganisation} title={t.eraseOrganisationTitle} body={t.eraseOrganisationBody} confirm={t.eraseOrganisation} cancel={t.cancel} />}
+                    {hold.due && blocked.organisations.has(hold.id) && <PublishButton label={t.eraseOrganisation} hint={t.billingBlocked} />}
+                    {hold.due && !blocked.organisations.has(hold.id) && <ConfirmForm action={eraseOrg} fields={{ organisation: hold.id }} label={t.eraseOrganisation} title={t.eraseOrganisationTitle} body={t.eraseOrganisationBody} confirm={t.eraseOrganisation} cancel={t.cancel} />}
                   </>
                 )}
               </li>

@@ -14,6 +14,12 @@ export const fill = (text: string, values: Record<string, string>) =>
   text.replace(/\{(\w+)\}/g, (match, key: string) => (key in values ? values[key] : match));
 
 export type PendingDeletion = { userId: string; email: string; requestedAt: string; deleteAfter: string; due: boolean; byAdministrator: boolean; organisations: { id: string; name: string }[] };
+/** Which erasures wait for the Stripe subscription to be cancelled (public.erasure_blocked_by_billing). Unreadable: nothing is marked, and the database still refuses. */
+export function parseBillingBlocks(value: unknown): { users: Set<string>; organisations: Set<string> } {
+  const record = value && typeof value === 'object' && !Array.isArray(value) ? value as Record<string, unknown> : {};
+  const ids = (list: unknown) => new Set(Array.isArray(list) ? list.filter((id): id is string => typeof id === 'string') : []);
+  return { users: ids(record.users), organisations: ids(record.organisations) };
+}
 export type OrganisationHold = { id: string; name: string; heldSince: string; deleteAfter: string; due: boolean; erasedAt: string | null; formerOwnerEmail: string | null };
 
 const text = (value: unknown) => (typeof value === 'string' ? value : '');
@@ -87,6 +93,7 @@ const copy = {
     eraseTitle: 'Erase this account for good?',
     eraseBody: 'Everything about this person is deleted, including their documents. This cannot be undone.',
     holds: 'Hidden organisations',
+    billingBlocked: 'A Stripe subscription is still running for this organisation. Cancel it in Stripe first, then reload this page to erase.',
     holdsNone: 'No organisation is hidden.',
     eraseOrganisation: 'Erase organisation',
     eraseOrganisationTitle: 'Erase this organisation for good?',
@@ -162,6 +169,7 @@ const copy = {
     eraseTitle: 'Eliminați definitiv acest cont?',
     eraseBody: 'Tot ce privește această persoană este șters, inclusiv documentele. Nu se poate anula.',
     holds: 'Organizații ascunse',
+    billingBlocked: 'Un abonament Stripe este încă activ pentru această organizație. Anulați-l mai întâi în Stripe, apoi reîncărcați pagina pentru a elimina.',
     holdsNone: 'Nicio organizație nu este ascunsă.',
     eraseOrganisation: 'Eliminați organizația',
     eraseOrganisationTitle: 'Eliminați definitiv această organizație?',
@@ -237,6 +245,7 @@ const copy = {
     eraseTitle: 'Dieses Konto endgültig entfernen?',
     eraseBody: 'Alles über diese Person wird gelöscht, auch ihre Nachweise. Das lässt sich nicht rückgängig machen.',
     holds: 'Ausgeblendete Organisationen',
+    billingBlocked: 'Für diese Organisation läuft noch ein Stripe-Abonnement. Kündigen Sie es zuerst in Stripe und laden Sie die Seite dann neu, um zu löschen.',
     holdsNone: 'Keine Organisation ist ausgeblendet.',
     eraseOrganisation: 'Organisation entfernen',
     eraseOrganisationTitle: 'Diese Organisation endgültig entfernen?',

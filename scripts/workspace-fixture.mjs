@@ -29,6 +29,11 @@ if (demo) {
   const codes = world.summary.places.filter(place => place.code && !place.key.startsWith('archive-')).map(place => `${place.code} ${place.key}`);
   console.log('QR codes (published places): '+codes.join(', '));
 }
+// Payments: the webhook's secret, as the owner sets it in the real project (docs/guides/PAYMENTS.md).
+if(process.env.VIANORAE_BILLING_SECRET) await db.query("update private.billing_policy set webhook_secret_sha256=sha256(convert_to($1,'UTF8'))",[process.env.VIANORAE_BILLING_SECRET]);
+// A fake Stripe API (scripts/workspace-fixture-fetch.mjs sends api.stripe.com here): Checkout and the customer page answer with Stripe's
+// addresses, which the browser test intercepts. The last request of each kind can be read back, to check what the app sent.
+const stripeRequests=new Map();const stripeSubscriptions=new Map();let stripeCustomers=0;
 // Two-factor sign-in as Supabase Auth does it: factors on the user, the assurance level (aal) in the access token.
 const factorRows=userId=>locked(async()=>(await db.query('select id,friendly_name,factor_type,status,secret,created_at,updated_at from auth.mfa_factors where user_id=$1 order by created_at',[userId])).rows);
 const asFactor=row=>({id:row.id,friendly_name:row.friendly_name,factor_type:row.factor_type,status:row.status,created_at:row.created_at,updated_at:row.updated_at});
@@ -48,7 +53,8 @@ const safe=value=>{if(!/^[a-z_]+$/.test(value)) throw new Error('Unsafe identifi
 const simpleRpcs={my_account_deletion:[],request_account_deletion:[],request_account_deletion_for:['p_email'],restore_account:['p_user'],account_deletions:[],organisation_holds:[],
   account_erasure_files:['p_user'],organisation_erasure_files:['p_org'],erase_account:['p_user'],erase_held_organisation:['p_org'],export_my_data:[],
   export_user_data:['p_user'],export_files:['p_user'],delete_problem_report:['p_report'],account_deletion_schema_version:[],
-  admin_overview:[],admin_accounts:['p_search','p_limit','p_offset','p_admins_only'],add_platform_admin:['p_email'],remove_platform_admin:['p_user'],superadmin_schema_version:[],admin_account:['p_user'],account_profile_schema_version:[]};
+  admin_overview:[],admin_accounts:['p_search','p_limit','p_offset','p_admins_only'],add_platform_admin:['p_email'],remove_platform_admin:['p_user'],superadmin_schema_version:[],admin_account:['p_user'],account_profile_schema_version:[],
+  payments_schema_version:[],erasure_blocked_by_billing:[],billing_status:['org'],billing_record_subscription:['p_secret','p_org','p_customer','p_subscription','p_status','p_period_end','p_cancel_at_period_end','p_event_created']};
 const tables=new Set(['organizations','organization_members','places','place_translations','zones','zone_translations','zone_fields','zone_field_translations','sensory_profiles','media_assets','guides','guide_steps','organization_applications','organization_review_events','organization_evidence_documents','problem_reports']);
 createServer(async(req,res)=>{
   try {
@@ -71,6 +77,34 @@ createServer(async(req,res)=>{
       await locked(()=>db.query('update private.two_factor_policy set organisations_from=$1',[from]));return send(res,200,{from});
     }
     if (url.pathname==='/health') return send(res,200,{ready:true});
+    if(url.pathname==='/__fixture/payments-required' && req.method==='POST') {
+      const from=JSON.parse(body.toString()).from;
+      await locked(()=>db.query('update private.billing_policy set required_from=$1',[from]));return send(res,200,{from});
+    }
+    // Test-only: end every organisation's 30 days of grace now.
+    if(url.pathname==='/__fixture/payments-grace-over' && req.method==='POST') {
+      await locked(()=>db.query("update public.organization_subscriptions set lapsed_at=now()-interval '31 days' where lapsed_at is not null"));return send(res,200,{over:true});
+    }
+    if(url.pathname.startsWith('/__fixture/stripe-last/') && req.method==='GET') return send(res,200,stripeRequests.get(url.pathname.split('/').at(-1))||null);
+    // Test-only: what Stripe answers about a subscription from now on (the webhook asks for it after each event).
+    if(url.pathname==='/__fixture/stripe-subscription' && req.method==='POST') {const subscription=JSON.parse(body.toString());stripeSubscriptions.set(subscription.id,subscription);return send(res,200,subscription);}
+    if(url.pathname.startsWith('/__stripe/v1/') && req.headers.authorization!==`Bearer ${process.env.VIANORAE_STRIPE_SECRET_KEY}`) return send(res,401,{error:{message:'Invalid API key'}});
+    if(url.pathname.startsWith('/__stripe/v1/subscriptions/') && req.method==='GET') {
+      const subscription=stripeSubscriptions.get(url.pathname.split('/').at(-1));
+      return subscription?send(res,200,subscription):send(res,404,{error:{message:'No such subscription'}});
+    }
+    if(url.pathname.startsWith('/__stripe/v1/') && req.method==='POST') {
+      const params=Object.fromEntries(new URLSearchParams(body.toString()));const id=randomUUID().replace(/-/g,'');
+      if(url.pathname==='/__stripe/v1/checkout/sessions') {
+        stripeRequests.set('checkout',{...params,fixture_customer:params.customer||`cus_Fixture${++stripeCustomers}`});
+        return send(res,200,{id:`cs_test_${id}`,object:'checkout.session',url:`https://checkout.stripe.com/c/pay/cs_test_${id}`});
+      }
+      if(url.pathname==='/__stripe/v1/billing_portal/sessions') {
+        stripeRequests.set('portal',params);
+        return send(res,200,{id:`bps_${id}`,object:'billing_portal.session',url:`https://billing.stripe.com/p/session/test_${id}`});
+      }
+      return send(res,404,{error:{message:'Unrecognized request URL'}});
+    }
     if(url.pathname==='/auth/v1/signup' || url.pathname==='/auth/v1/resend') {
       const payload=JSON.parse(body.toString());
       if(payload.email==='limited@example.test') return send(res,429,{error_code:'over_email_send_rate_limit',msg:'Email rate limit exceeded'});
@@ -143,7 +177,7 @@ createServer(async(req,res)=>{
     }
     if (url.pathname==='/auth/v1/logout') {tokens.delete(token);res.writeHead(204);return res.end();}
     // What a visitor may ask without signing in: schema checks, and the functions that return published data only.
-    const anonymousRpc=['workspace_schema_version','organization_verification_schema_version','mandate_evidence_schema_version','publishing_schema_version','two_factor_schema_version','remember_device_schema_version','account_deletion_schema_version','superadmin_schema_version','account_profile_schema_version','published_guide','published_places','resolve_qr'].map(name=>`/rest/v1/rpc/${name}`);
+    const anonymousRpc=['workspace_schema_version','organization_verification_schema_version','mandate_evidence_schema_version','publishing_schema_version','two_factor_schema_version','remember_device_schema_version','account_deletion_schema_version','superadmin_schema_version','account_profile_schema_version','payments_schema_version','billing_record_subscription','published_guide','published_places','resolve_qr'].map(name=>`/rest/v1/rpc/${name}`);
     if (!user && !anonymousRpc.includes(url.pathname) && !(req.method==='GET' && url.pathname.startsWith('/storage/v1/object/'))) return send(res,401,{code:'42501',message:'Sign in required'});
     await locked(async()=>{
       await db.exec('begin');

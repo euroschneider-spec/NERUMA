@@ -1,7 +1,9 @@
 'use client';
 
+import Link from 'next/link';
 import { useEffect, useId, useRef, useState } from 'react';
-import { getPublicationCheck, publishPlace } from '@/app/workspace/actions';
+import { getPublicationCheck, getPublishingAllowed, publishPlace } from '@/app/workspace/actions';
+import { getBillingCopy } from '@/lib/billing';
 import { localeNames, type Locale } from '@/lib/i18n';
 import type { LanguageCheck } from '@/lib/publishing';
 import { getPublishingCopy, waitingReasons, type PublishResult } from '@/lib/publishing';
@@ -20,6 +22,8 @@ export function PublishDialog({ open, locale, org, placeId, revision, onClose, o
   const ref = useRef<HTMLDialogElement>(null);
   const id = useId();
   const [checks, setChecks] = useState<LanguageCheck[] | null>(null);
+  // Without an active plan (once payments are on), the dialog says so instead of offering to publish.
+  const [plan, setPlan] = useState<{ allowed: boolean; owner: boolean } | null>(null);
   const [failed, setFailed] = useState(false);
   const [agreed, setAgreed] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -34,14 +38,15 @@ export function PublishDialog({ open, locale, org, placeId, revision, onClose, o
     let active = true;
     // Fresh each time it opens: the saved version may have changed since.
     // eslint-disable-next-line react-hooks/set-state-in-effect
-    setChecks(null); setFailed(false); setAgreed(false);
-    getPublicationCheck(org, placeId).then((result) => {
+    setChecks(null); setPlan(null); setFailed(false); setAgreed(false);
+    Promise.all([getPublicationCheck(org, placeId), getPublishingAllowed(org)]).then(([result, allowed]) => {
       if (!active) return;
-      if (result) setChecks(result); else setFailed(true);
+      if (result && allowed) { setChecks(result); setPlan(allowed); } else setFailed(true);
     }).catch(() => { if (active) setFailed(true); });
     return () => { active = false; };
   }, [open, org, placeId]);
-  const ready = checks?.filter((check) => check.ready) ?? [];
+  const billing = getBillingCopy(locale);
+  const ready = plan?.allowed === false ? [] : checks?.filter((check) => check.ready) ?? [];
   const waiting = checks?.filter((check) => !check.ready && (check.started || check.published)) ?? [];
   async function confirm() {
     setBusy(true);
@@ -61,7 +66,11 @@ export function PublishDialog({ open, locale, org, placeId, revision, onClose, o
       <p>{t.publishIntro}</p>
       {failed && <p role="alert">{t.publishError}</p>}
       {!checks && !failed && <p role="status">{t.publishing}</p>}
-      {checks && <>
+      {checks && plan?.allowed === false && <p role="alert">
+        {billing.publishNeedsPlan}{' '}
+        {plan.owner ? <Link href={`/${locale}/workspace/billing?org=${org}`}>{billing.publishNeedsPlanOwner}</Link> : billing.publishNeedsPlanAdmin}
+      </p>}
+      {checks && plan?.allowed !== false && <>
         {ready.length > 0 && <section aria-label={t.publishLive}>
           <h3>{t.publishLive}</h3>
           <ul>{ready.map((check) => <li key={check.locale}>{localeNames[check.locale]}</li>)}</ul>

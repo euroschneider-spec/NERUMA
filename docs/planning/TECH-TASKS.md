@@ -21,7 +21,7 @@ and 16; the order below is a proposal for the owner to confirm.
 7. **Privacy and terms text** (§15, §16), with a lawyer. Needed before real organisations and before any payment.
 8. **Features:** live preview in a second tab, team invitations, visit counts (after the privacy decision), the organisations list for
    administrators.
-9. **Payment** (§8): after email, the privacy and terms text, and the provider principle.
+9. **Payment** (§8): built and switched off; set up Stripe in test mode, then go live after email and the privacy and terms text.
 10. **Later:** a consistent read-aloud voice (§9), a storage plan and photo limits (§5), the table of every field (§6), test hardening (§11).
 
 ## 1. Mock data and mock users
@@ -162,27 +162,27 @@ the form can therefore set a 6-character password.
 
 ## 8. Subscription flow for institutions
 
-**Today:** nothing exists; the site states "No subscriptions or paid services are active".
+**Today:** built and switched off (brief `docs/briefs/2026-10-18-payments.md`, how-to `docs/guides/PAYMENTS.md`): *Plan & billing* for owners,
+Stripe Checkout and customer page, the webhook, one plan per organisation, 30 days of grace, and the database rules. Nothing is required
+until a start date is set. Decisions: `DECISIONS.md`, "Payments go through Stripe" and "Pay to publish".
 
-Suggested flow: request access → administrator approves → **choose a plan and pay** → publishing
-unlocks. Drafting and preview stay free, so organisations can try the builder first.
-
-- [ ] Choose a provider. Owner's lean, 2026-10-18: a European provider, German if there is one, not French (§15); research before
-  settling. The first pass:
-  - **Stripe** (Checkout + Customer Portal + Stripe Tax). Most control; you handle EU VAT and
-    invoices. Collect a VAT ID for B2B reverse charge.
-  - **Paddle** or **Lemon Squeezy** as "merchant of record". They handle VAT and invoices; higher fees.
-- [ ] Data: a `subscriptions` table per organisation (plan, status, period end), readable by its
-  members and written only by the payment webhook.
-- [ ] Webhook: a route under `src/app/api/` verifies the provider's signature and updates the status.
-  The project currently uses no service-role key (README), but a webhook has no user session. It needs
-  a narrowly scoped database function called with a webhook secret, or a deliberate exception to that
-  rule. This is a security decision to make before building.
-- [ ] Where it shows: a *Plan & billing* tab in the organisation dashboard (owners only), plus a
-  publish button that explains what's needed when there is no active plan.
-- [ ] Decide what happens on non-payment: hide published guides, or keep them visible but locked
-  for editing.
-- [ ] Update the terms and privacy pages before taking any payment.
+- [x] Choose a provider: **Stripe** (owner, 2026-10-18). No German company was found that runs subscriptions, VAT and invoices together.
+- [x] Data: `organization_subscriptions` per organisation, written only by the webhook (through `billing_record_subscription` and a secret).
+- [x] Webhook: `src/app/api/stripe/webhook` checks Stripe's signature; the database checks the secret.
+- [x] *Plan & billing* (owners only), and Publish explains when a plan is needed.
+- [x] Non-payment: 30 days of grace, then the guides say "unavailable" (owner, 2026-10-18).
+- [ ] **Paused (owner, 2026-10-18): open the Stripe account.** The owner wants it opened as a *business* account for production, which needs
+      the selling company's details first, so it waits for the next item. (A test-mode account needs no business details and could be opened
+      sooner, but the owner would rather open it once, in the right name. Stripe's country can't be changed later.)
+- [ ] **Decide who sells** (which company, which country): it decides VAT registration, the invoice format, and in whose name the Stripe
+      account is opened. Needed to unblock the item above.
+- [ ] **Set up Stripe** in test mode and test by hand (`PAYMENTS.md` sections 2 and 3). Install `20261018090000_payments.sql`.
+- [ ] Update the terms and privacy pages (Stripe as a processor) before taking any payment; then go live (`PAYMENTS.md` section 5)
+      and set the start date (section 4), telling organisations at least 30 days before.
+- [x] Nobody is erased while Stripe still charges them: the deletions page and the database refuse to erase an organisation, or its last
+      owner, until the subscription is cancelled in Stripe (owner, 2026-10-18).
+- [ ] Later: invoice and bank transfer; German e-invoices (XRechnung or ZUGFeRD) if customers need them; cancel the Stripe subscription
+      automatically when an organisation is erased (today a person does it in Stripe).
 
 ## 9. A consistent voice for read-aloud
 
@@ -462,6 +462,11 @@ The dashboard, accounts list and administrators list exist (brief `2026-10-17-su
 4. [x] **Mark that you are in the administration area.** Done: a strip on every administration page (icon, "Platform administration",
    the signed-in email) and a warm yellow for the whole area in dark and light (`admin-area`; high contrast keeps its palette). The profile page (item 1) says "you are viewing this account as a platform administrator".
 5. [ ] **"Organisation account" in the administration menu** reads better as "My account".
+6. [ ] **From an organisation to its owners and admins, and to their profiles** (owner, 2026-10-18). A platform administrator opens an
+   organisation (from the list in item 2, or its request) and sees who its owners and admins are, each linking to that person's profile
+   (`/admin/accounts/<id>`, item 1). Today the profile page goes the other way only (a person, then their organisations). Same rules as
+   item 1: read only, says who is viewing, and a new function that checks `is_platform_admin()` like the others. It also helps the
+   payments work: to reach the owner of an organisation that is overdue or still being charged before it can be erased.
 
 ## 15. Hosting, providers and where the data goes (owner, 2026-10-18; pinned)
 

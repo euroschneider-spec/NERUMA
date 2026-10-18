@@ -7,6 +7,11 @@ if (process.env.VIANORAE_TEST_FIXTURE === '1') {
       url.protocol = 'http:'; url.host = '127.0.0.1:3012';
       input = input instanceof Request ? new Request(url, input) : url;
     }
+    // Stripe's API, faked by the same fixture (payments).
+    if (url.hostname === 'api.stripe.com') {
+      url.protocol = 'http:'; url.host = '127.0.0.1:3012'; url.pathname = `/__stripe${url.pathname}`;
+      input = input instanceof Request ? new Request(url, input) : url;
+    }
     return original(input, init);
   };
 }

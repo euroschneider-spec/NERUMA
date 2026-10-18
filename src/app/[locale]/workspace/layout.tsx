@@ -3,7 +3,9 @@ import { notFound } from 'next/navigation';
 import { getCopy, isLocale, longDate } from '@/lib/i18n';
 import { getOrganisationCopy } from '@/lib/organisation-copy';
 import { getWorkspaceCopy } from '@/lib/workspace';
-import { problemReportsReady } from '@/lib/verification-server';
+import { paymentsReady, problemReportsReady } from '@/lib/verification-server';
+import { getBillingCopy } from '@/lib/billing';
+import { stripeConfigured } from '@/lib/stripe-server';
 import { workspaceSession } from '@/lib/workspace-server';
 import { signOut } from '@/app/auth/actions';
 import { OrgSidebar } from '@/components/org-sidebar';
@@ -16,6 +18,8 @@ export default async function WorkspaceLayout({ children, params }: { children: 
   const context = await workspaceSession(locale);
   // Before the 2026-10-12 migration the button stays hidden, like the field controls before theirs.
   const reportsEnabled = await problemReportsReady(context.supabase);
+  // Plan & billing appears once Stripe is set up and the payments migration is installed (docs/guides/PAYMENTS.md).
+  const billingEnabled = stripeConfigured() && await paymentsReady(context.supabase);
   // Until two-factor is required for owners and admins, those without it see the date it starts.
   const deadline = upcomingDeadline(context.twoFactor);
   const twoFactor = getTwoFactorCopy(locale);
@@ -24,6 +28,7 @@ export default async function WorkspaceLayout({ children, params }: { children: 
     organisation: membership.organisation,
     name: membership.name,
     roleLabel: roleLabels[membership.role],
+    owner: membership.role === 'owner',
   }));
   return (
     <div className="app-shell">
@@ -39,6 +44,7 @@ export default async function WorkspaceLayout({ children, params }: { children: 
           expand: t.expandSidebar,
           reading: getCopy(locale).settings,
           report: reportsEnabled ? t.reportProblem : undefined,
+          billing: billingEnabled ? getBillingCopy(locale).title : undefined,
         }}
         signOutAction={signOut.bind(null, locale)}
       />

@@ -196,6 +196,27 @@ accounts list (searchable by email) and the administrators list. An administrato
 or remove another, never themselves, so the last one can't be removed. Before this, the first one was added with SQL; that is still
 how the very first one is made. The administration area always says so: a strip with the signed-in email on every page, and a warm yellow in place of the blue (dark and light themes; high contrast keeps its palette). An administrator can open any account's profile (read only; no actions and no record of who looked, for now). Not chosen yet: a list of organisations, a history of who added whom. Plan: brief `2026-10-17-superadmin-dashboard.md`.
 
+### Payments go through Stripe
+Owner, 2026-10-18. The owner wanted a German provider. The research found German payment companies (Unzer, Novalnet, Payone,
+Computop) but no German company that also runs subscriptions, VAT and invoices for software sold to businesses; the German
+"merchant of record" services (Digistore24 and similar) are built for online courses. Stripe does all of it in one place, so
+Stripe it is. This is an exception to the European-provider lean (TECH-TASKS §15): Stripe is a US company that serves EU
+customers through Stripe Payments Europe in Ireland, so its data-processing agreement is signed and it is named on the privacy
+page as a processor. Still open, for the payments brief: who the seller is (which company, which country; it decides VAT and
+the invoice format), the plans and prices, whether institutions can pay by invoice and bank transfer as well as by card or
+SEPA direct debit, what happens when an organisation doesn't pay, and how the Stripe webhook writes to the database without a
+signed-in user (TECH-TASKS §8). German e-invoices (XRechnung or ZUGFeRD) are not a Stripe feature as far as checked; confirm
+before relying on Stripe's PDF invoices for German customers.
+
+### Pay to publish: one plan per organisation, 30 days of grace, then the guides go offline
+Owner, 2026-10-18. Registering, building and previewing stay free; publishing needs a plan. One plan covers all of an organisation's
+locations. When a payment stops, the guides stay online for 30 days, then show "This guide isn't available right now" (the same as
+unpublishing: address, QR codes and content stay, and paying again brings them back). Not chosen: keeping guides visible but locked
+(they would go out of date, which is worse for visitors than no guide), hiding at once. Card and SEPA direct debit through Stripe
+Checkout first; invoice and bank transfer later. Stripe's webhook writes to the database through one narrow function that needs a
+secret, not with Supabase's all-powerful key. Payments stay off until a date is set in the database. Plan: brief
+`2026-10-18-payments.md`; how-to `docs/guides/PAYMENTS.md`.
+
 ## Not yet discussed
 
 - `DESIGN-TASKS.md` sections 5, 6 (other items) and 7.

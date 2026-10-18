@@ -1,12 +1,16 @@
 import assert from 'node:assert/strict';
 import { spawn } from 'node:child_process';
 import { createWriteStream } from 'node:fs';
+import { createHmac } from 'node:crypto';
 import { chromium, expect } from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
 import sharp from 'sharp';
 import { FIXTURE_ADMIN_TOTP_SECRET, totp } from './fixture-totp.mjs';
 
-const env={...process.env,VIANORAE_TEST_FIXTURE:'1',VIANORAE_SUPABASE_PROJECT_REF:'vianorae-fixture',NEXT_PUBLIC_SUPABASE_URL:'https://vianorae-fixture.supabase.co',NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY:'sb_publishable_fixture',VIANORAE_WORKSPACE_ENABLED:'1'};
+const env={...process.env,VIANORAE_TEST_FIXTURE:'1',VIANORAE_SUPABASE_PROJECT_REF:'vianorae-fixture',NEXT_PUBLIC_SUPABASE_URL:'https://vianorae-fixture.supabase.co',NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY:'sb_publishable_fixture',VIANORAE_WORKSPACE_ENABLED:'1',
+  // Payments against the fixture's fake Stripe (test-only values; docs/guides/PAYMENTS.md).
+  VIANORAE_STRIPE_SECRET_KEY:'sk_test_fixture',VIANORAE_STRIPE_WEBHOOK_SECRET:'whsec_fixture',VIANORAE_STRIPE_PRICE_ID:'price_fixture',
+  VIANORAE_BILLING_SECRET:'fixture-only-billing-secret-0123456789abcdef'};
 const children=[];let browser;let checks=0;
 function start(command,args,extra={},log='/tmp/vianorae-workspace-test.log') {
   const child=spawn(command,args,{env:{...env,...extra},stdio:['ignore','pipe','pipe']});children.push(child);
@@ -41,6 +45,19 @@ async function login(page,owner=1) {
   await signInWithPassword(page,owner);
   if(page.url().endsWith('/en/login/verify')) {await enterCode(page,totp(authenticators[owner]));await page.waitForURL(/\/en\/(account|workspace|admin(\/organisations)?)$/);}
 }
+// A subscription changes in Stripe, and Stripe tells the webhook, signing the event with the endpoint's secret the way Stripe does.
+// The webhook then asks (the fake) Stripe for the subscription as it is now.
+let stripeEventCount=0;
+async function stripeEvent(status,{org='00000000-0000-4000-8000-000000000101',customer='cus_Fixture1',signature}={}) {
+  const created=Math.floor(Date.now()/1000)+(++stripeEventCount);
+  const subscription={id:'sub_Fixture1',object:'subscription',customer,status,cancel_at_period_end:false,cancel_at:null,metadata:{organization_id:org},
+    items:{data:[{current_period_end:created+30*86400}]}};
+  if(!signature) await fixture('stripe-subscription',subscription);
+  const payload=JSON.stringify({id:`evt_fixture${stripeEventCount}`,object:'event',type:'customer.subscription.updated',created,data:{object:subscription}});
+  const signed=signature ?? `t=${created},v1=${createHmac('sha256',env.VIANORAE_STRIPE_WEBHOOK_SECRET).update(`${created}.${payload}`).digest('hex')}`;
+  return (await fetch(`${base}/api/stripe/webhook`,{method:'POST',headers:{'Content-Type':'application/json','Stripe-Signature':signed},body:payload})).status;
+}
+const fixture=(path,body)=>fetch(`http://127.0.0.1:3012/__fixture/${path}`,body===undefined?{}:{method:'POST',body:JSON.stringify(body)}).then(response=>response.json());
 const saved=page=>expect(page.locator('.status-message[role]')).toContainText('Draft saved');
 const save=async page=>{await page.getByRole('button',{name:'Save',exact:true}).last().click();await saved(page);};
 try {
@@ -396,6 +413,59 @@ try {
     await visitor.goto(`${base}${qrPath}`);
     await expect(visitor).toHaveURL(new RegExp(`${publicAddress}$`));
     await expect(visitor.locator('.gg-title')).toBeVisible();
+  });
+  await check('Plan & billing: before payments start publishing is free; the owner pays on Stripe and comes back to an active plan',async()=>{
+    await page.goto(`${base}/en/workspace`);
+    await page.getByRole('complementary').getByRole('link',{name:'Plan & billing'}).click();
+    await expect(page).toHaveURL(/\/en\/workspace\/billing$/);
+    await expect(page.getByRole('heading',{name:'Plan & billing',level:1})).toBeVisible();
+    await expect(page.getByText('Test mode: no real money is taken.',{exact:false})).toBeVisible();
+    await expect(page.getByText('Publishing is free for now.',{exact:false})).toBeVisible();
+    await expect(page.getByText('No plan yet.',{exact:true})).toBeVisible();
+    const result=await new AxeBuilder({page}).withTags(['wcag2a','wcag2aa','wcag21a','wcag21aa','wcag22aa']).analyze();
+    assert.deepEqual(result.violations.map(v=>v.id),[],'Plan & billing');
+    // Stripe's pages are Stripe's: the test stands in for them.
+    await page.route('https://checkout.stripe.com/**',route=>route.fulfill({contentType:'text/html',body:'<!doctype html><title>Stripe Checkout (test)</title><h1>Stripe Checkout (test)</h1>'}));
+    await page.route('https://billing.stripe.com/**',route=>route.fulfill({contentType:'text/html',body:'<!doctype html><title>Stripe customer page (test)</title><h1>Stripe customer page (test)</h1>'}));
+    await page.getByRole('button',{name:'Choose a plan',exact:true}).click();
+    await expect(page.getByRole('heading',{name:'Stripe Checkout (test)'})).toBeVisible();
+    const sent=await fixture('stripe-last/checkout');
+    assert.equal(sent.mode,'subscription');assert.equal(sent['line_items[0][price]'],'price_fixture');assert.equal(sent.locale,'en');
+    assert.equal(sent['subscription_data[metadata][organization_id]'],'00000000-0000-4000-8000-000000000101');
+    assert.equal(sent.customer_email,'owner1@example.test');assert.equal(sent['automatic_tax[enabled]'],'true');
+    // Only Stripe's correctly signed event changes anything.
+    assert.equal(await stripeEvent('active',{signature:'t=1,v1='+'0'.repeat(64)}),400);
+    assert.equal(await stripeEvent('active'),200);
+    await page.goto(sent.success_url);
+    await expect(page.getByText('Thank you. Stripe is confirming the payment',{exact:false})).toBeVisible();
+    await expect(page.getByText(/^Plan active\. It renews on \d+ \w+ \d{4}\.$/)).toBeVisible();
+    await page.getByRole('button',{name:'Change payment details or cancel',exact:true}).click();
+    await expect(page.getByRole('heading',{name:'Stripe customer page (test)'})).toBeVisible();
+    const portal=await fixture('stripe-last/portal');
+    assert.equal(portal.customer,'cus_Fixture1');assert.match(portal.return_url,/\/en\/workspace\/billing\?org=00000000-0000-4000-8000-000000000101$/);
+    await page.unrouteAll();
+  });
+  await check('once payments are on, a failed payment keeps the guide online for 30 days; then it is unavailable and Publish asks for a plan; paying brings it back',async()=>{
+    await fixture('payments-required',{from:new Date(Date.now()-60000).toISOString()});
+    assert.equal(await stripeEvent('past_due'),200);
+    await page.goto(`${base}/en/workspace`);
+    await expect(page.getByText(/The payment for the plan didn't go through\. Your guides stay online until \d+ \w+ \d{4}\./)).toBeVisible();
+    await visitor.goto(`${base}${publicAddress}`);await expect(visitor.locator('.gg-title')).toBeVisible();
+    await fixture('payments-grace-over',{});
+    await visitor.goto(`${base}${publicAddress}`);
+    await expect(visitor.getByRole('heading',{name:"This guide isn't available right now"})).toBeVisible();
+    await visitor.goto(`${base}${qrPath}`);await expect(visitor).toHaveURL(/\/guide-unavailable$/);
+    await page.goto(`${base}/en/workspace`);
+    await expect(page.getByText('The plan has ended: your guides are not shown to visitors.',{exact:false})).toBeVisible();
+    await page.goto(editUrl);await page.getByRole('button',{name:'Publish',exact:true}).first().click();
+    await expect(publishDialog.getByRole('alert')).toContainText('Publishing needs an active plan.');
+    await expect(publishDialog.getByRole('link',{name:'Choose one under Plan & billing, then publish.'})).toHaveAttribute('href','/en/workspace/billing?org=00000000-0000-4000-8000-000000000101');
+    await expect(publishDialog.getByRole('button',{name:'Publish now',exact:true})).toBeDisabled();
+    await publishDialog.getByRole('button',{name:'Cancel',exact:true}).click();
+    assert.equal(await stripeEvent('active'),200);
+    await visitor.goto(`${base}${qrPath}`);
+    await expect(visitor).toHaveURL(new RegExp(`${publicAddress}$`));await expect(visitor.locator('.gg-title')).toBeVisible();
+    await fixture('payments-required',{from:null});
   });
   await check('sign out clears access to the saved workspace and photo',async()=>{
     await page.goto(`${base}/en/account`);await page.getByRole('button',{name:'Sign out',exact:true}).click();await page.waitForURL('**/en/login');
@@ -951,6 +1021,21 @@ try {
     await outsider.context.close();
     await fetch('http://127.0.0.1:3012/__fixture/deletions-due',{method:'POST'});await view.reload();
     await expect(entry.getByText('Due: can be erased now',{exact:true})).toBeVisible();
+    // This organisation still pays through Stripe (the payment checks above): nothing is erased until the subscription is cancelled there.
+    await expect(entry.getByRole('button',{name:'Erase now',exact:true})).toHaveAttribute('aria-disabled','true');
+    await expect(entry.getByRole('button',{name:'Erase now',exact:true})).toHaveAccessibleDescription(/A Stripe subscription is still running/);
+    await entry.getByRole('button',{name:'Erase now',exact:true}).hover();
+    await expect(entry.getByRole('tooltip')).toBeVisible();
+    await expect(entry.getByRole('tooltip')).toContainText('Cancel it in Stripe first');
+    await view.mouse.move(0,0);
+    await expect(entry.getByRole('tooltip')).toBeHidden();
+    const stillPaying=view.getByRole('listitem').filter({has:view.getByRole('heading',{name:'Fixture museum 1',level:3})});
+    await stillPaying.getByRole('button',{name:'Erase organisation',exact:true}).focus();
+    await expect(stillPaying.getByRole('tooltip')).toBeVisible();
+    await expect(stillPaying.getByRole('button',{name:'Erase organisation',exact:true})).toHaveAttribute('aria-disabled','true');
+    assert.equal(await stripeEvent('canceled'),200);await view.reload();
+    await expect(entry.getByText('A Stripe subscription is still running',{exact:false})).toHaveCount(0);
+    await expect(entry.getByRole('button',{name:'Erase now',exact:true})).not.toHaveAttribute('aria-disabled','true');
     await entry.getByRole('button',{name:'Erase now',exact:true}).click();
     await view.getByRole('dialog',{name:'Erase this account for good?'}).getByRole('button',{name:'Erase now',exact:true}).click();
     await expect(view.getByText('No deletion in progress.',{exact:true})).toBeVisible();

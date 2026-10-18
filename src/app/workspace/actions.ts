@@ -1,14 +1,19 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
+import { redirect } from 'next/navigation';
 import { isLocale } from '@/lib/i18n';
 import { confirmedUser, createClient } from '@/lib/supabase/server';
 import { getWorkspaceCopy, parsePlaceDraft, parseReportMessage, uuidPattern } from '@/lib/workspace';
-import { approvedOrganization, problemReportsReady, publishingReady } from '@/lib/verification-server';
+import { approvedOrganization, paymentsReady, problemReportsReady, publishingReady } from '@/lib/verification-server';
 import { parseLanguageChecks, type LanguageCheck, type PublishResult, type UnpublishResult } from '@/lib/publishing';
 import { responsibilityVersion } from '@/lib/organisation-copy';
 import { workspaceConfigured } from '@/lib/workspace-server';
 import { isOrganisationRole } from '@/lib/roles';
+import { managesInStripe } from '@/lib/billing';
+import { getBillingStatus } from '@/lib/billing-server';
+import { siteOrigin } from '@/lib/request-guards';
+import { createCheckout, createPortal, stripeConfigured } from '@/lib/stripe-server';
 
 export type SaveResult = {ok:true;revision:number} | {ok:false;error:'invalid'|'conflict'|'auth'|'error'};
 export async function savePlaceDraft(org: string, locale: string, input: unknown): Promise<SaveResult> {
@@ -50,7 +55,7 @@ export async function submitProblemReport(org: string, locale: string, _previous
   } catch { return {message:t.reportError,done:false}; }
 }
 
-/** The signed-in owner or admin of an approved organisation, or null. The database checks the same again. */
+/** The signed-in owner or admin of an approved organisation (and which of the two), or null. The database checks the same again. */
 async function publisher(org: string) {
   if (!workspaceConfigured() || !uuidPattern.test(org)) return null;
   const supabase = await createClient();
@@ -58,14 +63,14 @@ async function publisher(org: string) {
   if (!user || !await approvedOrganization(supabase, org) || !await publishingReady(supabase)) return null;
   const role = await supabase.from('organization_members').select('role').eq('user_id', user.id).eq('organization_id', org).maybeSingle();
   if (role.error || !role.data || (role.data.role !== 'owner' && role.data.role !== 'admin')) return null;
-  return supabase;
+  return { supabase, owner: role.data.role === 'owner' };
 }
 
 /** Which languages could go live now, read from the saved version. */
 export async function getPublicationCheck(org: string, place: string): Promise<LanguageCheck[] | null> {
   if (!uuidPattern.test(place)) return null;
   try {
-    const supabase = await publisher(org);
+    const supabase = (await publisher(org))?.supabase;
     if (!supabase) return null;
     const result = await supabase.rpc('publication_check', { org, place });
     return result.error ? null : parseLanguageChecks(result.data);
@@ -76,10 +81,10 @@ export async function getPublicationCheck(org: string, place: string): Promise<L
 export async function publishPlace(org: string, place: string, revision: number, agreed: boolean): Promise<PublishResult> {
   if (!uuidPattern.test(place) || !Number.isSafeInteger(revision) || revision < 1 || agreed !== true) return { ok: false, error: 'invalid' };
   try {
-    const supabase = await publisher(org);
+    const supabase = (await publisher(org))?.supabase;
     if (!supabase) return { ok: false, error: 'auth' };
     const result = await supabase.rpc('publish_place', { org, place, expected_revision: revision, responsibility: responsibilityVersion });
-    if (result.error) return { ok: false, error: result.error.code === '40001' ? 'conflict' : result.error.code === '42501' ? 'auth' : result.error.code === '22023' ? 'nothing' : 'error' };
+    if (result.error) return { ok: false, error: result.error.code === '40001' ? 'conflict' : result.error.code === '42501' ? 'auth' : result.error.code === '22023' ? 'nothing' : result.error.code === 'P0402' ? 'plan' : 'error' };
     const data = result.data as { live?: unknown; slug?: unknown; code?: unknown } | null;
     const live = Array.isArray(data?.live) ? data.live.filter((locale): locale is 'en' | 'ro' | 'de' => isLocale(String(locale))) : [];
     if (!live.length || typeof data?.slug !== 'string' || typeof data?.code !== 'string') return { ok: false, error: 'error' };
@@ -95,7 +100,7 @@ export async function publishPlace(org: string, place: string, revision: number,
 export async function unpublishPlace(org: string, place: string): Promise<UnpublishResult> {
   if (!uuidPattern.test(place)) return { ok: false };
   try {
-    const supabase = await publisher(org);
+    const supabase = (await publisher(org))?.supabase;
     if (!supabase) return { ok: false };
     const result = await supabase.rpc('unpublish_place', { org, place });
     if (result.error) return { ok: false };
@@ -105,4 +110,38 @@ export async function unpublishPlace(org: string, place: string): Promise<Unpubl
     }
     return { ok: true };
   } catch { return { ok: false }; }
+}
+
+/** Whether this organisation may publish now, and whether the person asking is an owner, for the publish dialog. The database decides again. */
+export async function getPublishingAllowed(org: string): Promise<{ allowed: boolean; owner: boolean } | null> {
+  try {
+    const access = await publisher(org);
+    if (!access) return null;
+    const status = await getBillingStatus(access.supabase, org);
+    // Before the payments migration publishing needs no plan.
+    return { allowed: status ? status.allowed : !await paymentsReady(access.supabase), owner: access.owner };
+  } catch { return null; }
+}
+
+/**
+ * Plan & billing's one button: Stripe Checkout for an organisation without a running plan, Stripe's own page for one that has it.
+ * Owners only; the database answers the plan, and the organisation's id goes to Stripe so the webhook knows whose payment it is.
+ */
+export async function openBilling(org: string, locale: string) {
+  if (!isLocale(locale) || !uuidPattern.test(org)) redirect('/');
+  const back = `/${locale}/workspace/billing?org=${org}`;
+  let destination: string | null = null;
+  try {
+    const supabase = stripeConfigured() && workspaceConfigured() ? await createClient() : null;
+    const user = supabase ? await confirmedUser(supabase) : null;
+    const origin = await siteOrigin();
+    if (supabase && user?.email && origin && await approvedOrganization(supabase, org)) {
+      const role = await supabase.from('organization_members').select('role').eq('user_id', user.id).eq('organization_id', org).maybeSingle();
+      const status = !role.error && role.data?.role === 'owner' ? await getBillingStatus(supabase, org) : null;
+      if (status) destination = managesInStripe(status) && status.customer
+        ? await createPortal({ customer: status.customer, locale, returnUrl: `${origin}${back}` })
+        : await createCheckout({ org, customer: status.customer, email: user.email, locale, origin });
+    }
+  } catch { destination = null; }
+  redirect(destination ?? `${back}&checkout=error`);
 }
