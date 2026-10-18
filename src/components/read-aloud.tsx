@@ -3,7 +3,7 @@ import { useEffect, useId, useRef, useState } from 'react';
 import { Volume2, Pause, Play, Square } from 'lucide-react';
 import type { Locale } from '@/lib/i18n';
 import { getAccessCopy } from '@/lib/accessibility-copy';
-import { speechChunks } from '@/lib/speech';
+import { pickVoice, speechChunks } from '@/lib/speech';
 
 const stopEvent='vianorae:stop-reading';
 type State='idle'|'playing'|'paused'|'finished'|'error'|'missingVoice';
@@ -40,7 +40,7 @@ export function ReadAloud({locale,text,label,enabled=true}:{locale:Locale;text?:
     if(!supported || !enabled) return;
     window.dispatchEvent(new Event(stopEvent));
     const synth=window.speechSynthesis;
-    const voice=synth.getVoices().find(item=>item.lang.replace('_','-').toLowerCase().split('-')[0]===locale);
+    const voice=pickVoice(synth.getVoices(),locale);
     if(!voice){setState('missingVoice');return;}
     const chunks=speechChunks(text??pageText());if(!chunks.length){setState('error');return;}
     // cancel() does not clear the browser's paused flag. A fresh user request must.
@@ -65,6 +65,7 @@ export function ReadAloud({locale,text,label,enabled=true}:{locale:Locale;text?:
   const status=supported===false?a.audioUnsupported:state==='missingVoice'?a.audioNoVoice:state==='error'?a.audioError:state==='playing'?a.audioPlaying:state==='paused'?a.audioPaused:state==='finished'?a.audioFinished:a.audioReady;
   return <section className="read-aloud" aria-labelledby={`${id}-title`}>
     <h3 id={`${id}-title`}>{label}</h3><p className="small-note">{a.audioIntro}</p>
+    <p className="small-note">{a.audioVoiceTip}</p>
     <div className="button-row"><button type="button" className="button button-outline" onClick={start} disabled={supported!==true || !enabled}><Volume2 size={18} aria-hidden="true"/>{busy?a.audioRestart:a.audioStart}</button>
       <button type="button" className="button button-outline" onClick={pause} disabled={!busy}>{state==='paused'?<Play size={18} aria-hidden="true"/>:<Pause size={18} aria-hidden="true"/>}{state==='paused'?a.audioResume:a.audioPause}</button>
       <button type="button" className="button button-outline" onClick={stop} disabled={!busy}><Square size={18} aria-hidden="true"/>{a.audioStop}</button>
