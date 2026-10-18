@@ -196,6 +196,18 @@ accounts list (searchable by email) and the administrators list. An administrato
 or remove another, never themselves, so the last one can't be removed. Before this, the first one was added with SQL; that is still
 how the very first one is made. The administration area always says so: a strip with the signed-in email on every page, and a warm yellow in place of the blue (dark and light themes; high contrast keeps its palette). An administrator can open any account's profile (read only; no actions and no record of who looked, for now). Not chosen yet: a list of organisations, a history of who added whom. Plan: brief `2026-10-17-superadmin-dashboard.md`.
 
+### Payments go through Stripe
+Owner, 2026-10-18. The owner wanted a German provider. The research found German payment companies (Unzer, Novalnet, Payone,
+Computop) but no German company that also runs subscriptions, VAT and invoices for software sold to businesses; the German
+"merchant of record" services (Digistore24 and similar) are built for online courses. Stripe does all of it in one place, so
+Stripe it is. This is an exception to the European-provider lean (TECH-TASKS §15): Stripe is a US company that serves EU
+customers through Stripe Payments Europe in Ireland, so its data-processing agreement is signed and it is named on the privacy
+page as a processor. Still open, for the payments brief: who the seller is (which company, which country; it decides VAT and
+the invoice format), the plans and prices, whether institutions can pay by invoice and bank transfer as well as by card or
+SEPA direct debit, what happens when an organisation doesn't pay, and how the Stripe webhook writes to the database without a
+signed-in user (TECH-TASKS §8). German e-invoices (XRechnung or ZUGFeRD) are not a Stripe feature as far as checked; confirm
+before relying on Stripe's PDF invoices for German customers.
+
 ## Not yet discussed
 
 - `DESIGN-TASKS.md` sections 5, 6 (other items) and 7.

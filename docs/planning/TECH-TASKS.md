@@ -167,11 +167,9 @@ the form can therefore set a 6-character password.
 Suggested flow: request access → administrator approves → **choose a plan and pay** → publishing
 unlocks. Drafting and preview stay free, so organisations can try the builder first.
 
-- [ ] Choose a provider. Owner's lean, 2026-10-18: a European provider, German if there is one, not French (§15); research before
-  settling. The first pass:
-  - **Stripe** (Checkout + Customer Portal + Stripe Tax). Most control; you handle EU VAT and
-    invoices. Collect a VAT ID for B2B reverse charge.
-  - **Paddle** or **Lemon Squeezy** as "merchant of record". They handle VAT and invoices; higher fees.
+- [x] Choose a provider: **Stripe** (owner, 2026-10-18; `DECISIONS.md`, "Payments go through Stripe"). No German company was found
+  that runs subscriptions, VAT and invoices together. Use Checkout, the Customer Portal and Stripe Tax; collect a VAT ID for B2B
+  reverse charge. Check whether German e-invoices (XRechnung or ZUGFeRD) need a separate tool.
 - [ ] Data: a `subscriptions` table per organisation (plan, status, period end), readable by its
   members and written only by the payment webhook.
 - [ ] Webhook: a route under `src/app/api/` verifies the provider's signature and updates the status.
