@@ -7,7 +7,6 @@ Done: `- [x] T-001 | title | note | cost`.
 
 ## Open
 
-- [ ] T-004 | How it works and Methodology: the closing box with one link becomes a button | DESIGN-TASKS section 5. Quick win.
 - [ ] T-005 | Home: the dot before the tagline and the check mark sit between lines when the text wraps | DESIGN-TASKS section 7. Quick win.
 - [ ] T-006 | Delete the unused styles .pilot and .principle | DESIGN-TASKS section 7. Quick win.
 - [ ] T-007 | Check and tick: builder steps as accordions, Sign in label mismatch, Sign in widths | Probably already done. Measure Sign in at 320, 390 and 1280px before ticking.
