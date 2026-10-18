@@ -171,8 +171,12 @@ until a start date is set. Decisions: `DECISIONS.md`, "Payments go through Strip
 - [x] Webhook: `src/app/api/stripe/webhook` checks Stripe's signature; the database checks the secret.
 - [x] *Plan & billing* (owners only), and Publish explains when a plan is needed.
 - [x] Non-payment: 30 days of grace, then the guides say "unavailable" (owner, 2026-10-18).
+- [ ] **Paused (owner, 2026-10-18): open the Stripe account.** The owner wants it opened as a *business* account for production, which needs
+      the selling company's details first, so it waits for the next item. (A test-mode account needs no business details and could be opened
+      sooner, but the owner would rather open it once, in the right name. Stripe's country can't be changed later.)
+- [ ] **Decide who sells** (which company, which country): it decides VAT registration, the invoice format, and in whose name the Stripe
+      account is opened. Needed to unblock the item above.
 - [ ] **Set up Stripe** in test mode and test by hand (`PAYMENTS.md` sections 2 and 3). Install `20261018090000_payments.sql`.
-- [ ] **Decide who sells** (which company, which country): it decides VAT registration and the invoice format.
 - [ ] Update the terms and privacy pages (Stripe as a processor) before taking any payment; then go live (`PAYMENTS.md` section 5)
       and set the start date (section 4), telling organisations at least 30 days before.
 - [x] Nobody is erased while Stripe still charges them: the deletions page and the database refuse to erase an organisation, or its last
