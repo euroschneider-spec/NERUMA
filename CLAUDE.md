@@ -70,6 +70,10 @@ When you duplicate logic that already exists in two places, say so rather than a
 
 ## Working rules
 
+- The owner is not a developer. When you ask them to run terminal commands, give each command on its own, in its own
+  code block, numbered and with one line saying what it does, so each can be copied alone. Never chain commands with
+  `&&` or put several in one block. Say which folder they must be in (`cd ~/neruma`), because a command run in the
+  wrong folder is the usual failure. Ask what the last command printed before giving the next batch.
 - Secrets live in a gitignored `.env`; never commit one or paste one into docs.
 - Don't edit the generated block in `AGENTS.md`; add project rules here.
 - Say plainly what you changed, what you ran, and what you did not run.
