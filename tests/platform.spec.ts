@@ -102,16 +102,6 @@ test('Sign in and Request access are on screen when the organisations page opens
  }
 });
 
-// Language, light or dark, and the reading button share one height, however the page is sized.
-test('the controls above the menu are all the same height',async({page})=>{
- for(const size of [{width:1280,height:800},{width:390,height:844},{width:320,height:700}]) {
-  await page.setViewportSize(size);await page.goto('/en/methodology');
-  const heights=await page.evaluate(()=>[...document.querySelectorAll('.topbar .language-switch summary, .topbar .theme-toggle, .topbar .topbar-reading')].map(el=>Math.round(el.getBoundingClientRect().height)));
-  expect(heights.length).toBe(3);
-  expect(new Set(heights).size,JSON.stringify(heights)).toBe(1);
- }
-});
-
 // The Register page reads as one balanced column: shared edges, one rhythm, one label style. The responsibility text is
 // the consent step: inside the form, directly above the two statements, sharing the fields' edges.
 test('Register blocks share both edges, one 24px rhythm and one label size',async({page})=>{
@@ -218,10 +208,13 @@ test('the menu has one organisations link on a narrow viewport and sign-in sits 
 // Warm is a reader's alternative palette, so it has to clear the same contrast sweep as the default.
 const openPanel=async(page:import('@playwright/test').Page)=>{await page.locator('.topbar-reading').click();return page.getByRole('dialog');};
 for(const theme of ['dark','light']) {
- test(`green accent in ${theme} persists and passes automated checks`,async({page})=>{
+ test(`green accent in ${theme} persists, passes automated checks and resets to blue`,async({page})=>{
   await page.goto('/en');
-  const panel=await openPanel(page);
-  await panel.getByLabel('Accent colour',{exact:true}).selectOption('warm');
+  let panel=await openPanel(page);
+  const accent=panel.getByLabel('Accent colour',{exact:true});
+  await expect(accent).toHaveValue('cool');
+  await expect(accent.locator('option')).toHaveText(['Blue','Green']);
+  await accent.selectOption('warm');
   await expect(page.locator('html')).toHaveAttribute('data-tone','warm');
   await page.evaluate(t=>{const k='vianorae:reading:v1';localStorage.setItem(k,JSON.stringify({...JSON.parse(localStorage.getItem(k)||'{}'),theme:t,themeV:2}));},theme);
   for(const path of ['/en','/en/places/willow-museum/guide','/en/for-organisations']) {
@@ -231,6 +224,10 @@ for(const theme of ['dark','light']) {
    const results=await new AxeBuilder({page}).withTags(['wcag2a','wcag2aa','wcag21a','wcag21aa','wcag22aa']).analyze();
    expect(results.violations).toEqual([]);
   }
+  panel=await openPanel(page);
+  await expect(panel.getByLabel('Accent colour',{exact:true})).toHaveValue('warm');
+  await panel.getByRole('button',{name:'Reset',exact:false}).last().click();
+  await expect(page.locator('html')).toHaveAttribute('data-tone','cool');
  });
 }
 test('the saved accent colour is applied before the page scripts load, so a refresh does not flash blue',async({page})=>{

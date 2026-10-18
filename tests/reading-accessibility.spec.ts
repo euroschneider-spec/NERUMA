@@ -37,15 +37,7 @@ for(const locale of ['en','ro','de'] as const) {
     await page.getByRole('button',{name:t.steps,exact:true}).click();await expect(page.locator('.gg-title')).toBeFocused();await expect(page.locator('.gg-photo img')).toBeVisible();
   });
 }
-test('reading panel repositions on resize and reflows with enlarged text',async({page})=>{
-  await page.setViewportSize({width:1440,height:1000});await page.goto('/de');await page.locator('.topbar-reading').click();
-  const dialog=page.getByRole('dialog',{name:copy.de.settings,exact:true});
-  await page.setViewportSize({width:320,height:800});await page.evaluate(()=>document.documentElement.style.fontSize='32px');
-  await expect.poll(async()=>dialog.evaluate(node=>{const rect=node.getBoundingClientRect();return rect.left>=0 && rect.right<=window.innerWidth && node.scrollWidth<=node.clientWidth;})).toBe(true);
-  await dialog.getByLabel(copy.de.theme,{exact:true}).selectOption('dark');
-  const result=await new AxeBuilder({page}).withTags(['wcag2aa','wcag21aa','wcag22aa']).analyze();expect(result.violations).toEqual([]);
-  await dialog.getByRole('button',{name:copy.de.close,exact:true}).click();
-});
+// The panel repositioning on resize and reflowing at 320px with enlarged text, in /de too: tests/read-aloud.spec.ts.
 test('reading controls are visible before the footer and screenshots document the new views',async({page})=>{
   await page.setViewportSize({width:1440,height:1000});await page.goto('/ro');await page.locator('.topbar-reading').click();
   await page.screenshot({path:'docs/verification/screenshots/reading-panel-preview.png'});await page.keyboard.press('Escape');

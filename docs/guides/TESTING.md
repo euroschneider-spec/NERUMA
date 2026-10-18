@@ -14,7 +14,7 @@ npm run typecheck && npm run lint && npm run test:unit
 
 | Changed | Run |
 |---|---|
-| `site-header`, `site-footer`, `theme-toggle`, chrome CSS | `tests/platform.spec.ts` |
+| `site-header`, `site-footer`, `theme-toggle`, chrome CSS | `tests/platform.spec.ts` + `tests/top-bar.spec.ts` |
 | `guest-guide`, `guide-viewer`, `guide-text`, `lib/demo` | `tests/platform.spec.ts` + `tests/reading-accessibility.spec.ts` |
 | `read-aloud`, `lib/speech` | `tests/read-aloud.spec.ts` |
 | `reading-settings`, `lib/reading-prefs` | `tests/reading-accessibility.spec.ts` + `tests/read-aloud.spec.ts` |
