@@ -59,7 +59,7 @@ motion is already respected. The root URL always redirects to English (`src/app/
 
 - [x] Theme: follows `prefers-color-scheme` until the visitor picks one (`data-theme-choice`, *Match my device*),
   resolved before first paint and live. Done in #33.
-- [ ] Consider `prefers-contrast: more` → high contrast theme.
+- [x] `prefers-contrast: more` → high contrast theme, while the visitor follows the device (`DECISIONS.md`).
 - [ ] Language: the root URL picks EN/RO/DE from the browser's `Accept-Language`, falling back to EN.
   A language chosen in the menu wins.
 - [x] Tests: Playwright now runs as a dark device and `tests/theme-follows-device.spec.ts` emulates both. The signed-in workspace and admin pages

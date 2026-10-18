@@ -41,7 +41,7 @@ Languages everywhere: **English, Romanian, German.** Root `/` opens English; an 
 - The QR image is an SVG, downloadable.
 
 ### Reading settings (every page)
-- Text size (normal, large, larger), theme (follows the device, light, dark, high contrast), accent colour (blue, green),
+- Text size (normal, large, larger), theme (follows the device, including its request for more contrast; light, dark, high contrast), accent colour (blue, green),
   line width, typeface (default or Atkinson Hyperlegible), extra spacing, and on text pages full or summary length. Reset.
 - Remembered in the browser only, applied before the page appears (no flash).
 - The panel can be moved by dragging or with the keyboard, and closes with Escape.

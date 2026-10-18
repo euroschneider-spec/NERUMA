@@ -105,6 +105,8 @@ Storing a setting such as text size does not count as choosing a theme. The old 
 setting, which can't be told from a choice, so themes saved before this change are reset once to follow the device
 (a `themeV` marker in the stored settings; fine while there are no real visitors, and every later choice is kept).
 High contrast stays a deliberate choice: following `prefers-contrast` was considered and left out for now.
+Changed by the owner on 2026-10-18: *Match my device* now also gives high contrast when the device asks for more contrast
+(`prefers-contrast: more`), before first paint and live. A theme the visitor picked still wins.
 The language still comes from the browser later (`TECH-TASKS.md`, section 2).
 
 ### Organisations shape their own steps, within limits
