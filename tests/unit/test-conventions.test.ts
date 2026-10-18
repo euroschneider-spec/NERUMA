@@ -24,9 +24,9 @@ describe('test conventions', () => {
   it('the helper checks the words in the same step as it finds the element', () => {
     const helper = read('tests/support/bound.ts');
     expect(helper).toMatch(/getByTestId\(testId\)/);
-    expect(helper).toMatch(/toHaveText\(text\)/);
-    expect(helper).toMatch(/toHaveAccessibleName\(text\)/);
-    expect(helper).toMatch(/toHaveAccessibleName\(label\)/);
+    expect(helper).toMatch(/toHaveText\(text(, \{ timeout \})?\)/);
+    expect(helper).toMatch(/toHaveAccessibleName\(text(, \{ timeout \})?\)/);
+    expect(helper).toMatch(/toHaveAccessibleName\(label(, \{ timeout \})?\)/);
     // There is no exported function that returns an element without having checked its words.
     const exported = [...helper.matchAll(/^export async function (\w+)/gm)].map((match) => match[1]);
     expect(exported.sort()).toEqual(['button', 'field', 'message']);

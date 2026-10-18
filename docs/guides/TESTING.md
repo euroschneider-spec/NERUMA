@@ -42,6 +42,8 @@ PORT=3100 npx playwright test tests/platform.spec.ts
 
 `npm run test:workspace` takes `-- --group=workspace|approval|two-factor|accounts` to run one part on its own fixture (CI runs the four side by side); with no flag it runs all of them in order. `--skip-build` reuses the build already in `.next`.
 
+`npm run test:e2e -- --shard=1/4` runs one quarter of the browser tests (CI runs the four side by side). Playwright splits by test count, not by time.
+
 **Before pushing:** `npm run check && PORT=3100 npm run test:e2e`, or open the pull request and
 let CI run it.
 

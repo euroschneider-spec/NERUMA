@@ -12,31 +12,32 @@ import { expect, type Locator, type Page } from '@playwright/test';
  */
 type Words = string | RegExp;
 
-async function found(page: Page, testId: string): Promise<Locator> {
+/** `timeout` (ms) is for tests that prove a refusal on a page that can't change: waiting out the default only costs time. */
+async function found(page: Page, testId: string, timeout?: number): Promise<Locator> {
   const locator = page.getByTestId(testId);
-  await expect(locator, `the control "${testId}" is on the page`).toHaveCount(1);
-  await expect(locator, `the control "${testId}" is visible`).toBeVisible();
+  await expect(locator, `the control "${testId}" is on the page`).toHaveCount(1, { timeout });
+  await expect(locator, `the control "${testId}" is visible`).toBeVisible({ timeout });
   return locator;
 }
 
 /** A button or link: its visible text and its accessible name are both the words given, so they agree (WCAG 2.5.3). */
-export async function button(page: Page, testId: string, text: Words): Promise<Locator> {
-  const locator = await found(page, testId);
-  await expect(locator, `"${testId}" shows the text`).toHaveText(text);
-  await expect(locator, `"${testId}" is announced with the same words`).toHaveAccessibleName(text);
+export async function button(page: Page, testId: string, text: Words, timeout?: number): Promise<Locator> {
+  const locator = await found(page, testId, timeout);
+  await expect(locator, `"${testId}" shows the text`).toHaveText(text, { timeout });
+  await expect(locator, `"${testId}" is announced with the same words`).toHaveAccessibleName(text, { timeout });
   return locator;
 }
 
 /** A form field, checkbox or any control named by a label: its accessible name is the label given. */
-export async function field(page: Page, testId: string, label: Words): Promise<Locator> {
-  const locator = await found(page, testId);
-  await expect(locator, `"${testId}" has the label`).toHaveAccessibleName(label);
+export async function field(page: Page, testId: string, label: Words, timeout?: number): Promise<Locator> {
+  const locator = await found(page, testId, timeout);
+  await expect(locator, `"${testId}" has the label`).toHaveAccessibleName(label, { timeout });
   return locator;
 }
 
 /** A message or heading: its text is the words given. */
-export async function message(page: Page, testId: string, text: Words): Promise<Locator> {
-  const locator = await found(page, testId);
-  await expect(locator, `"${testId}" says`).toHaveText(text);
+export async function message(page: Page, testId: string, text: Words, timeout?: number): Promise<Locator> {
+  const locator = await found(page, testId, timeout);
+  await expect(locator, `"${testId}" says`).toHaveText(text, { timeout });
   return locator;
 }
