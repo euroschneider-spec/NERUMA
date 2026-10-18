@@ -25,7 +25,8 @@ and 16; the order below is a proposal for the owner to confirm.
 8. **Features:** live preview in a second tab, team invitations, visit counts (after the privacy decision), the organisations list for
    administrators.
 9. **Payment** (§8): built and switched off; set up Stripe in test mode, then go live after email and the privacy and terms text.
-10. **Later:** a consistent read-aloud voice (§9), a storage plan and photo limits (§5), the table of every field (§6), test hardening (§11).
+10. **Going live:** the full checklist is §18.
+11. **Later:** a consistent read-aloud voice (§9), a storage plan and photo limits (§5), the table of every field (§6), test hardening (§11).
 
 ## 1. Mock data and mock users
 
@@ -524,3 +525,57 @@ Order, so that nothing is ever without a working address:
    stay as written); `euroschneider-spec/Vianorae` in `README.md` and `NEXT-STEPS.md`; the package name `vianorae-platform` in `package.json` and `package-lock.json`;
    and the naming rule in `CLAUDE.md` and `README.md`.
 7. [ ] **Check, after deploying:** `SMOKE_URL=https://neruma.lignorae.com npm run test:smoke`, (skip the old-QR-address check while no code has been printed).
+
+## 18. Going live: what is still missing (review of 2026-10-18; email is its own section, §4)
+
+Collected from this file, `docs/guides/PERSONAL-DATA.md`, `docs/guides/TEST-PLAN.md` and a review at the owner's request. Each item points to
+the section that holds the detail. Not legal advice: the legal items need a qualified person.
+
+**Blocks going live**
+
+- [ ] **Decide who is the data controller and who sells** (legal name, address, country; `PERSONAL-DATA.md` D1, D2, and §8). The legal texts, the
+  Stripe account and the invoices all depend on it.
+- [ ] **Privacy notice.** It still describes the demonstration and doesn't name the controller, retention or processors (Supabase, Vercel, Stripe,
+  later the email provider). Plan: Claude drafts it from `PERSONAL-DATA.md` with the open decisions marked; a lawyer reviews it for a fixed fee
+  (a generator such as eRecht24 covers the basics but doesn't know our data flows). Decisions still needed: legal basis per item, how long each
+  item is kept, whether transfers outside the EU are acceptable (§15).
+- [ ] **Terms of use.** A draft for the demonstration today. Have a lawyer write or check them: they cover payment, the 30-day grace rule, what
+  happens when someone stops paying, and who is responsible for a guide's accuracy (a visitor may rely on "quiet room"), including any limit
+  on liability. If there is no lawyer, ask a chamber of commerce or a small-business legal advice service for a low-cost first check.
+- [ ] **Sign the data-processing agreements** with Supabase, Vercel and Stripe (and the email provider). No lawyer needed: each offers a standard
+  one to accept online. Then name them on the privacy page (§15).
+- [ ] **An imprint (Impressum), if the operator is in Germany.** Nothing in the repo mentions one; German business websites generally need it.
+  Ask the lawyer, then add a footer page in EN, RO and DE.
+- [ ] **Data retention.** Nothing is deleted automatically: requests, documents, reports and audit entries stay forever (`PERSONAL-DATA.md`, finding 4).
+  Decide a rule with the lawyer, then build it.
+- [ ] **Backups.** Check what the Supabase plan really gives (§5), then rehearse restoring one at least once (`TEST-PLAN.md` A9).
+- [ ] **Registration on production, end to end**, with a real email and a real applicant (needs email, §4 and §13 item 0).
+
+**Payment-specific** (§8, `docs/guides/PAYMENTS.md`)
+
+- [ ] Open the Stripe account in the seller's name (paused until the seller is decided) and run the hand-test in test mode.
+- [ ] Decide whether Stripe's invoices are enough for German customers, or whether e-invoices (XRechnung or ZUGFeRD) are needed.
+- [ ] Sign Stripe's data-processing agreement and name Stripe on the privacy page.
+- [ ] Tell organisations the start date at least 30 days ahead, then set it (`PAYMENTS.md` section 4).
+
+**Hosting and security settings**
+
+- [ ] Pin the Vercel region to Frankfurt and confirm the database region (§15). Today form contents travel through the US.
+- [ ] Branch protection on `main` (§11), in progress with a friend who has admin rights.
+- [ ] Check the password minimum on `neruma-dev` (§13).
+- [ ] Decide when to leave the free Supabase plan: storage and traffic caps (§5).
+
+**What a person notices today** (§16)
+
+- [ ] Explore: the country and city filters do nothing, and the category list offers types nobody can choose.
+- [ ] No way to invite a colleague (needs email).
+- [ ] The Contact form doesn't send anything (needs email).
+- [ ] A new organisation lands on an empty dashboard (`DESIGN-TASKS.md` §8).
+
+**Testing only people can do** (`TEST-PLAN.md` Part A)
+
+- [ ] Real phones, real authenticator apps, a screen reader, and publish plus QR on an actual phone.
+- [ ] After the address rename (§17): `SMOKE_URL=https://neruma.lignorae.com npm run test:smoke`.
+
+**Suggested order:** decide the controller and the seller, then book the lawyer for the texts; email, the address rename and the Frankfurt
+region; the backup rehearsal and the hand-tests with real devices; Stripe live mode and the start date last.
