@@ -462,6 +462,11 @@ The dashboard, accounts list and administrators list exist (brief `2026-10-17-su
 4. [x] **Mark that you are in the administration area.** Done: a strip on every administration page (icon, "Platform administration",
    the signed-in email) and a warm yellow for the whole area in dark and light (`admin-area`; high contrast keeps its palette). The profile page (item 1) says "you are viewing this account as a platform administrator".
 5. [ ] **"Organisation account" in the administration menu** reads better as "My account".
+6. [ ] **From an organisation to its owners and admins, and to their profiles** (owner, 2026-10-18). A platform administrator opens an
+   organisation (from the list in item 2, or its request) and sees who its owners and admins are, each linking to that person's profile
+   (`/admin/accounts/<id>`, item 1). Today the profile page goes the other way only (a person, then their organisations). Same rules as
+   item 1: read only, says who is viewing, and a new function that checks `is_platform_admin()` like the others. It also helps the
+   payments work: to reach the owner of an organisation that is overdue or still being charged before it can be erased.
 
 ## 15. Hosting, providers and where the data goes (owner, 2026-10-18; pinned)
 
