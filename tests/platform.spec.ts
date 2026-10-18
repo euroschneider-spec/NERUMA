@@ -115,20 +115,33 @@ test('the controls above the menu are all the same height',async({page})=>{
  }
 });
 
-// The Register page reads as one balanced column: shared edges, one rhythm, one label style.
+// The Register page reads as one balanced column: shared edges, one rhythm, one label style. The responsibility text is
+// the consent step: inside the form, directly above the two statements, sharing the fields' edges.
 test('Register blocks share both edges, one 24px rhythm and one label size',async({page})=>{
  for(const size of [{width:1280,height:800},{width:390,height:844}]) {
   await page.setViewportSize(size);await page.goto('/en/register');
   const m=await page.evaluate(()=>{
    const box=(sel:string)=>{const r=document.querySelector(sel)!.getBoundingClientRect();return {left:Math.round(r.left),right:Math.round(r.right),top:Math.round(r.top),bottom:Math.round(r.bottom)};};
    const labels=[...document.querySelectorAll('.organisation-form label.form-field, .organisation-form .form-field > label')].map(el=>getComputedStyle(el).fontSize);
-   return {notice:box('.responsibility-notice'),gate:box('.organisation-form .notice'),form:box('.organisation-form fieldset'),labels,innerGaps:[...document.querySelectorAll('.responsibility-notice > * + *')].map(el=>Math.round(el.getBoundingClientRect().top-el.previousElementSibling!.getBoundingClientRect().bottom))};
+   const notice=document.querySelector('.organisation-form fieldset > .responsibility-notice');
+   return {notices:document.querySelectorAll('.responsibility-notice').length,next:notice?.nextElementSibling?.textContent,notice:box('.responsibility-notice'),grid:box('.organisation-form .form-grid'),gate:box('.organisation-form > .notice'),form:box('.organisation-form fieldset'),labels,innerGaps:[...document.querySelectorAll('.responsibility-notice > * + *')].map(el=>Math.round(el.getBoundingClientRect().top-el.previousElementSibling!.getBoundingClientRect().bottom))};
   });
-  expect(m.gate.left,JSON.stringify(m)).toBe(m.notice.left);expect(m.form.left).toBe(m.notice.left);
-  expect(m.gate.right).toBe(m.notice.right);expect(m.form.right).toBe(m.notice.right);
-  expect(m.gate.top-m.notice.bottom).toBe(24);expect(m.form.top-m.gate.bottom).toBe(24);
+  expect(m.notices,JSON.stringify(m)).toBe(1);expect(m.next).toContain('I am authorised to represent this organisation.');
+  expect(m.gate.left).toBe(m.form.left);expect(m.gate.right).toBe(m.form.right);expect(m.form.top-m.gate.bottom).toBe(24);
+  expect(m.notice.left).toBe(m.grid.left);expect(m.notice.right).toBe(m.grid.right);expect(m.notice.top-m.grid.bottom).toBe(24);
   expect(new Set(m.labels).size,JSON.stringify(m.labels)).toBe(1);
   expect(new Set(m.innerGaps).size,JSON.stringify(m.innerGaps)).toBe(1);
+ }
+});
+
+// The responsibility text is shown once, in the form; the organisations page links to it instead of repeating it.
+test('For organisations links to the responsibility text instead of repeating it',async({page})=>{
+ for(const [locale,name] of [['en','What your organisation takes responsibility for'],['ro','Pentru ce își asumă responsabilitatea organizația ta'],['de','Wofür Ihre Organisation die Verantwortung übernimmt']]) {
+  await page.goto(`/${locale}/for-organisations`);
+  await expect(page.locator('.responsibility-notice')).toHaveCount(0);
+  await page.getByRole('link',{name,exact:true}).click();
+  await expect(page).toHaveURL(new RegExp(`/${locale}/register#responsibility$`));
+  await expect(page.locator('#responsibility')).toBeInViewport();
  }
 });
 

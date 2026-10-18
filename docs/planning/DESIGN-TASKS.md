@@ -57,9 +57,11 @@ Decision needed before starting.
 
 ## 4. Wording and space on phones
 
-- [ ] Responsibility text ("Your information can change someone's experience" + the full
+- [x] Responsibility text ("Your information can change someone's experience" + the full
   responsibility paragraph, ~650px) appears on *For organisations*, *Register* and *Builder*. Show it
-  once, as the consent step in Register, and link to it elsewhere.
+  once, as the consent step in Register, and link to it elsewhere. Done: it sits in the request form (Register and the
+  account page) directly above the two statements; *For organisations* links to it; the publish step keeps its short version
+  and the Terms page its own copy.
 - [ ] Register (3784px, 427 words): four info blocks before the form, which starts ~2 screens down.
   Put the form first.
 - [ ] Builder (10282px, ~12 screens): all five steps are open at once. Make each step an accordion.

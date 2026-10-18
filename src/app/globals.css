@@ -786,7 +786,8 @@ legend { padding-inline: var(--space-2); max-width: 100%; font-weight: var(--fon
 }
 .organisation-form .form-grid > .notice { margin-bottom: 0; }
 .organisation-form fieldset { margin: 0; padding: 24px; }
-.organisation-form fieldset:disabled { opacity: 0.6; }
+/* Fade the controls of a switched-off form, not the responsibility text inside it: it still has to be readable. */
+.organisation-form fieldset:disabled > :not(.responsibility-notice) { opacity: 0.6; }
 .organisation-form button { margin-top: 20px; }
 /* Register: one column, so the responsibility box, the notice and the form share both edges and one rhythm
    (24px between blocks, 12px inside the box). */
