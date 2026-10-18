@@ -1,6 +1,7 @@
 name: Foundation checks
 on:
   push:
+    branches: [main]
   pull_request:
 concurrency:
   group: ${{ github.workflow }}-${{ github.head_ref || github.ref }}
@@ -8,7 +9,8 @@ concurrency:
 permissions:
   contents: read
 jobs:
-  checks:
+  # Static checks, unit tests, database tests and the production build.
+  static:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -18,14 +20,47 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm run check
+  # The Playwright specs against a production build.
+  e2e:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci
       - run: npx playwright install --with-deps chromium
+      - run: npm run build
       - run: npm run test:e2e
-      - run: npm run test:workspace
       - uses: actions/upload-artifact@v4
         if: failure()
         with:
-          name: browser-evidence
+          name: browser-evidence-e2e
           path: |
             playwright-report/
             test-results/
           retention-days: 7
+  # Builds its own copy of the app with fixture settings, so it cannot share the e2e build.
+  workspace:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - run: npm run test:workspace
+  # One stable name for branch protection: it passes only when all three jobs above passed.
+  checks:
+    if: always()
+    needs: [static, e2e, workspace]
+    runs-on: ubuntu-latest
+    steps:
+      - run: |
+          echo "static=${{ needs.static.result }} e2e=${{ needs.e2e.result }} workspace=${{ needs.workspace.result }}"
+          test "${{ needs.static.result }}" = success
+          test "${{ needs.e2e.result }}" = success
+          test "${{ needs.workspace.result }}" = success
