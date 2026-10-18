@@ -61,6 +61,11 @@ Whose data: the **applicant or member** (the person who registers), the **admini
 - **The visitor's device:** cookies and local storage, listed on the privacy page. Nothing leaves the device except through the sign-in cookies.
 - **Vercel (hosting):** request logs, which normally include IP address and browser. **DECIDE**: confirm retention.
 - **The future email provider (TECH-TASKS §4):** the recipient's address and the message.
+- **Stripe (payments, `docs/guides/PAYMENTS.md`):** for each paying organisation, the name, billing email and address, VAT number and
+  payment details the owner types on Stripe's pages, the invoices and payments. NERUMA keeps only Stripe's customer and subscription
+  numbers, the plan's status and dates (`public.organization_subscriptions`, readable through `billing_status` by owners and admins).
+  Erasing an organisation doesn't cancel its Stripe subscription or delete the Stripe customer: an administrator does that in Stripe.
+  **DECIDE**: retention in Stripe (invoices must be kept 10 years under German tax law); Stripe as a processor (D5).
 
 ## 2. Findings that change decisions
 
@@ -95,7 +100,7 @@ Whose data: the **applicant or member** (the person who registers), the **admini
 | D2 | The **legal basis** for each group: running an account, verifying an organisation (a legitimate interest?), keeping the review history, problem reports. |
 | D3 | **Retention** for each group: unconfirmed sign-ups, rejected requests, approved organisations, documents, reports, audit entries, review history, accounts after deletion. |
 | D4 | The **deletion rule** for each blocking row above: delete, anonymise or keep. |
-| D5 | **Processors** and agreements: Supabase, Vercel, the email provider. Regions, and whether a transfer outside the EU is acceptable (finding 5). |
+| D5 | **Processors** and agreements: Supabase, Vercel, the email provider, Stripe. Regions, and whether a transfer outside the EU is acceptable (finding 5). |
 | D6 | How a person **asks** (an email address, a form), and the time we answer in. Export format. |
 | D7 | What to do if data leaks (who is told, within how long). |
 | D8 | Whether to keep the **registration form copy** in `raw_user_meta_data` at all. It exists to prefill the form after email confirmation. A shorter lifetime, or none, is possible. |

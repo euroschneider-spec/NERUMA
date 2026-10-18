@@ -2,7 +2,7 @@
 
 import { getAuthFeedback, authErrorMessage } from '@/lib/auth-feedback';
 import { redirect } from 'next/navigation';
-import { headers } from 'next/headers';
+import { siteOrigin } from '@/lib/request-guards';
 import { isLocale } from '@/lib/i18n';
 import { getOrganisationCopy } from '@/lib/organisation-copy';
 import { authConfigured } from '@/lib/supabase/config';
@@ -20,14 +20,10 @@ export type AuthState = { message: string; confirmation?:boolean };
 const text = (form: FormData, key: string) => String(form.get(key) || '').trim();
 const validEmail = (email: string) => email.length <= 254 && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 
-// Where confirmation links point. VIANORAE_SITE_URL, when set, is the only answer, so a forged
-// Host/Origin cannot redirect a confirmation elsewhere. Without it (local runs, previews) the
-// request Origin is used; Supabase's redirect allow-list still has to accept the result.
+// Where confirmation links point. Supabase's redirect allow-list still has to accept the result.
 async function confirmationCallback(locale: string): Promise<string | null> {
-  const configured = process.env.VIANORAE_SITE_URL;
-  const origin = configured || (await headers()).get('origin');
-  if (!origin || !/^https?:\/\//.test(origin)) return null;
-  try { return `${new URL(origin).origin}/auth/callback?locale=${locale}`; } catch { return null; }
+  const origin = await siteOrigin();
+  return origin ? `${origin}/auth/callback?locale=${locale}` : null;
 }
 
 export async function authenticate(locale: string, mode: 'register' | 'login', _previous: AuthState, form: FormData): Promise<AuthState> {

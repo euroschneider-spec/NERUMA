@@ -135,6 +135,19 @@ Languages everywhere: **English, Romanian, German.** Root `/` opens English; an 
 - Editing after publishing changes nothing public until the next publish; the card says so.
 - **Unpublish** (asks first): the address and QR code stay and say "isn't available", without the name; photos become private again.
 
+### Plan & billing (owners)
+- Built, **switched off until NERUMA sets a start date** (`docs/guides/PAYMENTS.md`). Before it, publishing is free and nothing below applies
+  to publishing or visitors; *Plan & billing* still shows, once Stripe is set up.
+- *Plan & billing* in the sidebar, for **owners only**: where the plan stands (none, active and when it renews, cancelled and until when,
+  payment failed and until when the guides stay online, ended), and one button: **Choose a plan** opens Stripe's own page (card or SEPA
+  direct debit, price, VAT and VAT number), or **Change payment details or cancel** opens Stripe's customer page. In test mode the page
+  says no real money is taken.
+- One plan per organisation covers all its locations. Once payments are on, **Publish** without an active plan says a plan is needed
+  (owners get a link to *Plan & billing*; admins are told to ask an owner), and the database refuses it too.
+- **A failed payment**: the dashboard and *Plan & billing* say until when the guides stay online (30 days). After that, and for an
+  organisation without a plan once payments are on, visitors, Explore and the QR code see "This guide isn't available right now". Paying
+  again brings everything back at the same address and QR code; nothing is deleted.
+
 ### Report a problem
 - From the sidebar: a message to NERUMA (10 to 2,000 characters), optionally about one location. Up to 5 an hour, 20 a day. The
   confirmation says plainly it was **saved, not emailed**.
@@ -177,7 +190,7 @@ Languages everywhere: **English, Romanian, German.** Root `/` opens English; an 
 - **Terms of use tick** at registration, with the accepted version recorded (proposed; waits for real terms text).
 - **Email provider** for confirmations, reminders and notices (TECH-TASKS §4).
 - **Visit counts** per location (privacy decision pending).
-- **Plan & billing** for organisations (payments not started).
+- **Paying by invoice and bank transfer**, and German e-invoices (payments brief, "Not in scope").
 - **A consistent read-aloud voice** generated once per text (researched, not started).
 
 ## 8. Visible gaps (things a person can notice today)

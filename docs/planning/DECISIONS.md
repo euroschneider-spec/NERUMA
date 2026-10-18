@@ -208,6 +208,15 @@ SEPA direct debit, what happens when an organisation doesn't pay, and how the St
 signed-in user (TECH-TASKS §8). German e-invoices (XRechnung or ZUGFeRD) are not a Stripe feature as far as checked; confirm
 before relying on Stripe's PDF invoices for German customers.
 
+### Pay to publish: one plan per organisation, 30 days of grace, then the guides go offline
+Owner, 2026-10-18. Registering, building and previewing stay free; publishing needs a plan. One plan covers all of an organisation's
+locations. When a payment stops, the guides stay online for 30 days, then show "This guide isn't available right now" (the same as
+unpublishing: address, QR codes and content stay, and paying again brings them back). Not chosen: keeping guides visible but locked
+(they would go out of date, which is worse for visitors than no guide), hiding at once. Card and SEPA direct debit through Stripe
+Checkout first; invoice and bank transfer later. Stripe's webhook writes to the database through one narrow function that needs a
+secret, not with Supabase's all-powerful key. Payments stay off until a date is set in the database. Plan: brief
+`2026-10-18-payments.md`; how-to `docs/guides/PAYMENTS.md`.
+
 ## Not yet discussed
 
 - `DESIGN-TASKS.md` sections 5, 6 (other items) and 7.

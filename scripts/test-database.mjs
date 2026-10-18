@@ -12,7 +12,7 @@ async function check(name,fn){await fn();checks++;console.log(`PASS ${name}`);}
 async function as(user,role='authenticated',aal='aal2',session=user,iat=Math.floor(Date.now()/1000)){await db.exec(`reset role; set role ${role}; select set_config('request.jwt.claim.sub','${user||''}',false); select set_config('request.jwt.claims','${user?JSON.stringify({sub:user,aal,session_id:session,iat}):''}',false);`);}
 async function count(table){return (await db.query(`select count(*)::int as n from public.${table}`)).rows[0].n;}
 async function denied(sql){await assert.rejects(()=>db.exec(sql));}
-await check('all 30 public tables use RLS',async()=>{const result=await db.query("select tablename from pg_tables where schemaname='public' and not rowsecurity");assert.deepEqual(result.rows,[]);assert.equal((await db.query("select count(*)::int n from pg_tables where schemaname='public'")).rows[0].n,30);});
+await check('all 31 public tables use RLS',async()=>{const result=await db.query("select tablename from pg_tables where schemaname='public' and not rowsecurity");assert.deepEqual(result.rows,[]);assert.equal((await db.query("select count(*)::int n from pg_tables where schemaname='public'")).rows[0].n,31);});
 await db.exec(`insert into auth.users values ${[owner,admin,editor,outsider,ownerB,assessor,reviewer,dual].map(x=>`('${x}')`).join(',')};
 insert into public.organizations(id,name,approval_status) values('${orgA}','Demo A','approved'),('${orgB}','Demo B','approved');
 insert into public.organization_members(organization_id,user_id,role) values('${orgA}','${owner}','owner'),('${orgA}','${admin}','admin'),('${orgA}','${editor}','editor'),('${orgB}','${ownerB}','owner'),('${orgA}','${assessor}','assessor'),('${orgA}','${reviewer}','reviewer'),('${orgA}','${dual}','owner'),('${orgB}','${dual}','owner');
@@ -732,6 +732,89 @@ await check('only a platform administrator can open a profile',async()=>{
  await as(platformAdmin);
 });
 await db.exec('reset role');
+
+// Payments (supabase/migrations/20261018090000_payments.sql): only the webhook's secret records a plan; without one, after the start
+// date, an organisation can't publish and visitors see "unavailable"; a failed payment leaves 30 days.
+const billOwner=id(70),billAdmin=id(71),billOrg=id(170),billPlace=id(270),billGuide=id(370);
+const billingSecret='fixture-only-billing-secret-0123456789abcdef';
+await db.exec('reset role');
+await db.query('insert into auth.users(id) values($1),($2)',[billOwner,billAdmin]);
+await db.query("insert into public.organizations(id,name,approval_status) values($1,'Paying museum','approved')",[billOrg]);
+await db.query("insert into public.organization_members(organization_id,user_id,role) values($1,$2,'owner'),($1,$3,'admin')",[billOrg,billOwner,billAdmin]);
+await db.query("insert into public.places(id,organization_id,slug,city) values($1,$2,'paying-museum','Example C')",[billPlace,billOrg]);
+await db.query("insert into public.guides(id,place_id,organization_id,locale) values($1,$2,$3,'en')",[billGuide,billPlace,billOrg]);
+await db.query(`insert into public.guide_versions(guide_id,place_id,organization_id,version,content) values($1,$2,$3,1,'{"source_level":"venue_provided","zones":[{"title":"Entrance"},{},{}]}')`,[billGuide,billPlace,billOrg]);
+await db.query("update public.guides set status='published',current_version=1,published_at=now() where id=$1",[billGuide]);
+await db.query("update public.places set status='published',published_revision=0 where id=$1",[billPlace]);
+await db.query("insert into public.qr_redirects(public_code,place_id,organization_id) values('paying-a',$1,$2)",[billPlace,billOrg]);
+await db.query("update private.billing_policy set webhook_secret_sha256=sha256(convert_to($1,'UTF8'))",[billingSecret]);
+const record=(status,{secret=billingSecret,subscription='sub_Paying1',created=new Date().toISOString(),periodEnd=null,cancel=false}={})=>
+ db.query('select public.billing_record_subscription($1,$2,$3,$4,$5,$6,$7,$8) r',[secret,billOrg,'cus_Paying1',subscription,status,periodEnd,cancel,created]).then(result=>result.rows[0].r);
+const paidGuide=async()=>(await db.query("select public.published_guide('paying-museum','en') g")).rows[0].g.status;
+const paidQr=async()=>(await db.query("select public.resolve_qr('paying-a') q")).rows[0].q.status;
+const billing=async()=>(await db.query('select public.billing_status($1) b',[billOrg])).rows[0].b;
+const ago=days=>new Date(Date.now()-days*86400000).toISOString();
+await check('before payments start, an organisation without a plan stays visible and may publish',async()=>{
+ await as(null,'anon');assert.equal(await paidGuide(),'published');assert.equal(await paidQr(),'published');
+ await as(billOwner);const status=await billing();assert.equal(status.required,false);assert.equal(status.allowed,true);assert.equal(status.status,null);
+ await db.query('update public.places set published_revision=1 where id=$1',[billPlace]);
+});
+await check('only the webhook secret records a plan, and nobody reads or writes the plans table directly',async()=>{
+ await as(null,'anon');
+ await assert.rejects(()=>record('active',{secret:'wrong-secret-of-the-right-length-0123456789'}),/Not allowed/);
+ await assert.rejects(()=>record('active',{secret:'short'}),/Not allowed/);
+ await assert.rejects(()=>record('active',{secret:null}),/Not allowed/);
+ await denied('select * from public.organization_subscriptions');
+ await as(billOwner);
+ await denied('select * from public.organization_subscriptions');
+ await denied(`insert into public.organization_subscriptions(organization_id,stripe_customer_id,stripe_subscription_id,status,event_created) values('${billOrg}','cus_Forged','sub_Forged','active',now())`);
+ await denied('select * from private.billing_policy');
+ await as(null,'anon');await assert.rejects(()=>record('active',{subscription:'not-a-stripe-id'}));
+ await assert.rejects(()=>db.query('select public.billing_record_subscription($1,$2,$3,$4,$5,null,false,now())',[billingSecret,id(9998),'cus_Paying1','sub_Paying1','active']),/Unknown organisation/);
+});
+await check('after the start date, without a plan: publishing is refused and visitors and the QR code see "unavailable"',async()=>{
+ await db.exec('reset role');await db.exec("update private.billing_policy set required_from=now()-interval '1 minute'");
+ await as(null,'anon');assert.equal(await paidGuide(),'unavailable');assert.equal(await paidQr(),'unavailable');
+ assert.equal((await db.query('select count(*)::int n from public.guides where organization_id=$1',[billOrg])).rows[0].n,0,'not through the table either');
+ assert.equal((await db.query('select count(*)::int n from public.qr_redirects where organization_id=$1',[billOrg])).rows[0].n,0);
+ await as(billOwner);
+ await assert.rejects(()=>db.query('update public.places set published_revision=2 where id=$1',[billPlace]),error=>error.code==='P0402');
+ assert.equal((await db.query('select count(*)::int n from public.guides where organization_id=$1',[billOrg])).rows[0].n,1,'the organisation still reads its own guide');
+ const status=await billing();assert.equal(status.required,true);assert.equal(status.allowed,false);
+});
+await check('a paid plan brings the guide back at the same address; an older event changes nothing',async()=>{
+ await as(null,'anon');
+ assert.equal(await record('active',{periodEnd:new Date(Date.now()+30*86400000).toISOString()}),'recorded');
+ assert.equal(await paidGuide(),'published');assert.equal(await paidQr(),'published');
+ assert.equal(await record('past_due',{created:ago(1)}),'stale');
+ await as(billOwner);const status=await billing();assert.equal(status.status,'active');assert.equal(status.allowed,true);assert.equal(status.graceUntil,null);
+ await db.query('update public.places set published_revision=2 where id=$1',[billPlace]);
+});
+await check('a failed payment keeps the guides online for 30 days, then hides them; paying again brings them back',async()=>{
+ await as(null,'anon');assert.equal(await record('past_due'),'recorded');assert.equal(await paidGuide(),'published');
+ await as(billOwner);const status=await billing();assert.equal(status.allowed,true);
+ const days=(new Date(status.graceUntil)-Date.now())/86400000;assert.ok(days>29.9 && days<=30,`grace ends in 30 days, not ${days}`);
+ await as(null,'anon');assert.equal(await record('unpaid'),'recorded');
+ await as(billOwner);assert.equal((await billing()).graceUntil,status.graceUntil,'the grace keeps its start');
+ await db.exec('reset role');await db.query("update public.organization_subscriptions set lapsed_at=now()-interval '31 days' where organization_id=$1",[billOrg]);
+ await as(null,'anon');assert.equal(await paidGuide(),'unavailable');
+ assert.equal(await record('active'),'recorded');assert.equal(await paidGuide(),'published');
+ await as(billOwner);assert.equal((await billing()).graceUntil,null);
+});
+await check('a second subscription that ends does not end the paid one; a plan that was never paid gets no grace',async()=>{
+ await as(null,'anon');assert.equal(await record('incomplete_expired',{subscription:'sub_Paying2'}),'ignored');
+ await as(billOwner);assert.equal((await billing()).status,'active');
+ await db.exec('reset role');await db.query('delete from public.organization_subscriptions where organization_id=$1',[billOrg]);
+ await as(null,'anon');assert.equal(await record('incomplete'),'recorded');assert.equal(await paidGuide(),'unavailable');
+ assert.equal(await record('canceled',{cancel:true}),'recorded');assert.equal(await paidGuide(),'unavailable');
+});
+await check('the plan is shown to owners and admins only, and the Stripe customer to owners only',async()=>{
+ await as(billOwner);assert.equal((await billing()).customer,'cus_Paying1');
+ await as(billAdmin);const status=await billing();assert.equal(status.customer,null);assert.equal(status.status,'canceled');
+ await as(outsider);await assert.rejects(()=>billing(),/Owner or admin required/);
+ await as(null,'anon');await denied(`select public.billing_status('${billOrg}')`);
+});
+await db.exec('reset role');await db.exec('update private.billing_policy set required_from=null');
 
 // The test fixture fakes the REST layer, so it can't tell when the app asks PostgREST to embed a table that has no direct link to the one
 // being read (it fails at run time, and the whole dashboard shows its error page). Every table embedded in the dashboard's place query

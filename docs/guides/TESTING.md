@@ -29,6 +29,7 @@ npm run typecheck && npm run lint && npm run test:unit
 | A new table or column that holds personal data | `npm run test:db` fails until it is written in `docs/guides/PERSONAL-DATA.md` |
 | Anything that shows organisation-typed text (guide, demo, preview) | `tests/hostile-text.spec.ts` |
 | `supabase/config.toml`, `supabase/templates/` | `npm run test:unit` (`auth-config`, `email-template`) |
+| `billing`, `stripe-server`, `api/stripe/webhook`, `workspace/billing`, the payments migration | `npm run test:db` + `npm run test:unit` (`billing.test.ts`) + `npm run test:workspace` (Checkout, webhook, grace, publish needs a plan); by hand: `PAYMENTS.md` section 3 |
 | `verification.ts`, the registration form | `npm run test:unit` (`verification.test.ts`) + `npm run test:workspace` |
 | Design tokens or palette in `globals.css` | **everything** — the axe WCAG contrast sweeps are spread across all three spec files |
 

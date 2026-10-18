@@ -17,6 +17,8 @@ administrators can open, with two-factor.
    *Problem reports* page.
 5. **A hidden organisation** has its own 30 days. When it is due, **Erase organisation** deletes its guides, steps and photos. Its
    places keep their addresses and QR codes, which keep saying the guide isn't available.
+   **If it pays for a plan, cancel its subscription in Stripe first** (`docs/guides/PAYMENTS.md`, section 6): erasing doesn't stop Stripe
+   charging.
 
 Nothing runs by itself: an erase happens only when an administrator presses the button. Check the page once a week.
 

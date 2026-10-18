@@ -2,15 +2,15 @@
 import Link from 'next/link';
 import { usePathname, useSearchParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
-import { LayoutDashboard, LifeBuoy, LogOut, PanelLeftClose, PanelLeftOpen, SlidersHorizontal } from 'lucide-react';
+import { CreditCard, LayoutDashboard, LifeBuoy, LogOut, PanelLeftClose, PanelLeftOpen, SlidersHorizontal } from 'lucide-react';
 import type { Locale } from '@/lib/i18n';
 import { ThemeToggle } from './theme-toggle';
 import { LanguageMenu } from './language-menu';
 import { Brand } from './site-header';
 import { ReadingButton } from './reading-settings';
 
-export type SidebarMembership = { organisation: string; name: string; roleLabel: string };
-export type SidebarCopy = { dashboard: string; signOut: string; sidebarLabel: string; collapse: string; expand: string; reading: string; report?: string };
+export type SidebarMembership = { organisation: string; name: string; roleLabel: string; owner?: boolean };
+export type SidebarCopy = { dashboard: string; signOut: string; sidebarLabel: string; collapse: string; expand: string; reading: string; report?: string; billing?: string };
 
 /** Remembered in this browser only; a convenience, so a missing or blocked storage simply means "open". */
 const collapsedKey = 'neruma:sidebar-collapsed';
@@ -34,6 +34,9 @@ export function OrgSidebar({ locale, memberships, copy, signOutAction, base = 'w
   const dashboard = `${home}${memberships.length > 1 ? `?org=${current.organisation}` : ''}`;
   const reportPath = `${home}/report`;
   const reportHref = `${reportPath}${memberships.length > 1 ? `?org=${current.organisation}` : ''}`;
+  // Plan & billing is for owners: it shows only for an organisation the person owns.
+  const billingPath = `${home}/billing`;
+  const billingHref = `${billingPath}${memberships.length > 1 ? `?org=${current.organisation}` : ''}`;
   const [collapsed, setCollapsed] = useState(false);
   useEffect(() => {
     try {
@@ -66,7 +69,7 @@ export function OrgSidebar({ locale, memberships, copy, signOutAction, base = 'w
         <p className="app-org-role">{current.roleLabel}</p>
       </div>
       <nav className="app-nav" aria-label={copy.sidebarLabel}>
-        <Link href={dashboard} aria-current={path === home ? 'page' : undefined} data-active={path.startsWith(home) && path !== reportPath} data-tip={copy.dashboard}>
+        <Link href={dashboard} aria-current={path === home ? 'page' : undefined} data-active={path.startsWith(home) && path !== reportPath && path !== billingPath} data-tip={copy.dashboard}>
           <LayoutDashboard size={16} aria-hidden="true" />
           <span className="app-label">{copy.dashboard}</span>
         </Link>
@@ -74,6 +77,12 @@ export function OrgSidebar({ locale, memberships, copy, signOutAction, base = 'w
           <Link href={reportHref} aria-current={path === reportPath ? 'page' : undefined} data-active={path === reportPath} data-tip={copy.report}>
             <LifeBuoy size={16} aria-hidden="true" />
             <span className="app-label">{copy.report}</span>
+          </Link>
+        )}
+        {copy.billing && current.owner && (
+          <Link href={billingHref} aria-current={path === billingPath ? 'page' : undefined} data-active={path === billingPath} data-tip={copy.billing}>
+            <CreditCard size={16} aria-hidden="true" />
+            <span className="app-label">{copy.billing}</span>
           </Link>
         )}
       </nav>

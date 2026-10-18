@@ -10,7 +10,7 @@ import { PHOTO_BUCKET } from './workspace';
  * session, and only the functions that return published data (`published_guide`, `published_places`, `resolve_qr`).
  * When the database isn't configured, or answers badly, nothing is published as far as a visitor can tell.
  */
-function publicClient() {
+export function publicClient() {
   if (!authConfigured()) return null;
   return createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!, {
     auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },
