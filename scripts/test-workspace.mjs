@@ -954,6 +954,85 @@ try {
     for(let i=0;i<view.getUint16(end+10,true);i++){const size=view.getUint32(at+20,true);const nameLength=view.getUint16(at+28,true);const local=view.getUint32(at+42,true);
       const name=Buffer.from(bytes.slice(at+46,at+46+nameLength)).toString();const start=local+30+view.getUint16(local+26,true);files[name]=Buffer.from(bytes.slice(start,start+size));at+=46+nameLength;}
     return files;};
+  // Password reset (docs/briefs/2026-10-18-password-reset.md): the fixture's Auth service issues one-time recovery tokens like Supabase's.
+  const axeClean=async(target,label)=>{const result=await new AxeBuilder({page:target}).withTags(['wcag2a','wcag2aa','wcag21a','wcag21aa','wcag22aa']).analyze();assert.deepEqual(result.violations.map(v=>v.id),[],label);};
+  const resetLink=async(email,locale='en')=>{const {token_hash:token}=await fixture(`last-recovery?email=${email}`);assert.ok(token,`a recovery token for ${email}`);return `${base}/${locale}/login/reset/continue?token_hash=${token}`;};
+  await check('a forgotten password is reset through an emailed link: the answer never says who has an account, the link is used by its button, and the old password stops working',async()=>{
+    const {context,view}=await newContext();
+    await view.goto(`${base}/en/login`);
+    await view.getByRole('link',{name:'Forgot your password?',exact:true}).click();
+    await expect(view).toHaveURL(/\/en\/login\/reset$/);
+    await expect(view.getByRole('heading',{name:'Reset your password',level:1})).toBeVisible();
+    await axeClean(view,'the request page');
+    const ask=async email=>{
+      await view.goto(`${base}/en/login/reset`);
+      await view.getByLabel('Email address',{exact:true}).fill(email);
+      await view.getByRole('button',{name:'Send the link',exact:true}).click();
+      const note=view.getByRole('status').filter({hasText:'If there is an account for that address'});
+      await expect(note).toBeVisible();return note.textContent();
+    };
+    const known=await ask('owner4@example.test');const unknown=await ask('nobody@example.test');
+    assert.equal(known,unknown,'the same answer for an address with an account and one without');
+    assert.equal((await fixture('last-recovery?email=nobody@example.test')).token_hash,null,'nothing is sent to an unknown address');
+    await view.goto(`${base}/en/login/reset`);await view.getByLabel('Email address',{exact:true}).fill('limited@example.test');
+    await view.getByRole('button',{name:'Send the link',exact:true}).click();await expect(view.getByRole('alert').filter({hasText:'Too many requests.'})).toBeVisible();
+    // Opening the link doesn't use it up (a mail program may open it to check it): only the button does.
+    const link=await resetLink('owner4@example.test');
+    assert.equal((await context.request.get(link)).status(),200);assert.equal((await context.request.get(link)).status(),200);
+    for(const locale of ['en','ro','de']) {await view.goto(link.replace('/en/',`/${locale}/`));await axeClean(view,`the link page in ${locale}`);}
+    await view.goto(link);
+    await expect(view.getByRole('heading',{name:'Choose a new password',level:1})).toBeVisible();
+    // Without a reset link the new-password page isn't there: a signed-out visit goes to sign-in.
+    await view.goto(`${base}/en/account/password`);await expect(view).toHaveURL(/\/en\/login$/);
+    await view.goto(link);await view.getByRole('button',{name:'Continue',exact:true}).click();
+    await expect(view).toHaveURL(/\/en\/account\/password$/);
+    await expect(view.getByRole('heading',{name:'Choose a new password',level:1})).toBeVisible();
+    await axeClean(view,'the new-password page');
+    // The server checks what the form checks.
+    await view.locator('form').first().evaluate(form=>{form.noValidate=true;});
+    const submit=async(first,second)=>{await view.getByLabel('New password',{exact:true}).fill(first);await view.getByLabel('Repeat the new password',{exact:true}).fill(second);await view.getByRole('button',{name:'Save new password',exact:true}).click();};
+    await submit('short','short');await expect(view.getByRole('alert').filter({hasText:'The password needs at least 12 characters.'})).toBeVisible();
+    await submit('Reset-passphrase-4821','Reset-passphrase-4822');await expect(view.getByRole('alert').filter({hasText:'The two passwords are not the same.'})).toBeVisible();
+    await submit('Fixture-only-passphrase-123','Fixture-only-passphrase-123');await expect(view.getByRole('alert').filter({hasText:'Choose a password you did not use before'})).toBeVisible();
+    await submit('Reset-passphrase-4821','Reset-passphrase-4821');
+    await expect(view).toHaveURL(/\/en\/login\?password=changed$/);
+    await expect(view.getByRole('status').filter({hasText:'Your password was changed. Sign in with the new password.'})).toBeVisible();
+    // The old password no longer works, the new one does, and the used link is refused.
+    await signInWithPasswordExpectingRefusal(view,4);
+    await view.goto(`${base}/en/login`);await view.getByLabel('Work email',{exact:true}).fill('owner4@example.test');
+    await view.getByLabel('Password',{exact:true}).fill('Reset-passphrase-4821');await view.getByRole('button',{name:'Sign in',exact:true}).click();
+    await expect(view).toHaveURL(/\/en\/account$/);
+    // Signed in normally, the new-password page is not available (it needs the reset link's cookie): the account page is.
+    await view.goto(`${base}/en/account/password`);await expect(view).toHaveURL(/\/en\/account$/);await expect(view.getByRole('heading',{name:'Choose a new password'})).toHaveCount(0);
+    await view.goto(link);await view.getByRole('button',{name:'Continue',exact:true}).click();
+    await expect(view).toHaveURL(/\/en\/login\/reset\?link=expired$/);
+    await expect(view.getByRole('alert').filter({hasText:'That link has expired or was already used.'})).toBeVisible();
+    await view.goto(`${base}/en/login/reset/continue?token_hash=../../etc/passwd`);await expect(view.getByRole('heading',{name:'Choose a new password'})).toHaveCount(0);
+    await fixture('reset-passwords',{});await context.close();
+  });
+  await check('a reset needs the two-factor code for an account that has it, and the reset pages read in Romanian and German',async()=>{
+    const {context,view}=await newContext();
+    const link=await (async()=>{await view.goto(`${base}/en/login/reset`);await view.getByLabel('Email address',{exact:true}).fill('owner3@example.test');await view.getByRole('button',{name:'Send the link',exact:true}).click();await expect(view.getByRole('status')).toBeVisible();return resetLink('owner3@example.test');})();
+    await view.goto(link);await view.getByRole('button',{name:'Continue',exact:true}).click();
+    await expect(view).toHaveURL(/\/en\/account\/password$/);
+    await expect(view.getByText('This account uses two-factor sign-in.',{exact:false})).toBeVisible();
+    await axeClean(view,'the new-password page with a code field');
+    await view.locator('form').first().evaluate(form=>{form.noValidate=true;});
+    const submit=async(code)=>{await view.getByLabel('6-digit code from the app',{exact:true}).fill(code);await view.getByLabel('New password',{exact:true}).fill('Admin-reset-passphrase-77');await view.getByLabel('Repeat the new password',{exact:true}).fill('Admin-reset-passphrase-77');await view.getByRole('button',{name:'Save new password',exact:true}).click();};
+    await submit('');await expect(view.getByRole('alert').filter({hasText:'That code is not right.'})).toBeVisible();
+    await submit('000000');await expect(view.getByRole('alert').filter({hasText:'That code is not right.'})).toBeVisible();
+    await submit(totp(authenticators[3]));
+    await expect(view).toHaveURL(/\/en\/login\?password=changed$/);
+    await fixture('reset-passwords',{});
+    // The other languages: the pages read, and pass the checks, in Romanian and German.
+    for(const [locale,forgot,title,sent] of [['ro','Ai uitat parola?','Resetează parola','Dacă există un cont pentru această adresă'],['de','Passwort vergessen?','Passwort zurücksetzen','Falls es für diese Adresse ein Konto gibt']]) {
+      await view.goto(`${base}/${locale}/login`);await view.getByRole('link',{name:forgot,exact:true}).click();
+      await expect(view.getByRole('heading',{name:title,level:1})).toBeVisible();await axeClean(view,`the request page in ${locale}`);
+      await view.getByRole('textbox').fill('nobody@example.test');await view.locator('form button[type=submit]').click();
+      await expect(view.getByRole('status').filter({hasText:sent})).toBeVisible();
+    }
+    await context.close();
+  });
   await check('a person deletes their own account: the date is named first, a wrong password changes nothing, then it is locked and their data is ready',async()=>{
     const {context,view}=await newContext();await login(view,1);
     await view.goto(`${base}/en/account`);await expect(view.getByRole('heading',{name:'Delete my account',level:2})).toBeVisible();

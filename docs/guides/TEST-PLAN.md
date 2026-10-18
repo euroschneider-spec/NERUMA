@@ -190,6 +190,20 @@ Waiting for "Delete my account and export my data" (TECH-TASKS §13 step 3). Reh
   admin sees no *Plan & billing*, a failed renewal with a test clock shows the 30 days, and (on a dev database only) switching payments
   on hides an unpaid organisation's guide until it pays. In Romanian and German too.
 
+### A12. Password reset on the real site — 15 minutes
+
+The machines test this against a fake Supabase (`scripts/workspace-fixture.mjs`); only the real one proves the email link, the template variables and the two-factor rule.
+
+- [ ] Paste the two templates from `supabase/templates/auth-email-settings.example.json` into Supabase (*Authentication → Emails → Templates*: **Confirm sign up** and **Reset password**, with the
+  subjects in the file) and check *Authentication → URL Configuration*: Site URL `https://neruma.lignorae.com`.
+- [ ] On the sign-in page click *Forgot your password?*, enter your own account's address: the same message appears as for an unknown address. The email arrives from `NERUMA <noreply@mail.lignorae.com>`, in your language, text and links only,
+  with the link also written out and "Questions? Write to support@lignorae.com."
+- [ ] Open the link: a page with one button. Press it: *Choose a new password*. Choose one of 12 or more characters: you land on sign-in with "Your password was changed", the old password is refused and the new one works.
+- [ ] Open the same link again and press the button: "That link has expired or was already used".
+- [ ] With an account that has two-factor: the page asks for the code first; a wrong code is refused; the right code saves.
+- [ ] Open the link on a **different device** than the one that asked (the phone): it works.
+- [ ] Look at the email on a phone in dark mode, and read it with a screen reader if you can.
+
 ---
 
 ## Part B: what is already tested by machines

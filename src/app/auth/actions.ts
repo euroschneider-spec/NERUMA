@@ -12,13 +12,13 @@ import { uuidPattern } from '@/lib/workspace';
 import { getEvidenceCopy } from '@/lib/mandate-evidence';
 import { evidenceReady, verificationReady } from '@/lib/verification-server';
 import { landingPath } from '@/lib/roles';
+import { validEmail } from '@/lib/password-reset';
 import { getViewer } from '@/lib/viewer-server';
 import { twoFactorStep } from '@/lib/two-factor';
 import { getTwoFactorStatus, trustRememberedDevice, twoFactorPath } from '@/lib/two-factor-server';
 
 export type AuthState = { message: string; confirmation?:boolean };
 const text = (form: FormData, key: string) => String(form.get(key) || '').trim();
-const validEmail = (email: string) => email.length <= 254 && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 
 // Where confirmation links point. Supabase's redirect allow-list still has to accept the result.
 async function confirmationCallback(locale: string): Promise<string | null> {

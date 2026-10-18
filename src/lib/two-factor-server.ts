@@ -31,6 +31,17 @@ export async function requireSecondFactor(supabase: SupabaseClient, locale: Loca
   return status;
 }
 
+const wrongCode = (code: string | undefined) => code === 'mfa_verification_failed' || code === 'mfa_challenge_expired';
+
+/** The code from the authenticator app, checked for this session (which then counts as having passed). null: it was right. */
+export async function verifyTotp(supabase: SupabaseClient, code: string): Promise<'wrong' | 'error' | null> {
+  const factors = await supabase.auth.mfa.listFactors();
+  const factor = factors.data?.totp[0];
+  if (factors.error || !factor) return 'error';
+  const { error } = await supabase.auth.mfa.challengeAndVerify({ factorId: factor.id, code });
+  return error ? (wrongCode(error.code) ? 'wrong' : 'error') : null;
+}
+
 /** The account's backup codes. Anything but a clear answer reads as 'off', so the app shows no backup-code controls. */
 export async function getBackupCodes(supabase: SupabaseClient): Promise<BackupCodes> {
   try {

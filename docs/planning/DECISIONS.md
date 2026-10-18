@@ -230,6 +230,10 @@ email may tell us or anyone else that it was opened (the same promise as the sit
 server; images are often blocked anyway; and text works for screen readers and every mail program. Resend's click and open tracking are switched off. Which emails exist:
 `TECH-TASKS.md` §4. Not chosen: one hosted PNG of the logo (it would show when an email is opened).
 
+### The support address
+Owner, 2026-10-18. People write to **`support@lignorae.com`** (the company domain). Emails come from `noreply@mail.lignorae.com` and say in their text where to write,
+because Supabase's emails can't carry a reply-to. The mailbox itself (a forwarding address or a real mailbox) is still to be set up (TECH-TASKS §4).
+
 ## Not yet discussed
 
 - `DESIGN-TASKS.md` sections 5, 6 (other items) and 7.

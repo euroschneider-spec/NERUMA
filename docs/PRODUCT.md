@@ -98,6 +98,11 @@ Languages everywhere: **English, Romanian, German.** Root `/` opens English; an 
   and a new set (asks first) on the account page. Hidden if the Supabase project has them switched off.
 - **Remember this device for 30 days** (organisation owners and admins, never platform administrators): one browser skips the code;
   the account page lists remembered devices by date only and can forget them. A new password or an administrator's reset forgets all.
+- **Forgot your password** (sign-in page, in every language): enter the email address; the answer is the same whether or not an account exists. An email (text and links
+  only, in the language chosen at registration, English if unknown; it says to write to `support@lignorae.com`) carries a link, which opens a page with one button, so a
+  mail program that opens links to check them can't use it up. Then the new password, twice (12 to 128 characters); an account with two-factor gives its code first. Saving
+  signs the person out everywhere and forgets their remembered devices; sign-in says the password was changed. The link works once, for one hour. There is no way yet to
+  change a password from the account page while signed in.
 - **Lost phone**: write to NERUMA from the account's email; an administrator checks who they are and resets two-factor.
 - The rule is enforced by the database: a session that didn't pass the second factor can't read or change organisation data.
 - **Delete my account** (account page): confirmed with the password and the two-factor code, after reading the exact date. The

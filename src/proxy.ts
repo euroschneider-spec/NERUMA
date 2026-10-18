@@ -28,4 +28,6 @@ export const config = { matcher: [
   '/en/admin/:path*', '/ro/admin/:path*', '/de/admin/:path*',
   '/en/login', '/ro/login', '/de/login', '/en/register', '/ro/register', '/de/register',
   '/en/login/verify', '/ro/login/verify', '/de/login/verify',
+  '/en/login/reset', '/ro/login/reset', '/de/login/reset',
+  '/en/login/reset/continue', '/ro/login/reset/continue', '/de/login/reset/continue',
 ] };

@@ -33,6 +33,7 @@ describe('everything stored on the device is on the privacy page', () => {
   it('cookies are set only by the files that are disclosed', () => {
     expect(using(/document\.cookie/)).toEqual([]);
     expect(using(/cookies\(\)\)\.set|cookieStore\.set|\bstore\.set\(|\bcookies\.set\(/)).toEqual([
+      'src/lib/password-reset-server.ts', // "neruma_reset"
       'src/lib/supabase/server.ts', // sign-in cookies (chunked, "sb-…-auth-token")
       'src/lib/two-factor-server.ts', // "neruma_device"
       'src/proxy.ts', // refreshes the same sign-in cookies
@@ -48,14 +49,14 @@ describe('everything stored on the device is on the privacy page', () => {
   it.each(locales)('the %s privacy page names every storage key and cookie', (locale) => {
     const page = getContent(locale, 'privacy')!;
     const text = JSON.stringify(page);
-    for (const name of ['neruma_device', 'vianorae:reading:v1', 'neruma:sidebar-collapsed', 'neruma:demo:v1:', 'vianorae-demo-media-v1', 'sb-', '-auth-token', '400', '30']) {
+    for (const name of ['neruma_device', 'neruma_reset', 'vianorae:reading:v1', 'neruma:sidebar-collapsed', 'neruma:demo:v1:', 'vianorae-demo-media-v1', 'sb-', '-auth-token', '400', '30']) {
       expect(text, `${locale}: ${name}`).toContain(name);
     }
   });
 
   it('the storage names in the privacy page match the code', () => {
     const all = files.map(source).join('\n');
-    for (const name of ['vianorae:reading:v1', 'neruma:sidebar-collapsed', 'neruma:demo:v1:', 'vianorae-demo-media-v1', "'neruma_device'"]) {
+    for (const name of ['vianorae:reading:v1', 'neruma:sidebar-collapsed', 'neruma:demo:v1:', 'vianorae-demo-media-v1', "'neruma_device'", "'neruma_reset'"]) {
       expect(all, name).toContain(name);
     }
     expect(source('src/lib/two-factor-server.ts')).toContain('thirtyDays = 30 * 24 * 60 * 60');
