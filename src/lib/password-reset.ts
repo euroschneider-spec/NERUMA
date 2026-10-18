@@ -53,6 +53,11 @@ const en = {
   changed: 'Your password was changed. Sign in with the new password.',
   rate: 'Too many requests. Wait a few minutes, then try again.',
   unavailable: 'Sign-in is not active yet.',
+  changeTitle: 'Change your password',
+  changeIntro: 'Enter your current password, then choose a new one. You stay signed in here; every other device is signed out.',
+  currentPassword: 'Current password',
+  wrongPassword: 'That is not your current password. The password was not changed.',
+  changedHere: 'Your password was changed. Every other device was signed out.',
 };
 type ResetCopy = { [K in keyof typeof en]: string };
 const ro: ResetCopy = {
@@ -85,6 +90,11 @@ const ro: ResetCopy = {
   changed: 'Parola ta a fost schimbată. Autentifică-te cu parola nouă.',
   rate: 'Prea multe cereri. Așteaptă câteva minute, apoi încearcă din nou.',
   unavailable: 'Autentificarea nu este încă activă.',
+  changeTitle: 'Schimbă parola',
+  changeIntro: 'Introdu parola curentă, apoi alege una nouă. Rămâi autentificat aici; toate celelalte dispozitive sunt deconectate.',
+  currentPassword: 'Parola curentă',
+  wrongPassword: 'Aceasta nu este parola ta curentă. Parola nu a fost schimbată.',
+  changedHere: 'Parola ta a fost schimbată. Toate celelalte dispozitive au fost deconectate.',
 };
 const de: ResetCopy = {
   forgot: 'Passwort vergessen?',
@@ -116,5 +126,10 @@ const de: ResetCopy = {
   changed: 'Ihr Passwort wurde geändert. Melden Sie sich mit dem neuen Passwort an.',
   rate: 'Zu viele Anfragen. Warten Sie einige Minuten und versuchen Sie es dann erneut.',
   unavailable: 'Die Anmeldung ist noch nicht aktiv.',
+  changeTitle: 'Passwort ändern',
+  changeIntro: 'Geben Sie Ihr aktuelles Passwort ein und wählen Sie dann ein neues. Sie bleiben hier angemeldet; alle anderen Geräte werden abgemeldet.',
+  currentPassword: 'Aktuelles Passwort',
+  wrongPassword: 'Das ist nicht Ihr aktuelles Passwort. Das Passwort wurde nicht geändert.',
+  changedHere: 'Ihr Passwort wurde geändert. Alle anderen Geräte wurden abgemeldet.',
 };
 export const getResetCopy = (locale: Locale): ResetCopy => ({ en, ro, de })[locale];

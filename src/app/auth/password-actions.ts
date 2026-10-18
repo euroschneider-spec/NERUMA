@@ -2,8 +2,8 @@
 
 import { redirect } from 'next/navigation';
 import { isLocale } from '@/lib/i18n';
-import { getResetCopy, passwordProblem, tokenHashPattern, validEmail } from '@/lib/password-reset';
-import { clearResetCookie, hasResetCookie, setResetCookie } from '@/lib/password-reset-server';
+import { getResetCopy, MAX_PASSWORD, passwordProblem, tokenHashPattern, validEmail } from '@/lib/password-reset';
+import { clearResetCookie, currentPasswordIsRight, hasResetCookie, setResetCookie } from '@/lib/password-reset-server';
 import { authConfigured } from '@/lib/supabase/config';
 import { confirmedUser, createClient } from '@/lib/supabase/server';
 import { secondFactorCode } from '@/lib/two-factor';
@@ -85,4 +85,46 @@ export async function setNewPassword(locale: string, _previous: ResetState, form
   }
   await clearResetCookie();
   redirect(`/${locale}/login?password=changed`);
+}
+
+/**
+ * A signed-in person changes their password from the account page (brief docs/briefs/2026-10-18-change-password.md). The current password is checked
+ * without touching the person's session, and an account with two-factor gives its code too. The person stays
+ * signed in here; every other device is signed out and remembered devices are forgotten.
+ */
+export async function changePassword(locale: string, _previous: ResetState, form: FormData): Promise<ResetState> {
+  if (!isLocale(locale)) return { message: 'Invalid language.' };
+  const t = getResetCopy(locale);
+  if (!authConfigured()) return { message: t.unavailable };
+  const current = String(form.get('current') || '');
+  const password = String(form.get('password') || '');
+  const problem = passwordProblem(password, String(form.get('repeat') || ''));
+  if (problem) return { message: t[problem] };
+  if (!current || current.length > MAX_PASSWORD) return { message: t.wrongPassword };
+  try {
+    const supabase = await createClient();
+    const user = await confirmedUser(supabase);
+    if (!user?.email) return { message: t.error };
+    const status = await getTwoFactorStatus(supabase);
+    if (!status) return { message: t.error };
+    if (!await currentPasswordIsRight(user.email, current)) return { message: t.wrongPassword };
+    if (status.enrolled) {
+      // Supabase also refuses the change without a second-factor session; the code is asked for again so a left-open window can't change it.
+      const code = secondFactorCode(String(form.get('code') || ''));
+      if (!code) return { message: t.wrongCode };
+      const failure = await verifyTotp(supabase, code);
+      if (failure) return { message: failure === 'wrong' ? t.wrongCode : t.error };
+    }
+    const { error } = await supabase.auth.updateUser({ password });
+    if (error) return { message: error.code === 'same_password' ? t.same : error.code === 'weak_password' ? t.short : t.error };
+    // From here the password is changed. What follows only tidies up.
+    try {
+      if (await rememberDeviceReady(supabase)) await supabase.rpc('forget_devices', {});
+      await forgetThisBrowser();
+      await supabase.auth.signOut({ scope: 'others' });
+    } catch { /* The new password works either way. */ }
+    return { message: t.changedHere, sent: true };
+  } catch {
+    return { message: t.error };
+  }
 }

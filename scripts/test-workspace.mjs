@@ -1033,6 +1033,42 @@ try {
     }
     await context.close();
   });
+  await check('a signed-in person changes their password on the account page: the current password is checked, they stay signed in, other devices are signed out, and an account with two-factor gives its code',async()=>{
+    const {context,view}=await newContext();const other=await newContext();
+    await login(view,4);await login(other.view,4);
+    await view.goto(`${base}/en/account`);
+    const box=view.getByRole('region',{name:'Change your password'});
+    await expect(box.getByRole('heading',{name:'Change your password',level:2})).toBeVisible();
+    await view.waitForLoadState('networkidle');await axeClean(view,'the account page with the change-password form');
+    await box.locator('form').evaluate(form=>{form.noValidate=true;});
+    const submit=async(current,first,second)=>{await box.getByLabel('Current password',{exact:true}).fill(current);await box.getByLabel('New password',{exact:true}).fill(first);await box.getByLabel('Repeat the new password',{exact:true}).fill(second);await box.getByRole('button',{name:'Save new password',exact:true}).click();};
+    await submit('Fixture-only-passphrase-123','short','short');await expect(box.getByRole('alert').filter({hasText:'The password needs at least 12 characters.'})).toBeVisible();
+    await submit('Fixture-only-passphrase-123','Changed-passphrase-5521','Changed-passphrase-5522');await expect(box.getByRole('alert').filter({hasText:'The two passwords are not the same.'})).toBeVisible();
+    await submit('not-my-password','Changed-passphrase-5521','Changed-passphrase-5521');await expect(box.getByRole('alert').filter({hasText:'That is not your current password.'})).toBeVisible();
+    await submit('Fixture-only-passphrase-123','Fixture-only-passphrase-123','Fixture-only-passphrase-123');await expect(box.getByRole('alert').filter({hasText:'Choose a password you did not use before'})).toBeVisible();
+    await submit('Fixture-only-passphrase-123','Changed-passphrase-5521','Changed-passphrase-5521');
+    await expect(box.getByRole('status').filter({hasText:'Your password was changed. Every other device was signed out.'})).toBeVisible();
+    // Still signed in here; the other device is signed out.
+    await view.goto(`${base}/en/account`);await expect(view).toHaveURL(/\/en\/account$/);
+    await other.view.goto(`${base}/en/account`);await expect(other.view).toHaveURL(/\/en\/login$/);
+    // The old password is refused and the new one works.
+    await view.context().clearCookies({name:/^sb-/});await signInWithPasswordExpectingRefusal(view,4);
+    await view.goto(`${base}/en/login`);await view.getByLabel('Work email',{exact:true}).fill('owner4@example.test');
+    await view.getByLabel('Password',{exact:true}).fill('Changed-passphrase-5521');await view.getByRole('button',{name:'Sign in',exact:true}).click();
+    await expect(view).toHaveURL(/\/en\/account$/);
+    await fixture('reset-passwords',{});await other.context.close();await context.close();
+    // Two-factor: the code is asked for, a missing or wrong one changes nothing.
+    const admin=await newContext();await login(admin.view,3);await admin.view.goto(`${base}/en/account`);
+    const adminBox=admin.view.getByRole('region',{name:'Change your password'});
+    await adminBox.locator('form').evaluate(form=>{form.noValidate=true;});
+    const adminSubmit=async code=>{await adminBox.getByLabel('Current password',{exact:true}).fill('Fixture-only-passphrase-123');await adminBox.getByLabel('6-digit code from the app',{exact:true}).fill(code);await adminBox.getByLabel('New password',{exact:true}).fill('Admin-changed-passphrase-88');await adminBox.getByLabel('Repeat the new password',{exact:true}).fill('Admin-changed-passphrase-88');await adminBox.getByRole('button',{name:'Save new password',exact:true}).click();};
+    await adminSubmit('');await expect(adminBox.getByRole('alert').filter({hasText:'That code is not right.'})).toBeVisible();
+    await adminSubmit('000000');await expect(adminBox.getByRole('alert').filter({hasText:'That code is not right.'})).toBeVisible();
+    await adminSubmit(totp(authenticators[3]));await expect(adminBox.getByRole('status').filter({hasText:'Your password was changed.'})).toBeVisible();
+    await fixture('reset-passwords',{});
+    for(const [locale,title] of [['ro','Schimbă parola'],['de','Passwort ändern']]) {await admin.view.goto(`${base}/${locale}/account`);await expect(admin.view.getByRole('heading',{name:title,level:2})).toBeVisible();await axeClean(admin.view,`the change-password form in ${locale}`);}
+    await admin.context.close();
+  });
   await check('a person deletes their own account: the date is named first, a wrong password changes nothing, then it is locked and their data is ready',async()=>{
     const {context,view}=await newContext();await login(view,1);
     await view.goto(`${base}/en/account`);await expect(view.getByRole('heading',{name:'Delete my account',level:2})).toBeVisible();

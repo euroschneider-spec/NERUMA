@@ -109,7 +109,7 @@ image, no tracking pixels, no rewritten links. A text header "Neruma" in the log
   example file in step.
 - [ ] Translate the email templates into RO and DE (the confirmation already has all three; every new one needs them).
 - [x] A password-reset flow in EN/RO/DE with its email (brief `2026-10-18-password-reset.md`). Built and tested against the fake Supabase; **try it on the real site** (`TEST-PLAN.md` A12).
-- [ ] Change the password from the account page while signed in (asks for the current one). Not built.
+- [x] Change the password from the account page while signed in (asks for the current one, and the code with two-factor). Built (brief `2026-10-18-change-password.md`); **try it on the real site** (`TEST-PLAN.md` A12).
 
 ### The emails we need
 

@@ -23,6 +23,7 @@ import { RememberedDevices } from '@/components/remembered-devices';
 import { twoFactorStep } from '@/lib/two-factor';
 import { TwoFactorSetup } from '@/components/two-factor-setup';
 import { BackupCodesPanel } from '@/components/backup-codes';
+import { ChangePasswordForm } from '@/components/password-reset-forms';
 
 export const dynamic = 'force-dynamic';
 export const metadata = { title: 'Organisation account', robots: { index: false, follow: false } };
@@ -76,6 +77,7 @@ export default async function Account({ params }: { params: Promise<{ locale: st
     {ownOrganizations.length ? <><ul>{ownOrganizations.map(org=><li key={org.id}>{org.name}</li>)}</ul>{workspaceConfigured() ? <><p className="notice">{getWorkspaceCopy(locale).boundary}</p><Link className="button" href={`/${locale}/workspace`}>{getWorkspaceCopy(locale).workspace}</Link></> : <p className="notice">{t.liveBoundary}</p>}</> : null}
     {!operatorOnly && (!application || ['needs_information','rejected'].includes(application.status)) && !ownOrganizations.length && <OrganisationForm key={application?.revision || 'new'} locale={locale} mode="onboard" enabled={documentsEnabled && !documentsResult?.error} initial={initial} initialDocuments={initialDocuments}/>}
     {await twoFactorReady(supabase) && <TwoFactorSetup locale={locale} enrolled={twoFactor.enrolled} required={false}>{backup.state!=='off' && <BackupCodesPanel locale={locale} backup={backup}/>}{devices && <RememberedDevices locale={locale} devices={devices}/>}</TwoFactorSetup>}
+    <ChangePasswordForm locale={locale} needsCode={twoFactor.enrolled}/>
     {await accountDeletionReady(supabase) && <section className="notice" aria-labelledby="delete-account"><h2 id="delete-account">{getDeletionCopy(locale).sectionTitle}</h2><p>{getDeletionCopy(locale).sectionIntro}</p><p><Link className="quiet-link" href={`/${locale}/account/delete`}>{getDeletionCopy(locale).sectionLink}</Link></p></section>}
     <p><Link className="quiet-link" href={`/${locale}/demo`}>{getCopy(locale).openWorkspace}</Link></p>
     <form action={signOut.bind(null,locale)}><button className="text-button" type="submit">{t.signOut}</button></form>
