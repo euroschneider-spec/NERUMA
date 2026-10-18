@@ -177,7 +177,8 @@ Languages everywhere: **English, Romanian, German.** Root `/` opens English; an 
 - **Suspending** an organisation removes its members' access and takes its guides and QR codes down at once.
 - **Problem reports**: open and closed lists, the sender's email, close a report.
 - **Account deletions** (`/admin/deletions`): every deletion in progress with its date; restore within 30 days; erase when due;
-  erase a hidden organisation when due; start a deletion for someone who wrote in and download their data to send it to them.
+  erase a hidden organisation when due (**not while a Stripe subscription still runs** for it or its last owner: the button is greyed out
+  and says why on hover until it is cancelled in Stripe); start a deletion for someone who wrote in and download their data to send it to them.
   Problem reports from a deleted sender are labelled and can be deleted by hand. Steps: `docs/guides/ACCOUNT-DELETION.md`.
 - **Two-factor** is always required, and "remember this device" is never offered to them.
 

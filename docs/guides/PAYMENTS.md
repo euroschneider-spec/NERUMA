@@ -156,8 +156,10 @@ Only after the email provider and the lawyer-checked terms and privacy text (TEC
   organisation's id in NERUMA.
 - **Refunds, invoices, changing the price**: in Stripe. A new price for new customers: add it to the product and put its id in
   `VIANORAE_STRIPE_PRICE_ID`; existing subscriptions keep theirs until you change them in Stripe.
-- **Erasing an organisation** (`docs/guides/ACCOUNT-DELETION.md`): **cancel its subscription in Stripe first**, or Stripe keeps charging.
-  NERUMA doesn't do this for you yet.
+- **Erasing an organisation or its last owner** (`docs/guides/ACCOUNT-DELETION.md`): **cancel its subscription in Stripe first**. NERUMA
+  can't cancel it for you, so the deletions page refuses to erase (no Erase button, and the database refuses too) until Stripe reports the
+  subscription as cancelled. A plan with a failed payment counts as still running. Stripe → *Billing → Subscriptions → the subscription →
+  Cancel subscription*, then reload the deletions page.
 - **A subscription made by hand in Stripe** must carry the metadata `organization_id` with the organisation's id, or NERUMA ignores it.
 - ***Plan & billing* isn't in the sidebar**: one of the four Vercel values is missing or mistyped, or the migration isn't installed.
 - **"Stripe couldn't be opened"**: the key or the price id is wrong, or Stripe Tax isn't set up (section 2, step 4). Stripe →
@@ -171,7 +173,8 @@ Only after the email provider and the lawyer-checked terms and privacy text (TEC
 
 - `npm run test:db`: only the secret records a plan; nobody reads or writes the plans table directly; without a plan (once switched
   on) publishing is refused and guides, QR codes and their rows are hidden; a failed payment leaves 30 days; an older event changes
-  nothing; a second subscription ending doesn't end the paid one; owners and admins see the plan, only owners the Stripe customer.
+  nothing; a second subscription ending doesn't end the paid one; owners and admins see the plan, only owners the Stripe customer; an
+  organisation, or its last owner, can't be erased while Stripe still runs their subscription, and can once it is cancelled.
 - `npm run test:unit` (`tests/unit/billing.test.ts`): Stripe's signature check (wrong secret, changed body, old messages), reading
   Stripe's events (old and new API versions), what is sent to Checkout, that the browser is only ever sent to Stripe's own pages, and
   every text in three languages.

@@ -814,6 +814,28 @@ await check('the plan is shown to owners and admins only, and the Stripe custome
  await as(outsider);await assert.rejects(()=>billing(),/Owner or admin required/);
  await as(null,'anon');await denied(`select public.billing_status('${billOrg}')`);
 });
+await check('nobody is erased while Stripe still charges them: not the organisation, not its last owner, until the subscription is cancelled',async()=>{
+ await as(null,'anon');assert.equal(await record('active'),'recorded');
+ await db.exec('reset role');
+ await db.query('select private.begin_account_deletion($1,null)',[billOwner]);
+ await db.query("update private.account_deletions set delete_after=now()-interval '1 minute' where user_id=$1",[billOwner]);
+ await db.query("update private.organisation_holds set delete_after=now()-interval '1 minute' where organization_id=$1",[billOrg]);
+ await as(platformAdmin);
+ const blocked=(await db.query('select public.erasure_blocked_by_billing() b')).rows[0].b;
+ assert.deepEqual(blocked,{users:[billOwner],organisations:[billOrg]});
+ await assert.rejects(()=>db.query('select public.erase_held_organisation($1)',[billOrg]),/Cancel the Stripe subscription first/);
+ await assert.rejects(()=>db.query('select public.erase_account($1)',[billOwner]),/Cancel the Stripe subscription first/);
+ await db.exec('reset role');assert.equal((await db.query('select count(*)::int n from auth.users where id=$1',[billOwner])).rows[0].n,1,'still there');
+ await as(platformAdmin);
+ await as(billAdmin);await assert.rejects(()=>db.query('select public.erasure_blocked_by_billing()'),/Platform administrator required/);
+ // Cancelled in Stripe (the webhook records it): both go through. A past_due plan is still a running subscription.
+ await as(null,'anon');assert.equal(await record('past_due'),'recorded');
+ await as(platformAdmin);assert.deepEqual((await db.query('select public.erasure_blocked_by_billing() b')).rows[0].b,{users:[billOwner],organisations:[billOrg]});
+ await as(null,'anon');assert.equal(await record('canceled'),'recorded');
+ await as(platformAdmin);assert.deepEqual((await db.query('select public.erasure_blocked_by_billing() b')).rows[0].b,{users:[],organisations:[]});
+ await db.query('select public.erase_account($1)',[billOwner]);
+ await db.query('select public.erase_held_organisation($1)',[billOrg]);
+});
 await db.exec('reset role');await db.exec('update private.billing_policy set required_from=null');
 
 // The test fixture fakes the REST layer, so it can't tell when the app asks PostgREST to embed a table that has no direct link to the one

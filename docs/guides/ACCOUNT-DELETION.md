@@ -18,7 +18,9 @@ administrators can open, with two-factor.
 5. **A hidden organisation** has its own 30 days. When it is due, **Erase organisation** deletes its guides, steps and photos. Its
    places keep their addresses and QR codes, which keep saying the guide isn't available.
    **If it pays for a plan, cancel its subscription in Stripe first** (`docs/guides/PAYMENTS.md`, section 6): erasing doesn't stop Stripe
-   charging.
+   charging. The deletions page enforces it: while a Stripe subscription still runs, the Erase button of the organisation, and of its last
+   owner, is inactive (greyed out), and says why when you hover over it or focus it, and the database refuses the erase too. Starting a deletion is allowed (it is undone by restoring, and gives
+   the 30 days to cancel). Cancelling in Stripe is picked up within a minute; reload the page.
 
 Nothing runs by itself: an erase happens only when an administrator presses the button. Check the page once a week.
 

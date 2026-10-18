@@ -175,8 +175,10 @@ until a start date is set. Decisions: `DECISIONS.md`, "Payments go through Strip
 - [ ] **Decide who sells** (which company, which country): it decides VAT registration and the invoice format.
 - [ ] Update the terms and privacy pages (Stripe as a processor) before taking any payment; then go live (`PAYMENTS.md` section 5)
       and set the start date (section 4), telling organisations at least 30 days before.
+- [x] Nobody is erased while Stripe still charges them: the deletions page and the database refuse to erase an organisation, or its last
+      owner, until the subscription is cancelled in Stripe (owner, 2026-10-18).
 - [ ] Later: invoice and bank transfer; German e-invoices (XRechnung or ZUGFeRD) if customers need them; cancel the Stripe subscription
-      automatically when an organisation is erased.
+      automatically when an organisation is erased (today a person does it in Stripe).
 
 ## 9. A consistent voice for read-aloud
 

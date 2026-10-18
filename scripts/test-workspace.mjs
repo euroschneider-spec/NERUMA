@@ -1021,6 +1021,21 @@ try {
     await outsider.context.close();
     await fetch('http://127.0.0.1:3012/__fixture/deletions-due',{method:'POST'});await view.reload();
     await expect(entry.getByText('Due: can be erased now',{exact:true})).toBeVisible();
+    // This organisation still pays through Stripe (the payment checks above): nothing is erased until the subscription is cancelled there.
+    await expect(entry.getByRole('button',{name:'Erase now',exact:true})).toHaveAttribute('aria-disabled','true');
+    await expect(entry.getByRole('button',{name:'Erase now',exact:true})).toHaveAccessibleDescription(/A Stripe subscription is still running/);
+    await entry.getByRole('button',{name:'Erase now',exact:true}).hover();
+    await expect(entry.getByRole('tooltip')).toBeVisible();
+    await expect(entry.getByRole('tooltip')).toContainText('Cancel it in Stripe first');
+    await view.mouse.move(0,0);
+    await expect(entry.getByRole('tooltip')).toBeHidden();
+    const stillPaying=view.getByRole('listitem').filter({has:view.getByRole('heading',{name:'Fixture museum 1',level:3})});
+    await stillPaying.getByRole('button',{name:'Erase organisation',exact:true}).focus();
+    await expect(stillPaying.getByRole('tooltip')).toBeVisible();
+    await expect(stillPaying.getByRole('button',{name:'Erase organisation',exact:true})).toHaveAttribute('aria-disabled','true');
+    assert.equal(await stripeEvent('canceled'),200);await view.reload();
+    await expect(entry.getByText('A Stripe subscription is still running',{exact:false})).toHaveCount(0);
+    await expect(entry.getByRole('button',{name:'Erase now',exact:true})).not.toHaveAttribute('aria-disabled','true');
     await entry.getByRole('button',{name:'Erase now',exact:true}).click();
     await view.getByRole('dialog',{name:'Erase this account for good?'}).getByRole('button',{name:'Erase now',exact:true}).click();
     await expect(view.getByText('No deletion in progress.',{exact:true})).toBeVisible();

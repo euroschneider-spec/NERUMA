@@ -150,6 +150,49 @@ end $$;
 revoke all on function public.billing_record_subscription(text,uuid,text,text,text,timestamptz,boolean,timestamptz) from public;
 grant execute on function public.billing_record_subscription(text,uuid,text,text,text,timestamptz,boolean,timestamptz) to anon,authenticated;
 
+-- Stripe keeps charging until the subscription is cancelled in Stripe, and NERUMA can't cancel it. So the irreversible steps of a deletion
+-- (docs/guides/ACCOUNT-DELETION.md) refuse while one runs: erasing an organisation, and erasing the last owner of one. Starting a deletion
+-- is not refused (it is undone by restoring within 30 days, and gives time to cancel).
+create function private.subscription_running(org uuid) returns boolean language sql stable security definer set search_path='' as $$
+ select exists(select 1 from public.organization_subscriptions s where s.organization_id=org and s.status not in ('canceled','incomplete_expired'));
+$$;
+revoke all on function private.subscription_running(uuid) from public;
+
+create function private.refuse_last_owner_while_paying() returns trigger language plpgsql security definer set search_path='' as $$
+begin
+ if old.role='owner' and private.subscription_running(old.organization_id)
+   and not exists(select 1 from public.organization_members m where m.organization_id=old.organization_id and m.role='owner' and m.user_id<>old.user_id) then
+  raise exception 'Cancel the Stripe subscription first' using errcode='P0403';
+ end if;
+ return old;
+end $$;
+revoke all on function private.refuse_last_owner_while_paying() from public;
+create trigger organization_members_paying before delete on public.organization_members for each row execute function private.refuse_last_owner_while_paying();
+
+create function private.refuse_erasing_paying_organisation() returns trigger language plpgsql security definer set search_path='' as $$
+begin
+ if new.erased_at is not null and old.erased_at is null and private.subscription_running(new.organization_id) then
+  raise exception 'Cancel the Stripe subscription first' using errcode='P0403';
+ end if;
+ return new;
+end $$;
+revoke all on function private.refuse_erasing_paying_organisation() from public;
+create trigger organisation_holds_paying before update on private.organisation_holds for each row execute function private.refuse_erasing_paying_organisation();
+
+-- For the deletions page: which erasures wait for a cancellation in Stripe.
+create function public.erasure_blocked_by_billing() returns jsonb language plpgsql stable security definer set search_path='' as $$
+begin
+ if not private.is_platform_admin() then raise exception 'Platform administrator required' using errcode='42501'; end if;
+ return jsonb_build_object(
+  'users',coalesce((select jsonb_agg(distinct m.user_id) from public.organization_members m
+   where m.role='owner' and private.subscription_running(m.organization_id)
+    and not exists(select 1 from public.organization_members o where o.organization_id=m.organization_id and o.role='owner' and o.user_id<>m.user_id)),'[]'::jsonb),
+  'organisations',coalesce((select jsonb_agg(h.organization_id) from private.organisation_holds h
+   where h.erased_at is null and private.subscription_running(h.organization_id)),'[]'::jsonb));
+end $$;
+revoke all on function public.erasure_blocked_by_billing() from public,anon;
+grant execute on function public.erasure_blocked_by_billing() to authenticated;
+
 create function public.payments_schema_version() returns integer language sql immutable security invoker set search_path='' as $$ select 1 $$;
 grant execute on function public.payments_schema_version() to anon,authenticated;
 notify pgrst,'reload schema';
