@@ -31,3 +31,22 @@ Automated speech tests use a simulated browser speech engine to verify orchestra
 References: WCAG 2.2 [1.2.1 Audio-only and Video-only](https://www.w3.org/WAI/WCAG22/Understanding/audio-only-and-video-only-prerecorded.html) and [1.2.2 Captions](https://www.w3.org/WAI/WCAG22/Understanding/captions-prerecorded.html). No captioning service or media pipeline is activated by this change.
 
 Automated tests cover EN/RO/DE dialog keyboard focus, Escape and return focus, axe WCAG A/AA rules, viewport resize at 320px with 200% text, complete guide content without media/images, saved-draft use and retained step position. User testing with deaf/hard-of-hearing people and manual assistive-technology review remain part of pilot readiness; the controls do not establish full WCAG conformance.
+
+## Forms: warnings for a field that needs filling or checking
+
+The rule for every form (brief `docs/briefs/2026-10-18-form-warnings.md`; WCAG 2.2 AA: 3.3.1 Error Identification, 3.3.2 Labels or Instructions,
+3.3.3 Error Suggestion, 4.1.3 Status Messages, 1.4.1 Use of Color). The browser's own pop-up is not used: it speaks the browser's language, shows one
+field at a time and is not reliably announced.
+
+- **When:** on Send. Nothing is checked while typing or when leaving a field, so a field you haven't finished shows nothing.
+- **Where the screen goes:** to the first field that needs attention, and it gets focus.
+- **What each such field shows:** a sentence under it, in the site's language, that says what to do ("Fill in “Organisation name”.", "Use at least 12
+  characters.", "Enter an email address like name@example.org."). The field is outlined and the sentence starts with a symbol, so colour is never the only sign.
+- **For a screen reader:** the field has `aria-invalid="true"` and the sentence is its description (`aria-describedby`), read after the label and the hint.
+- **When it goes:** as soon as that field is right. A field that is still wrong keeps its sentence while it is being fixed.
+- **Back and Forward:** no warning is left showing, and what was typed stays. A refusal from the server keeps what was typed too.
+- **Server checks stay.** The same rules are checked again on the server; this only makes the browser's side clear.
+
+How to build a form this way: `useFormWarnings` and `Field` / `CheckField` in `src/components/form-field.tsx`, the words in `src/lib/form-warnings.ts`
+(add a language there with the others). Used by registration and sign-in (`src/components/organisation-form.tsx`); other forms move over one by one.
+Tests: `tests/unit/form-warnings.test.ts` and the workspace check "registration and sign-in mark each field…".

@@ -177,7 +177,7 @@ on the request form are `required`.
   and a title and description per zone. Sensory levels may stay "not recorded". Alt text is required
   whenever there is a photo.
 - [ ] Error messages per field in EN/RO/DE, linked to the field (`aria-describedby`), not only a
-  message at the top.
+  message at the top. **Done for registration and sign-in** (brief `2026-10-18-form-warnings.md`, rule in `ACCESSIBILITY.md`); the password forms, the guide editor and the organisation request on the account page still use the browser's pop-up.
 
 ## 7. Password rules
 
