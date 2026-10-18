@@ -41,7 +41,7 @@ Languages everywhere: **English, Romanian, German.** Root `/` opens English; an 
 - The QR image is an SVG, downloadable.
 
 ### Reading settings (every page)
-- Text size (normal, large, larger), theme (follows the device, light, dark, high contrast), accent colour (blue, green),
+- Text size (normal, large, larger), theme (follows the device, including its request for more contrast; light, dark, high contrast), accent colour (blue, green),
   line width, typeface (default or Atkinson Hyperlegible), extra spacing, and on text pages full or summary length. Reset.
 - Remembered in the browser only, applied before the page appears (no flash).
 - The panel can be moved by dragging or with the keyboard, and closes with Escape.
@@ -76,6 +76,8 @@ Languages everywhere: **English, Romanian, German.** Root `/` opens English; an 
   country code, registry reference (optional).
 - **Representative**: name, role, and how their authority can be confirmed (20 to 2,000 characters).
 - **Account**: work email and password (12 to 128 characters).
+- **The responsibility text** (why accurate information matters, what the organisation answers for) sits directly above
+  the statements; *For organisations* links to it.
 - **Two statements**, both required: "I am authorised to represent this organisation" and the responsibility statement for the
   content. Their wording, language and time are recorded.
 - **A field that needs filling or checking is marked** (registration, sign-in, the organisation request, the password forms and the guide editor, in every language): on Send the screen jumps to the first such field, and each one says in words what to do ("Fill in “Organisation name”.", "Use at least 12 characters."). The warning goes as soon as the field is right; nothing is checked while typing, and nothing stale is shown after Back. What was typed stays if the server refuses.

@@ -50,16 +50,23 @@ function readPreferences():Preferences {
   catch { return defaults; }
 }
 
-/** The theme on screen for a choice. 'system' follows the device and falls back to dark, the design default, when it can't be asked. */
-export function resolveTheme(choice:ThemeChoice,deviceIsLight:boolean):Theme {
-  return choice==='system' ? (deviceIsLight ? 'light' : 'dark') : choice;
+/**
+ * The theme on screen for a choice. 'system' follows the device: high contrast when it asks for more contrast,
+ * otherwise light or dark, falling back to dark, the design default, when it can't be asked.
+ */
+export function resolveTheme(choice:ThemeChoice,deviceIsLight:boolean,deviceWantsContrast:boolean):Theme {
+  if(choice!=='system') return choice;
+  if(deviceWantsContrast) return 'contrast';
+  return deviceIsLight ? 'light' : 'dark';
 }
 const lightQuery='(prefers-color-scheme: light)';
-const deviceIsLight=()=>typeof window.matchMedia==='function' && window.matchMedia(lightQuery).matches;
+const contrastQuery='(prefers-contrast: more)';
+const deviceMatches=(query:string)=>typeof window.matchMedia==='function' && window.matchMedia(query).matches;
+const deviceTheme=(choice:ThemeChoice)=>resolveTheme(choice,deviceMatches(lightQuery),deviceMatches(contrastQuery));
 
 export function applyPreferences(p:Preferences) {
   const root=document.documentElement;
-  root.dataset.themeChoice=p.theme;root.dataset.theme=resolveTheme(p.theme,deviceIsLight());root.dataset.textSize=p.size;root.dataset.spacing=String(p.spacing);
+  root.dataset.themeChoice=p.theme;root.dataset.theme=deviceTheme(p.theme);root.dataset.textSize=p.size;root.dataset.spacing=String(p.spacing);
   root.dataset.width=p.width;root.dataset.font=p.font;root.dataset.density=p.density;root.dataset.tone=p.tone;
 }
 
@@ -101,16 +108,18 @@ export function useThemeChoice():ThemeChoice {
     ()=>defaults.theme);
 }
 
-/** While the choice is 'system', follow the device when it switches between light and dark. Returns the cleanup. */
+/** While the choice is 'system', follow the device when it switches light/dark or asks for more contrast. Returns the cleanup. */
 export function followSystemTheme():()=>void {
   if(typeof window.matchMedia!=='function') return ()=>{};
-  const query=window.matchMedia(lightQuery);
+  const queries=[window.matchMedia(lightQuery),window.matchMedia(contrastQuery)];
   const update=()=>{
     const root=document.documentElement;
-    if(root.dataset.themeChoice==='system') root.dataset.theme=resolveTheme('system',query.matches);
+    if(root.dataset.themeChoice==='system') root.dataset.theme=deviceTheme('system');
   };
-  query.addEventListener('change',update);
-  return ()=>query.removeEventListener('change',update);
+  for(const query of queries) query.addEventListener('change',update);
+  return ()=>{
+    for(const query of queries) query.removeEventListener('change',update);
+  };
 }
 
 export function useDensity():Density {

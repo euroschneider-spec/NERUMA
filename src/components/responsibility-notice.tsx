@@ -2,14 +2,15 @@ import { getOrganisationCopy } from '@/lib/organisation-copy';
 import type { Locale } from '@/lib/i18n';
 
 /**
- * `part` lets a page lead with the reason this matters (`hook`) and keep the accountability
- * detail (`terms`) for after the practical content. Both halves come from the same copy, so
- * showing them apart never means two versions of the text.
+ * The responsibility text. Organisations read it in full once, as the consent step of their request
+ * (`organisation-form`), and again in short when they publish; other pages link to the form's `id`.
  */
-export function ResponsibilityNotice({ locale, compact = false, part = 'all' }: { locale: Locale; compact?: boolean; part?: 'all' | 'hook' | 'terms' }) {
+export function ResponsibilityNotice({ locale, compact = false, id }: { locale: Locale; compact?: boolean; id?: string }) {
   const t = getOrganisationCopy(locale);
-  return <section className="responsibility-notice">
-    {part !== 'terms' && <><h2>{t.responsibilityTitle}</h2><p>{t.responsibilityBody}</p></>}
-    {part !== 'hook' && <><p>{t.responsibilityScope}</p>{!compact && <ul>{t.commitments.map(item => <li key={item}>{item}</li>)}</ul>}</>}
+  return <section className="responsibility-notice" id={id}>
+    <h2>{t.responsibilityTitle}</h2>
+    <p>{t.responsibilityBody}</p>
+    <p>{t.responsibilityScope}</p>
+    {!compact && <ul>{t.commitments.map(item => <li key={item}>{item}</li>)}</ul>}
   </section>;
 }
