@@ -1,0 +1,14 @@
+{
+  "enabledPlugins": {
+    "ledger@neruma-mods": true,
+    "helpers@neruma-mods": true
+  },
+  "extraKnownMarketplaces": {
+    "neruma-mods": {
+      "source": {
+        "source": "github",
+        "repo": "euroschneider-spec/vianorae"
+      }
+    }
+  }
+}
