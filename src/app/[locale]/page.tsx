@@ -17,7 +17,7 @@ export default async function Home({params}:{params:Promise<{locale:string}>}){
     <div className="channel-grid">{t.who.map((title,i)=><article className="channel-card" key={title}><h3>{title}</h3><p>{t.whoBody[i]}</p></article>)}</div>
   </section>
   <section className="section container approach-section"><div><p className="eyebrow">{t.approach}</p><h2 className="section-title">{t.approachTitle}</h2></div><div><p className="large-copy">{t.approachBody}</p></div></section>
-  <section className="section details-section"><div className="container"><p className="eyebrow">{t.understand}</p><h2 className="section-title narrow">{t.understandTitle}</h2><div className="channel-grid">{t.channels.map((title,i)=>{const Icon=icons[i];return <article className="channel-card" key={title}><div className="channel-icon"><Icon size={24} strokeWidth={1.5} aria-hidden="true"/></div><h3>{title}</h3><p>{t.channelBody[i]}</p></article>;})}</div></div></section>
+  <section className="section details-section"><div className="container"><p className="eyebrow">{t.understand}</p><h2 className="section-title narrow">{t.understandTitle}</h2><div className="channel-grid channel-grid-six">{t.channels.map((title,i)=>{const Icon=icons[i];return <article className="channel-card" key={title}><div className="channel-icon"><Icon size={24} strokeWidth={1.5} aria-hidden="true"/></div><h3>{title}</h3><p>{t.channelBody[i]}</p></article>;})}</div></div></section>
   <section id="sources" className="section container">
     <p className="eyebrow">{t.sourcesLabel}</p>
     <h2 className="section-title">{t.sourcesTitle}</h2>

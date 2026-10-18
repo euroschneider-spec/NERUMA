@@ -7,7 +7,6 @@ Done: `- [x] T-001 | title | note | cost`.
 
 ## Open
 
-- [ ] T-002 | Home: feature cards 3 x 2 on desktop, two columns on phones | DESIGN-TASKS sections 4 and 7. Quick win.
 - [ ] T-003 | Explore: hide the filters while there is only one place | The country and city filters do nothing yet. Quick win.
 - [ ] T-004 | How it works and Methodology: the closing box with one link becomes a button | DESIGN-TASKS section 5. Quick win.
 - [ ] T-005 | Home: the dot before the tagline and the check mark sit between lines when the text wraps | DESIGN-TASKS section 7. Quick win.
@@ -22,3 +21,4 @@ Done: `- [x] T-001 | title | note | cost`.
 
 ## Done
 - [x] T-001 | Sign in: fold the resend-confirmation section behind "Didn't get the email?" | Folded in a details element (EN/RO/DE); workspace test opens it first. Pull request 83, CI green. | not measured
+- [x] T-002 | Home: feature cards 3 x 2 on desktop, two columns on phones | New .channel-grid-six: 2 columns, 3 from 900px. Pull request open, CI decides. | not measured
