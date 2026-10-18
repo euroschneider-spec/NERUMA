@@ -9,8 +9,11 @@ and 16; the order below is a proposal for the owner to confirm.
 
 ## Suggested order (proposal, 2026-10-18)
 
-1. **Small things that protect you** (minutes each, no code): turn on branch protection for `main` (§11); install
-   `20261017120000_account_profile.sql` in the live database (§12, job 8); check the password minimum in the hosted project (§7, §13).
+1. **Small things that protect you** (minutes each, no code):
+   - [ ] Turn on branch protection for `main` (§11). Needs someone with admin rights on the repository; a friend is doing it.
+   - [x] Install `20261017120000_account_profile.sql` in the live database (§12). Installed (checked 2026-10-18).
+   - [x] Install `20261018090000_payments.sql` in the live database (§8). Installed (checked 2026-10-18); payments are off and no plan exists.
+   - [x] Check the password minimum in the hosted project (§7, §13). Production says 12, length only (checked 2026-10-18); `neruma-dev` is left in §13.
 2. **Decide the provider principle** (§15): European providers, German preferred, not French (owner's lean, 2026-10-18). It settles
    email, payment and the hosting questions together.
 3. **Rename the site address** to `neruma.lignorae.com` (§17), before the email DNS records are made and before any QR code is printed.
@@ -22,7 +25,8 @@ and 16; the order below is a proposal for the owner to confirm.
 8. **Features:** live preview in a second tab, team invitations, visit counts (after the privacy decision), the organisations list for
    administrators.
 9. **Payment** (§8): built and switched off; set up Stripe in test mode, then go live after email and the privacy and terms text.
-10. **Later:** a consistent read-aloud voice (§9), a storage plan and photo limits (§5), the table of every field (§6), test hardening (§11).
+10. **Going live:** the full checklist is §18.
+11. **Later:** a consistent read-aloud voice (§9), a storage plan and photo limits (§5), the table of every field (§6), test hardening (§11).
 
 ## 1. Mock data and mock users
 
@@ -86,27 +90,52 @@ chose fall under that. **So no cookie banner is needed as things stand.**
 
 ## 4. Email
 
-**Today:** Supabase's built-in email sends the confirmation mail. It is for development only: it is
-limited to a few emails per hour, and Supabase restricts it to the project team's own addresses. So
-real applicants may not receive their confirmation email. There is a template in
-`supabase/templates/confirmation.html`. **Owner, 2026-10-18:** leaning towards a European provider, not French, German if there is one
-(the same for payment, §8). Resend was being tried (its EU region is Ireland only; no Frankfurt); nothing is decided or connected.
+**Where it stands (2026-10-18):** Resend is connected as Supabase's sender for the sign-in emails. The domain `mail.lignorae.com` is verified (region Ireland,
+click and open tracking off), a sending-only key was made, and Supabase sends from `NERUMA <noreply@mail.lignorae.com>` (Authentication → Emails → SMTP). **Still to
+confirm:** that a real test email arrives (Authentication → Users → *Send password recovery* on your own account, then check the inbox, the spam folder and Resend's
+Logs). The app itself sends nothing yet. **Provider:** Resend is used for now (owner, 2026-10-18); the owner's lean towards a European provider is still open
+(§15), and swapping is one SMTP setting.
 
-Missing: password reset (no recovery flow exists in the code), team invitations, and notifying
-applicants of an administrator's decision.
+**Rule (owner, 2026-10-18; `DECISIONS.md`, "Emails are text and links only"):** every email is text and hyperlinks, in English, Romanian and German. No images, no logo
+image, no tracking pixels, no rewritten links. A text header "Neruma" in the logo's charcoal and off-white. `tests/unit/email-template.test.ts` enforces it.
 
-- [ ] Choose an SMTP provider and connect it in Supabase (Authentication → Emails → SMTP settings). Research European providers,
-  German first, before settling (§15); the list below is the first pass, not a shortlist:
-  - **Brevo**: EU company, free tier around 300 emails/day. Simplest fit for GDPR.
-  - **Resend**: free tier around 3,000/month; good developer experience; US company with an EU
-    sending region.
-  - **Postmark**: paid, best known for deliverability.
-  - **Amazon SES**: cheapest at volume; more setup.
-- [ ] Sending domain: add SPF, DKIM and DMARC records on the domain's DNS (e.g. a
-  `mail.lignorae.com` subdomain, or the final NERUMA domain).
-- [ ] Add a password-reset flow (Supabase `resetPasswordForEmail` + a "set new password" page) in
-  EN/RO/DE.
-- [ ] Translate the email templates into RO and DE.
+- [x] Choose an SMTP provider and connect it in Supabase: Resend (see above). Delivery test still to confirm (above).
+- [x] Sending domain: SPF, DKIM and return-path records for `mail.lignorae.com` are in Vercel's DNS and Resend says verified. DMARC is not set yet: add a
+  `_dmarc.mail` TXT record (`v=DMARC1; p=none; rua=mailto:<an address you read>`) once mail is flowing, and tighten it later.
+- [ ] Check that Supabase's Authentication → URL Configuration has the Site URL `https://neruma.lignorae.com` and `…/auth/callback` in the redirect list, and
+  `VIANORAE_SITE_URL` is set in Vercel (the friend with Vercel access is checking).
+- [ ] Restyle the confirmation email: text header, new colours (the green is the old brand), same wording. Keep `supabase/templates/` as the source and the pasted
+  example file in step.
+- [ ] Translate the email templates into RO and DE (the confirmation already has all three; every new one needs them).
+- [ ] Add a password-reset flow (Supabase `resetPasswordForEmail` + a "set new password" page) in EN/RO/DE, and its email.
+
+### The emails we need
+
+Sent by Supabase through Resend (templates pasted in the dashboard, one per type, language chosen with `preferred_locale`):
+
+1. [x] **Confirm your email** (registration). Exists in three languages; restyle (above).
+2. [ ] **Reset your password.** Needs the reset flow (above). Before launch.
+3. [ ] **Security notices** (optional in Supabase, cheap to add): password changed, email address changed, two-factor added or removed. Tells someone when their
+   account was touched by somebody else.
+
+Sent by the app (needs code, a shared plain layout, and a plain-text part; a brief first):
+
+4. [ ] **Request received**: "we have your organisation's request and will check it" (nothing is emailed after submitting today).
+5. [ ] **Request approved**: the organisation can sign in and build. Before launch.
+6. [ ] **More information needed**: the administrator's note, and what to do. Before launch.
+7. [ ] **Request rejected**: the reason, and that they can apply again.
+8. [ ] **Team invitation** (needs the invite feature, §16): a link to join the organisation, and a notice to the owner when someone accepts.
+9. [ ] **Deleting an account** (`docs/briefs/2026-10-13-delete-account.md`, step 3): started (the date it is erased, how to restore), a reminder 3 days before, done.
+   Before launch: the law and the privacy page promise it.
+10. [ ] **Payments** (Stripe sends its own receipts and failed-payment mails; ours explain what the 30 days mean): "payment failed, your guides stay online
+    until <date>", a reminder 7 days before, "your guides are offline, pay to bring them back", "back online". Before the start date is set (§8).
+11. [ ] **To NERUMA's administrators**: a problem report arrived; a new organisation request is waiting (today the dashboard shows it, nothing is emailed).
+12. [ ] **Contact form**: sends the enquiry to NERUMA's inbox and shows the sender a copy (`/contact` only prepares a message today).
+13. [ ] **Organisation suspended or reinstated**: tells the owner, because their guides go offline.
+14. [ ] **Later**: a guide taken down by NERUMA, two-factor reset by an administrator, an export is ready, and visitor reports once they exist.
+
+**What every email shares:** one clear sentence on what to do, a button-like link *and* the address written out, the language of the account, a plain-text version,
+readable contrast, no images or tracking, the sender `NERUMA <noreply@mail.lignorae.com>` and a reply address a person reads.
 
 ## 5. Images and storage
 
@@ -150,15 +179,10 @@ on the request form are `required`.
 
 ## 7. Password rules
 
-**Today:** the register form asks for at least 12 characters, but only in the browser. The Supabase
-config in this repo (`supabase/config.toml`) allows 6 characters with no other rules. Anyone who skips
-the form can therefore set a 6-character password.
+**Today:** the minimum is 12 characters, length only (no forced symbols or numbers, as NIST 800-63B advises), in the register form, in
+`supabase/config.toml` and in the production project (checked 2026-10-18).
 
-- [ ] Set the minimum to 12 in the hosted project (Authentication → Policies or Providers → Email →
-  minimum password length), and in `config.toml` so local matches.
-- [ ] Keep it to length only. Current guidance (NIST 800-63B) advises against forced symbol/number
-  rules. Low effort, and fits the low-risk assessment.
-- [ ] Optional on Pro: leaked-password protection (checks against known breached passwords).
+- [ ] Optional on Pro: leaked-password protection (checks against known breached passwords). Not available on the free plan.
 
 ## 8. Subscription flow for institutions
 
@@ -176,7 +200,7 @@ until a start date is set. Decisions: `DECISIONS.md`, "Payments go through Strip
       sooner, but the owner would rather open it once, in the right name. Stripe's country can't be changed later.)
 - [ ] **Decide who sells** (which company, which country): it decides VAT registration, the invoice format, and in whose name the Stripe
       account is opened. Needed to unblock the item above.
-- [ ] **Set up Stripe** in test mode and test by hand (`PAYMENTS.md` sections 2 and 3). Install `20261018090000_payments.sql`.
+- [ ] **Set up Stripe** in test mode and test by hand (`PAYMENTS.md` sections 2 and 3).
 - [ ] Update the terms and privacy pages (Stripe as a processor) before taking any payment; then go live (`PAYMENTS.md` section 5)
       and set the start date (section 4), telling organisations at least 30 days before.
 - [x] Nobody is erased while Stripe still charges them: the deletions page and the database refuse to erase an organisation, or its last
@@ -336,7 +360,6 @@ Added on 2026-10-11, after the dashboard cards (PR #29). Decisions are in `DECIS
 
 - [ ] **Visit counts (brief 1e).** Nothing is counted today. Decide first what may be counted (for example a
   total per location, with no IP address and no cookie), then check section 3 and update the privacy page.
-- [ ] **Plan & billing page (brief 1d).** A placeholder for owners only, until payments exist (section 8).
 - [x] **Apply `supabase/migrations/20261011120000_step_fields.sql`** to the real Supabase project. Installed (checked 2026-10-17).
 
 **Test fixture limits found while building:**
@@ -367,8 +390,7 @@ Added on 2026-10-11, after the dashboard cards (PR #29). Decisions are in `DECIS
 
 1. [ ] **Live preview in a second tab** (brief, Task 2): the preview beside the editor, from unsaved changes, with
    the guide component visitors see. Narrow screens get a *Preview* button only.
-2. [ ] **Plan & billing placeholder** (brief 1d): owners only, until payments exist (section 8).
-3. [ ] **Visit counts privacy decision.** Suggested: one number per location per day, no IP address, no cookie,
+2. [ ] **Visit counts privacy decision.** Suggested: one number per location per day, no IP address, no cookie,
    counting each time the guide opens. Needs the owner's yes, then section 3 and the privacy page.
 4. [x] **Publishing**: built 2026-10-13 (the QR registry, the "isn't available" page, language choice, the QR pop-up). Visit counts
    on the card wait for item 3.
@@ -400,8 +422,8 @@ controls until each is installed, so nothing breaks while they wait). Needs acce
   transaction); tell the owner.
 
 - [x] **7. Superadmin** (`supabase/migrations/20261017090000_superadmin.sql`): the administration dashboard, accounts list and administrators list.
-- [ ] **8. Account profile** (`supabase/migrations/20261017120000_account_profile.sql`), after 7: the profile page at `/admin/accounts/<id>`. Until it is
-  installed that page says the tools are being activated. Check: `select public.account_profile_schema_version();` should give `1`.
+- [x] **8. Account profile** (`supabase/migrations/20261017120000_account_profile.sql`), after 7: the profile page at `/admin/accounts/<id>`. Installed
+  (checked 2026-10-18). **9. Payments** (`20261018090000_payments.sql`) is installed too (checked 2026-10-18; payments are off and no plan exists).
 
 How, for each file, in this order (1 to 8):
 
@@ -436,9 +458,8 @@ Each step is its own small pull request. When it is merged, remove its task from
    fixed: the three Vercel values name `ywbcsvswisorlgajbkev` and `npm run test:smoke` checks a deployed site for exactly that (GOTCHA.md).
    Open: a real applicant registering, receiving the confirmation email and signing in, which needs an email provider (§4); and Preview
    should use `neruma-dev` instead of production's project (`DATABASE-ENVIRONMENTS.md`).
-1. [ ] **Password rules in the hosted projects** (the owner's steps, no code; also section 7). Minimum 12 characters and, if
-   the plan offers it, *Prevent use of leaked passwords*, on `neruma-dev` first, then production (the friend's project
-   access). Also set the minimum in `supabase/config.toml` so local matches.
+1. [ ] **Password rules on `neruma-dev`** (the owner's steps, no code; also section 7). Production is done (12 characters, length only).
+   Check that `neruma-dev` says 12 too.
 3. [ ] **Delete my account and export my data.** *Step 1 built (delete, export, restore, erase; `docs/guides/ACCOUNT-DELETION.md`).
    Left: hand an organisation to a verified colleague, and the emails.* *Start from `docs/guides/PERSONAL-DATA.md`: a user can't be deleted today (15 foreign
    keys with "no action"), the same data is copied in several tables, and some records are immutable by design. Each blocking row needs
@@ -529,3 +550,57 @@ Order, so that nothing is ever without a working address:
    stay as written); `euroschneider-spec/Vianorae` in `README.md` and `NEXT-STEPS.md`; the package name `vianorae-platform` in `package.json` and `package-lock.json`;
    and the naming rule in `CLAUDE.md` and `README.md`.
 7. [ ] **Check, after deploying:** `SMOKE_URL=https://neruma.lignorae.com npm run test:smoke`, (skip the old-QR-address check while no code has been printed).
+
+## 18. Going live: what is still missing (review of 2026-10-18; email is its own section, §4)
+
+Collected from this file, `docs/guides/PERSONAL-DATA.md`, `docs/guides/TEST-PLAN.md` and a review at the owner's request. Each item points to
+the section that holds the detail. Not legal advice: the legal items need a qualified person.
+
+**Blocks going live**
+
+- [ ] **Decide who is the data controller and who sells** (legal name, address, country; `PERSONAL-DATA.md` D1, D2, and §8). The legal texts, the
+  Stripe account and the invoices all depend on it.
+- [ ] **Privacy notice.** It still describes the demonstration and doesn't name the controller, retention or processors (Supabase, Vercel, Stripe,
+  later the email provider). Plan: Claude drafts it from `PERSONAL-DATA.md` with the open decisions marked; a lawyer reviews it for a fixed fee
+  (a generator such as eRecht24 covers the basics but doesn't know our data flows). Decisions still needed: legal basis per item, how long each
+  item is kept, whether transfers outside the EU are acceptable (§15).
+- [ ] **Terms of use.** A draft for the demonstration today. Have a lawyer write or check them: they cover payment, the 30-day grace rule, what
+  happens when someone stops paying, and who is responsible for a guide's accuracy (a visitor may rely on "quiet room"), including any limit
+  on liability. If there is no lawyer, ask a chamber of commerce or a small-business legal advice service for a low-cost first check.
+- [ ] **Sign the data-processing agreements** with Supabase, Vercel and Stripe (and the email provider). No lawyer needed: each offers a standard
+  one to accept online. Then name them on the privacy page (§15).
+- [ ] **An imprint (Impressum), if the operator is in Germany.** Nothing in the repo mentions one; German business websites generally need it.
+  Ask the lawyer, then add a footer page in EN, RO and DE.
+- [ ] **Data retention.** Nothing is deleted automatically: requests, documents, reports and audit entries stay forever (`PERSONAL-DATA.md`, finding 4).
+  Decide a rule with the lawyer, then build it.
+- [ ] **Backups.** Check what the Supabase plan really gives (§5), then rehearse restoring one at least once (`TEST-PLAN.md` A9).
+- [ ] **Registration on production, end to end**, with a real email and a real applicant (needs email, §4 and §13 item 0).
+
+**Payment-specific** (§8, `docs/guides/PAYMENTS.md`)
+
+- [ ] Open the Stripe account in the seller's name (paused until the seller is decided) and run the hand-test in test mode.
+- [ ] Decide whether Stripe's invoices are enough for German customers, or whether e-invoices (XRechnung or ZUGFeRD) are needed.
+- [ ] Sign Stripe's data-processing agreement and name Stripe on the privacy page.
+- [ ] Tell organisations the start date at least 30 days ahead, then set it (`PAYMENTS.md` section 4).
+
+**Hosting and security settings**
+
+- [ ] Pin the Vercel region to Frankfurt and confirm the database region (§15). Today form contents travel through the US.
+- [ ] Branch protection on `main` (§11), in progress with a friend who has admin rights.
+- [ ] Check the password minimum on `neruma-dev` (§13).
+- [ ] Decide when to leave the free Supabase plan: storage and traffic caps (§5).
+
+**What a person notices today** (§16)
+
+- [ ] Explore: the country and city filters do nothing, and the category list offers types nobody can choose.
+- [ ] No way to invite a colleague (needs email).
+- [ ] The Contact form doesn't send anything (needs email).
+- [ ] A new organisation lands on an empty dashboard (`DESIGN-TASKS.md` §8).
+
+**Testing only people can do** (`TEST-PLAN.md` Part A)
+
+- [ ] Real phones, real authenticator apps, a screen reader, and publish plus QR on an actual phone.
+- [ ] After the address rename (§17): `SMOKE_URL=https://neruma.lignorae.com npm run test:smoke`.
+
+**Suggested order:** decide the controller and the seller, then book the lawyer for the texts; email, the address rename and the Frankfurt
+region; the backup rehearsal and the hand-tests with real devices; Stripe live mode and the start date last.

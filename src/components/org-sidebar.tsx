@@ -6,7 +6,7 @@ import { CreditCard, LayoutDashboard, LifeBuoy, LogOut, PanelLeftClose, PanelLef
 import type { Locale } from '@/lib/i18n';
 import { ThemeToggle } from './theme-toggle';
 import { LanguageMenu } from './language-menu';
-import { Brand } from './site-header';
+import { Brand } from './brand';
 import { ReadingButton } from './reading-settings';
 
 export type SidebarMembership = { organisation: string; name: string; roleLabel: string; owner?: boolean };

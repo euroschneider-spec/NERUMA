@@ -14,6 +14,25 @@ test('language switch preserves the current route',async({page})=>{await page.go
 test('contact prepares an enquiry without sending it',async({page})=>{await page.goto('/en/contact');let posted=false;page.on('request',r=>{if(r.method()==='POST')posted=true;});await page.getByLabel('Your name').fill('Demo person');await page.getByLabel('Email').fill('demo@example.invalid');await page.getByLabel('Your message').fill('I would like to discuss the pilot.');await page.getByRole('button',{name:'Send',exact:true}).click();await expect(page.locator('.enquiry-output')).toContainText('I would like to discuss the pilot.');expect(posted).toBe(false);});
 // Reduced motion switches off the 0.15s colour fade, so the contrast check never samples a half-faded colour.
 test('reading preferences persist and contrast themes pass automated checks',async({page})=>{await page.emulateMedia({reducedMotion:'reduce'});await page.goto('/en');await page.locator('.topbar-reading').click();await page.getByLabel('Text size',{exact:true}).selectOption('larger');await page.getByLabel('Appearance',{exact:true}).selectOption('dark');await page.reload();await expect(page.locator('html')).toHaveAttribute('data-theme','dark');await expect(page.locator('html')).toHaveAttribute('data-text-size','larger');let result=await new AxeBuilder({page}).withTags(['wcag2aa']).analyze();expect(result.violations).toEqual([]);await page.locator('.topbar-reading').click();await page.getByLabel('Appearance',{exact:true}).selectOption('contrast');result=await new AxeBuilder({page}).withTags(['wcag2aa']).analyze();expect(result.violations).toEqual([]);});
+// The logo is two vector shapes in the text colour (src/components/brand.tsx), so it follows every theme instead of staying a fixed colour.
+for (const theme of ['dark', 'light', 'contrast'] as const) {
+  test(`the logo is light on dark and dark on light in the ${theme} theme, and keeps its name`, async ({ page }) => {
+    await page.addInitScript((value) => localStorage.setItem('vianorae:reading:v1', JSON.stringify({ theme: value, themeV: 2 })), theme);
+    await page.goto('/en');
+    const logo = page.getByRole('banner').getByRole('link', { name: 'NERUMA', exact: true });
+    await expect(logo.locator('svg')).toHaveCount(2);
+    await expect(logo.locator('svg').first()).toBeVisible();
+    await expect(logo.locator('svg').last()).toBeVisible();
+    const brightness = await logo.evaluate((link) => {
+      const [red, green, blue] = getComputedStyle(link.querySelector('path')!).fill.match(/\d+/g)!.map(Number);
+      return (red + green + blue) / 3;
+    });
+    if (theme === 'dark') expect(brightness).toBeGreaterThan(200);
+    else expect(brightness).toBeLessThan(80);
+    // The footer carries it too, with the same name.
+    await expect(page.getByRole('contentinfo').getByRole('link', { name: 'NERUMA', exact: true })).toBeVisible();
+  });
+}
 test('mobile reflow and menu',async({page})=>{await page.setViewportSize({width:390,height:844});await page.goto('/en');await page.getByRole('button',{name:'Open menu'}).click();await expect(page.getByRole('link',{name:'How it works',exact:true})).toBeVisible();await page.getByRole('link',{name:'How it works',exact:true}).click();await expect(page).toHaveURL(/\/en#how-it-works$/);await expect(page.locator('#how-it-works')).toBeInViewport();for(const path of ['/en','/en/places/willow-museum/guide','/en/demo/d0000000-0000-4000-8000-0000000000a1']){await page.goto(path);expect(await page.evaluate(()=>document.documentElement.scrollWidth<=window.innerWidth),path).toBe(true);}await page.goto('/en');await page.screenshot({path:'docs/verification/screenshots/mobile-preview.png',fullPage:true});});
 test('320px reflow with 200% text and extra spacing',async({page})=>{await page.setViewportSize({width:320,height:800});for(const path of ['/en','/de','/en/places/willow-museum/guide','/en/demo','/en/register','/de/register']){await page.goto(path);await page.evaluate(()=>{document.documentElement.style.fontSize='32px';document.documentElement.dataset.spacing='true';});const overflow=await page.evaluate(()=>({width:document.documentElement.scrollWidth,viewport:window.innerWidth,elements:Array.from(document.querySelectorAll('*')).map(element=>({tag:element.tagName,classes:element.className,left:element.getBoundingClientRect().left,right:element.getBoundingClientRect().right,scroll:element.scrollWidth,client:element.clientWidth,text:element.textContent?.slice(0,60)})).filter(element=>element.right>window.innerWidth+1||element.scroll>element.client+3)}));expect(overflow.width<=overflow.viewport,path+' '+JSON.stringify(overflow)).toBe(true);}});
 test('desktop visual evidence',async({page})=>{await page.setViewportSize({width:1440,height:1000});await page.goto('/en');await page.screenshot({path:'docs/verification/screenshots/home-preview.png',fullPage:true});await page.goto('/en/places/willow-museum/guide');await page.screenshot({path:'docs/verification/screenshots/guide-preview.png',fullPage:true});await page.goto('/en/demo');await page.screenshot({path:'docs/verification/screenshots/workspace-preview.png',fullPage:true});});
