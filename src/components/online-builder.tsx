@@ -18,6 +18,7 @@ import { getPublishingCopy, type Publication } from '@/lib/publishing';
 import { getBillingCopy } from '@/lib/billing';
 import { unpublishPlace } from '@/app/workspace/actions';
 import { ConfirmDialog } from './confirm-dialog';
+import { Field, useFormWarnings } from './form-field';
 
 /** The small × beside a field that hides it from the step (the text is kept). */
 function RemoveField({label,disabled,onClick,enabled=true}:{label:string;disabled:boolean;onClick:()=>void;enabled?:boolean}) {
@@ -49,12 +50,11 @@ export function OnlineBuilder({locale,org,initial,persistedZoneIds,missingTransl
   const [dragIndex,setDragIndex]=useState<number|null>(null);
   function moveZone(from:number,to:number){if(from===to || to<0) return;change(current=>{const zones=[...current.zones];const [zone]=zones.splice(from,1);zones.splice(Math.min(to,zones.length),0,zone);return {...current,zones};});}
   function toggleZone(id:string){setOpenZones(current=>{const next=new Set(current);if(next.has(id)) next.delete(id);else next.add(id);return next;});}
-  // A required field inside a folded step can't show its message: open that step, then ask again.
-  function openInvalid(event:React.FormEvent<HTMLFormElement>){
-    const target=event.target as HTMLInputElement;const body=target.closest<HTMLElement>('[data-zone-body]');
-    if(!body?.hidden) return;
-    setOpenZones(current=>new Set(current).add(body.dataset.zoneBody!));
-    requestAnimationFrame(()=>target.reportValidity());
+  // On Save, each field that needs filling says so (docs/guides/ACCESSIBILITY.md, "Forms"). The first one may sit in a folded step:
+  // open that step so the screen can jump to it.
+  function revealStep(control:Element){
+    const body=control.closest<HTMLElement>('[data-zone-body]');
+    if(body?.hidden) setOpenZones(current=>new Set(current).add(body.dataset.zoneBody!));
   }
   useEffect(()=>{
     if(!dirty) return;
@@ -84,8 +84,8 @@ export function OnlineBuilder({locale,org,initial,persistedZoneIds,missingTransl
   function ownField(index:number,fieldIndex:number,update:Partial<OwnField>){zoneField(index,z=>({...z,fields:z.fields.map((f,i)=>i===fieldIndex?{...f,...update}:f)}));}
   const offeredLabel=(name:RemovableField)=>name==='photo' ? t.fieldPhoto : name==='note' ? common.note : name==='next' ? common.predictability : t.optional;
   function photoBusy(id:string,busy:boolean){setBusyPhotos(current=>{const next=new Set(current);if(busy) next.add(id);else next.delete(id);return next;});}
-  async function save(event:React.FormEvent<HTMLFormElement>){
-    event.preventDefault();if(disabled) return;
+  async function save(){
+    if(disabled) return;
     if(!parsePlaceDraft(draft,mode==='demo' ? DEMO_ORG : org)){setMessage(t.invalid);setError('other');return;}
     setPending(true);setMessage(t.saving);setError(null);
     try {
@@ -96,6 +96,7 @@ export function OnlineBuilder({locale,org,initial,persistedZoneIds,missingTransl
     } catch {setError('other');setMessage(t.error);}
     finally {setPending(false);}
   }
+  const w=useFormWarnings(locale,()=>{void save();},revealStep);
   // Save, Preview and Publish sit at the top and the bottom of the editor. Only the bottom copy announces the result,
   // so a screen reader hears each message once.
   // Collapse all / Expand all, above and below the steps. Each shows only when it has something to do.
@@ -126,12 +127,12 @@ export function OnlineBuilder({locale,org,initial,persistedZoneIds,missingTransl
   </div>;
   return <>
     {missingTranslation && <p className="notice">{t.missing}</p>}
-    <form onSubmit={save} onInvalidCapture={openInvalid} aria-label={t.edit}>
+    <form {...w.form} aria-label={t.edit}>
       {actions(false)}
       <fieldset className="online-fields" disabled={disabled}>
         <div className="form-grid">
-          <label className="form-field wide">{t.location}<input name="location-name" required maxLength={160} value={draft.name} onChange={e=>field('name',e.target.value)}/></label>
-          <label className="form-field wide">{t.city}<input required maxLength={160} value={draft.city} onChange={e=>field('city',e.target.value)}/></label>
+          <Field w={w} name="location-name" label={t.location} className="wide"><input name="location-name" required maxLength={160} value={draft.name} onChange={e=>field('name',e.target.value)}/></Field>
+          <Field w={w} name="city" label={t.city} className="wide"><input name="city" required maxLength={160} value={draft.city} onChange={e=>field('city',e.target.value)}/></Field>
           <label className="form-field wide">{t.address}<input maxLength={500} value={draft.address} onChange={e=>field('address',e.target.value)}/></label>
           <ChoiceGroup className="wide" label={t.kind} value={draft.placeType} onChange={value=>field('placeType',value as PlaceDraft['placeType'])} options={placeTypes.map((kind,i)=>({value:kind,label:kind==='other' ? t.kindOther : o.types[i]}))}/>
           <div className="form-field wide"><label htmlFor="online-description">{t.summary}</label><textarea id="online-description" rows={2} maxLength={2000} value={draft.description} onChange={e=>field('description',e.target.value)}/></div>
@@ -161,8 +162,8 @@ export function OnlineBuilder({locale,org,initial,persistedZoneIds,missingTransl
           </div>
           <div id={`online-zone-body-${zone.id}`} className="zone-body" data-zone-body={zone.id} hidden={!open}>
           <div className="form-grid">
-            <label className="form-field wide">{t.stepName}<input required maxLength={160} value={zone.title} onChange={e=>zoneField(index,z=>({...z,title:e.target.value}))}/></label>
-            <div className="form-field wide"><label htmlFor={`online-description-${zone.id}`}>{common.description}</label><textarea id={`online-description-${zone.id}`} required rows={3} maxLength={2000} value={zone.description} onChange={e=>zoneField(index,z=>({...z,description:e.target.value}))}/></div>
+            <Field w={w} name={`title-${zone.id}`} label={t.stepName} className="wide"><input name={`title-${zone.id}`} required maxLength={160} value={zone.title} onChange={e=>zoneField(index,z=>({...z,title:e.target.value}))}/></Field>
+            <Field w={w} name={`description-${zone.id}`} label={common.description} className="wide" id={`online-description-${zone.id}`}><textarea name={`description-${zone.id}`} required rows={3} maxLength={2000} value={zone.description} onChange={e=>zoneField(index,z=>({...z,description:e.target.value}))}/></Field>
           </div>
           {!zone.hidden.includes('photo') && <OnlinePhotoEditor zone={zone} placeId={draft.id} locale={locale} mode={mode} persisted={mode==='demo' || persisted.has(zone.id)} disabled={disabled} onBusy={busy=>photoBusy(zone.id,busy)} onChange={(photo?:OnlinePhoto)=>zoneField(index,z=>({...z,photo}))}/>}
           <fieldset className="sensory-fields"><legend>{locale==='ro'?'Profil senzorial':locale==='de'?'Sensorisches Profil':'Sensory profile'}</legend>
@@ -174,7 +175,7 @@ export function OnlineBuilder({locale,org,initial,persistedZoneIds,missingTransl
           {zone.fields.map((own,fieldIndex)=><div className="own-field" key={own.id}>
             <div className="label-row own-field-head"><span className="small-label">{own.kind==='text' ? t.fieldShortText : t.fieldYesNo}</span><RemoveField enabled={fieldsEnabled} label={`${t.removeField}: ${own.label || (own.kind==='text' ? t.fieldShortText : t.fieldYesNo)}`} disabled={disabled} onClick={()=>removeOwnField(index,zone.id,own.id)}/></div>
             <div className="form-grid">
-              <label className="form-field wide">{own.kind==='text' ? t.ownLabel : t.ownQuestion}<input id={`own-field-${own.id}`} required maxLength={80} value={own.label} onChange={e=>ownField(index,fieldIndex,{label:e.target.value})}/></label>
+              <Field w={w} name={`own-${own.id}`} label={own.kind==='text' ? t.ownLabel : t.ownQuestion} className="wide" id={`own-field-${own.id}`}><input name={`own-${own.id}`} required maxLength={80} value={own.label} onChange={e=>ownField(index,fieldIndex,{label:e.target.value})}/></Field>
               {own.kind==='text'
                 ? <label className="form-field wide">{t.ownValue}<input maxLength={500} value={own.value} onChange={e=>ownField(index,fieldIndex,{value:e.target.value})}/></label>
                 : <ChoiceGroup className="wide" label={t.ownAnswer} value={own.answer} onChange={value=>ownField(index,fieldIndex,{answer:value as OwnField['answer']})} options={yesNoAnswers.map(answer=>({value:answer,label:answer==='yes' ? t.answerYes : answer==='no' ? t.answerNo : t.answerUnanswered}))}/>}

@@ -77,6 +77,37 @@ test('a change is kept in this browser, shows in the preview, and is not seen by
   await expect(stepName(page)).toHaveValue('The main entrance');
 });
 
+// Warnings on forms (docs/guides/ACCESSIBILITY.md, "Forms"): Save says which field needs filling, and opens a folded step to show it.
+test('the editor marks each field that needs filling, in words, and opens a folded step to show it', async ({ page }) => {
+  await page.goto(`/en/demo/${willow}`);
+  const location = page.getByLabel('Location name', { exact: true });
+  await location.fill('');
+  await stepName(page).fill('');
+  await page.getByRole('button', { name: /^Step 1/ }).click();
+  await expect(stepName(page)).toBeHidden();
+  await page.getByRole('button', { name: 'Save', exact: true }).first().click();
+  await expect(location).toBeFocused();
+  await expect(location).toHaveAttribute('aria-invalid', 'true');
+  await expect(location).toHaveAccessibleDescription('Fill in “Location name”.');
+  await expect(page.getByRole('status').filter({ hasText: 'Saved in this browser.' })).toHaveCount(0);
+  await location.fill('Willow Museum');
+  await expect(location).not.toHaveAttribute('aria-invalid', 'true');
+  // The step name sits in a folded step: Save opens it and goes there.
+  await page.getByRole('button', { name: 'Save', exact: true }).first().click();
+  await expect(stepName(page)).toBeVisible();
+  await expect(stepName(page)).toBeFocused();
+  await expect(stepName(page)).toHaveAccessibleDescription('Fill in “Step name”.');
+  expect((await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa']).analyze()).violations).toEqual([]);
+  await stepName(page).fill('The front door');
+  await page.getByRole('button', { name: 'Save', exact: true }).first().click();
+  await expect(page.getByRole('status').filter({ hasText: 'Saved in this browser.' })).toBeVisible();
+  // The words follow the page's language.
+  await page.goto(`/de/demo/${willow}`);
+  await page.getByLabel('Name des Ortes', { exact: true }).fill('');
+  await page.getByRole('button', { name: 'Speichern', exact: true }).first().click();
+  await expect(page.getByLabel('Name des Ortes', { exact: true })).toHaveAccessibleDescription('Füllen Sie „Name des Ortes“ aus.');
+});
+
 test('words are kept per language; levels and order are shared', async ({ page }) => {
   await page.goto(`/en/demo/${willow}`);
   await stepName(page).fill('The front door');
