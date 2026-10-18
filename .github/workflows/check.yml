@@ -21,8 +21,14 @@ jobs:
       - run: npm ci
       - run: npm run check
   # The Playwright specs against a production build.
+  # Four shards of the same run: Playwright splits the tests, every test runs in exactly one shard.
   e2e:
+    name: e2e (${{ matrix.shard }}/4)
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2, 3, 4]
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -32,11 +38,11 @@ jobs:
       - run: npm ci
       - run: npx playwright install --with-deps chromium
       - run: npm run build
-      - run: npm run test:e2e
+      - run: npm run test:e2e -- --shard=${{ matrix.shard }}/4
       - uses: actions/upload-artifact@v4
         if: failure()
         with:
-          name: browser-evidence-e2e
+          name: browser-evidence-e2e-${{ matrix.shard }}
           path: |
             playwright-report/
             test-results/
@@ -59,7 +65,7 @@ jobs:
       - run: npm ci
       - run: npx playwright install --with-deps chromium
       - run: npm run test:workspace -- --group=${{ matrix.group }}
-  # One stable name for branch protection: it passes only when all three jobs above passed.
+  # One stable name for branch protection: it passes only when every job above passed.
   checks:
     if: always()
     needs: [static, e2e, workspace]
