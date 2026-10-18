@@ -745,7 +745,7 @@ try {
     await applicant.goto(`${base}/en/register`);await fillApplication();await applicant.getByLabel('Work email',{exact:true}).fill('limited@example.test');await applicant.getByLabel('Password',{exact:true}).fill('Fixture-only-passphrase-123');
     await applicant.getByRole('button',{name:'Request organisation access',exact:true}).click();await expect(applicant.locator('main').getByRole('alert')).toContainText('The email service is limiting requests.');
     await applicant.context().clearCookies({name:/^sb-/});
-    await applicant.goto(`${base}/en/login`);await applicant.getByLabel('Confirmation email address',{exact:true}).fill('limited@example.test');await applicant.getByRole('button',{name:'Resend confirmation email',exact:true}).click();await expect(applicant.locator('main').getByRole('alert')).toContainText('The email service is limiting requests.');
+    await applicant.goto(`${base}/en/login`);await applicant.getByText("Didn't get the email?",{exact:true}).click();await applicant.getByLabel('Confirmation email address',{exact:true}).fill('limited@example.test');await applicant.getByRole('button',{name:'Resend confirmation email',exact:true}).click();await expect(applicant.locator('main').getByRole('alert')).toContainText('The email service is limiting requests.');
     await applicant.getByLabel('Confirmation email address',{exact:true}).fill('confirmed@example.test');await applicant.getByRole('button',{name:'Resend confirmation email',exact:true}).click();await expect(applicant.getByRole('status')).toContainText('The confirmation request was accepted.');
   });
   await check('missing evidence migration locks request submission',async()=>{
