@@ -105,7 +105,7 @@ image, no tracking pixels, no rewritten links. A text header "Neruma" in the log
   `_dmarc.mail` TXT record (`v=DMARC1; p=none; rua=mailto:<an address you read>`) once mail is flowing, and tighten it later.
 - [ ] Check that Supabase's Authentication → URL Configuration has the Site URL `https://neruma.lignorae.com` and `…/auth/callback` in the redirect list, and
   `VIANORAE_SITE_URL` is set in Vercel (the friend with Vercel access is checking).
-- [x] Restyle the confirmation email: text header, new colours, same wording, and the support address (brief `2026-10-18-password-reset.md`). **Paste the new template and subject into Supabase** (`TEST-PLAN.md` A12). Keep `supabase/templates/` as the source and the pasted
+- [x] Restyle the confirmation email: text header, new colours, same wording, and the support address (brief `2026-10-18-password-reset.md`). **Pasted into Supabase by the owner, 19 October 2026** (`TEST-PLAN.md` A12). Keep `supabase/templates/` as the source and the pasted
   example file in step.
 - [ ] Translate the email templates into RO and DE (the confirmation already has all three; every new one needs them).
 - [x] A password-reset flow in EN/RO/DE with its email (brief `2026-10-18-password-reset.md`). Built and tested against the fake Supabase; **try it on the real site** (`TEST-PLAN.md` A12).
@@ -116,7 +116,7 @@ image, no tracking pixels, no rewritten links. A text header "Neruma" in the log
 Sent by Supabase through Resend (templates pasted in the dashboard, one per type, language chosen with `preferred_locale`):
 
 1. [x] **Confirm your email** (registration). Exists in three languages; restyle (above).
-2. [x] **Reset your password.** Built (above); paste the template into Supabase and try it (`TEST-PLAN.md` A12).
+2. [x] **Reset your password.** Built (above); template pasted into Supabase by the owner on 19 October 2026; trying it on the real site is still open (`TEST-PLAN.md` A12).
 3. [ ] **Security notices** (optional in Supabase, cheap to add): password changed, email address changed, two-factor added or removed. Tells someone when their
    account was touched by somebody else.
 
