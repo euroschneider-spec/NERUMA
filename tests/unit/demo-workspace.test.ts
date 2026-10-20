@@ -22,7 +22,7 @@ describe('the demo samples', () => {
       expect(missingTranslation).toBe(false);
       expect(parsePlaceDraft(draft, DEMO_ORG)?.id).toBe(id);
       for (const zone of draft.zones) {
-        if (zone.photo) expect(demoSampleSource(zone.photo.id)).toMatch(/^\/illustrations\/.+\.svg$/);
+        if (zone.photo) expect(demoSampleSource(zone.photo.id)).toMatch(/^\/(illustrations\/.+\.svg|photos\/.+\.jpg)$/);
       }
     }
   });
