@@ -176,7 +176,8 @@ test('a photo added in the demo stays in this browser', async ({ page }) => {
 
 test('photo validation in the demo rejects SVG, a forged raster and oversized files', async ({ page }) => {
   await page.goto(`/en/demo/${pavilion}`);
-  const photo = page.locator('.photo-editor').first();
+  await page.getByRole('button', { name: /^Step 2/ }).click();
+  const photo = page.locator('.photo-editor').last();
   const input = photo.locator('input[type=file]');
   for (const file of [
     { name: 'script.svg', mimeType: 'image/svg+xml', buffer: Buffer.from('<svg onload="alert(1)"></svg>') },

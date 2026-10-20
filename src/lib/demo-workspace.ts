@@ -1,4 +1,4 @@
-import { demoEntrancePhoto, demoEntrancePhotoDate, demoEntrancePhotoSrc, getDemoGuide, type SensoryLevel, type SensoryProfile } from './demo';
+import { demoEntrancePhoto, demoFacadePhoto, demoFacadePhotoSrc, demoEntrancePhotoDate, demoEntrancePhotoSrc, getDemoGuide, type SensoryLevel, type SensoryProfile } from './demo';
 import type { Locale } from './i18n';
 import {
   placeAttention,
@@ -73,13 +73,13 @@ const willowArt = ['entrance', 'reception', 'collection', 'interactive', 'quiet-
 /** The sample photos are the site's own illustrations; a photo the visitor adds is kept in their browser instead. */
 const sampleSources: Record<string, string> = {
   ...Object.fromEntries(willowPhotos.map((photo, i) => [photo, i === 0 ? demoEntrancePhotoSrc : `/illustrations/${willowArt[i]}.svg`])),
-  [pavilionPhoto]: '/illustrations/quiet-room.svg',
+  [pavilionPhoto]: demoFacadePhotoSrc,
 };
 export const demoSampleSource = (photoId: string): string | undefined => sampleSources[photoId];
 export const demoPhotoKey = (placeId: string, zoneId: string, photoId: string) =>
   `${DEMO_ORG}/${placeId}/${zoneId}/${photoId}.webp`.toLowerCase();
 
-const pavilion: Record<Locale, { name: string; description: string; arrivalInfo: string; steps: [string, string, string, string][]; alt: string }> = {
+const pavilion: Record<Locale, { name: string; description: string; arrivalInfo: string; steps: [string, string, string, string][] }> = {
   en: {
     name: 'Garden Pavilion',
     description: 'A small glass pavilion in the museum garden, used for quiet talks and workshops.',
@@ -88,7 +88,6 @@ const pavilion: Record<Locale, { name: string; description: string; arrivalInfo:
       ['The garden path', 'A level gravel path leads from the museum café to the pavilion. Birdsong and wind in the willows are usually the loudest sounds.', 'Benches stand along the path if you want to pause.', 'The pavilion door is at the end of the path.'],
       ['Inside the pavilion', 'One bright room with folding chairs and large windows. Talks are small and usually end by early evening.', 'The light changes with the weather.', 'Staff at the door can show you a quieter seat.'],
     ],
-    alt: 'A calm room with chairs and a window onto a garden (illustration)',
   },
   ro: {
     name: 'Pavilionul din grădină',
@@ -98,7 +97,6 @@ const pavilion: Record<Locale, { name: string; description: string; arrivalInfo:
       ['Aleea din grădină', 'O alee plană de pietriș duce de la cafeneaua muzeului la pavilion. Cele mai puternice sunete sunt de obicei cântecul păsărilor și vântul prin sălcii.', 'Pe alee sunt bănci, dacă vrei să faci o pauză.', 'Ușa pavilionului este la capătul aleii.'],
       ['În pavilion', 'O singură încăpere luminoasă, cu scaune pliante și ferestre mari. Discuțiile sunt mici și se termină de obicei la începutul serii.', 'Lumina se schimbă odată cu vremea.', 'Personalul de la ușă îți poate arăta un loc mai liniștit.'],
     ],
-    alt: 'O cameră liniștită cu scaune și o fereastră spre grădină (ilustrație)',
   },
   de: {
     name: 'Gartenpavillon',
@@ -108,7 +106,6 @@ const pavilion: Record<Locale, { name: string; description: string; arrivalInfo:
       ['Der Gartenweg', 'Ein ebener Kiesweg führt vom Museumscafé zum Pavillon. Vogelgesang und Wind in den Weiden sind meist die lautesten Geräusche.', 'Entlang des Wegs stehen Bänke, falls Sie pausieren möchten.', 'Die Tür des Pavillons liegt am Ende des Wegs.'],
       ['Im Pavillon', 'Ein heller Raum mit Klappstühlen und großen Fenstern. Die Vorträge sind klein und enden meist am frühen Abend.', 'Das Licht ändert sich mit dem Wetter.', 'Das Personal an der Tür zeigt Ihnen einen ruhigeren Platz.'],
     ],
-    alt: 'Ein ruhiger Raum mit Stühlen und einem Fenster zum Garten (Illustration)',
   },
 };
 const pavilionSensory: SensoryProfile[] = [
@@ -166,7 +163,7 @@ function sampleStored(placeId: string): Stored | null {
       const text = pavilion[locale];
       texts[locale] = {
         name: text.name, description: text.description, arrivalInfo: text.arrivalInfo,
-        zones: Object.fromEntries(text.steps.map(([title, description, note, next], i) => [pavilionZones[i], { title, description, note, next, alt: i === 1 ? text.alt : '' }])),
+        zones: Object.fromEntries(text.steps.map(([title, description, note, next], i) => [pavilionZones[i], { title, description, note, next, alt: i === 0 ? demoFacadePhoto[locale].alt : '' }])),
         fields: {},
       };
     }
@@ -176,7 +173,7 @@ function sampleStored(placeId: string): Stored | null {
         revision: 1, city: 'Willow Bay', address: 'Willow Square 4 — fictional address', countryCode: '', placeType: 'cultural',
         zones: pavilionZones.map((zoneId, i) => ({
           id: zoneId, type: 'visit-space', optional: false, hidden: [], sensory: pavilionSensory[i], fields: [],
-          photo: i === 1 ? { id: pavilionPhoto, storageKey: demoPhotoKey(placeId, zoneId, pavilionPhoto), rights: 'NERUMA illustration — fictional example', photographedOn: photoDate } : undefined,
+          photo: i === 0 ? { id: pavilionPhoto, storageKey: demoPhotoKey(placeId, zoneId, pavilionPhoto), rights: demoFacadePhoto.en.rights, photographedOn: demoEntrancePhotoDate } : undefined,
         })),
       },
       texts,
