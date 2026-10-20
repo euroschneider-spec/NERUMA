@@ -43,6 +43,13 @@ export const demoEntrancePhoto: Record<Locale, { alt: string; rights: string }> 
   ro: { alt: 'O clădire de muzeu placată cu piatră, cu intrare de sticlă la nivelul străzii', rights: 'Fotografie furnizată de proprietarul proiectului, folosită ca exemplu' },
   de: { alt: 'Ein steinverkleidetes Museumsgebäude mit gläsernem Eingang auf Straßenebene', rights: 'Foto vom Projektinhaber, als Beispiel verwendet' }
 };
+/** The second sample photograph: the Garden Pavilion's first step in the demo workspace, and the example card in Explore. */
+export const demoFacadePhoto: Record<Locale, { alt: string; rights: string }> = {
+  en: { alt: 'A museum building covered in thin vertical rods in red, orange, green and blue, with a band of dark glass above a covered walkway', rights: demoEntrancePhoto.en.rights },
+  ro: { alt: 'O clădire de muzeu acoperită cu bare verticale subțiri roșii, portocalii, verzi și albastre, cu o bandă de sticlă închisă deasupra unei treceri acoperite', rights: demoEntrancePhoto.ro.rights },
+  de: { alt: 'Ein Museumsgebäude, verkleidet mit dünnen senkrechten Stäben in Rot, Orange, Grün und Blau, mit einem dunklen Glasband über einem überdachten Gehweg', rights: demoEntrancePhoto.de.rights }
+};
+export const demoFacadePhotoSrc = '/photos/pavilion.jpg';
 export const demoEntrancePhotoSrc = '/photos/entrance.jpg';
 export const demoEntrancePhotoDate = '2026-09-01';
 export function getDemoGuide(locale: Locale): Guide {
