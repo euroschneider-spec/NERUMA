@@ -37,7 +37,15 @@ const content: Record<Locale, string[][]> = {
     ['Der Ruheraum', 'Dieser kleine Raum bietet weicheres Licht, Stühle und ein Gartenfenster. Im Beispiel ist er während des Besuchs verfügbar.', 'Nutzen Sie den Raum für eine Pause. Fragen Sie, ob er besetzt ist. Er ist nicht schalldicht.', 'Kehren Sie zum Empfang zurück, um zu gehen oder den Besuch fortzusetzen.']
   ]
 };
+/** The entrance step of the example guide shows a photograph; the other steps use the site's illustrations. */
+export const demoEntrancePhoto: Record<Locale, { alt: string; rights: string }> = {
+  en: { alt: 'A stone-clad museum building with a glass entrance at street level', rights: 'Photo supplied by the project owner, used as an example' },
+  ro: { alt: 'O clădire de muzeu placată cu piatră, cu intrare de sticlă la nivelul străzii', rights: 'Fotografie furnizată de proprietarul proiectului, folosită ca exemplu' },
+  de: { alt: 'Ein steinverkleidetes Museumsgebäude mit gläsernem Eingang auf Straßenebene', rights: 'Foto vom Projektinhaber, als Beispiel verwendet' }
+};
+export const demoEntrancePhotoSrc = '/photos/entrance.jpg';
+export const demoEntrancePhotoDate = '2026-09-01';
 export function getDemoGuide(locale: Locale): Guide {
   return { schemaVersion:1, title: locale==='en' ? 'The Willow Museum' : locale==='ro' ? 'Muzeul Willow' : 'Das Willow Museum', locale, sourceLevel:'venue_provided', isDemo:true,
-    zones: content[locale].map(([title,description,note,next], i) => ({ id:['entrance','reception','collection','interactive','quiet-room'][i], title,description,note,next, illustration:`/illustrations/${['entrance','reception','collection','interactive','quiet-room'][i]}.svg`, sensory: profiles[i] })) };
+    zones: content[locale].map(([title,description,note,next], i) => ({ id:['entrance','reception','collection','interactive','quiet-room'][i], title,description,note,next, illustration:`/illustrations/${['entrance','reception','collection','interactive','quiet-room'][i]}.svg`, sensory: profiles[i], photo: i===0 ? { id:'entrance', src:demoEntrancePhotoSrc, photographedOn:demoEntrancePhotoDate, ...demoEntrancePhoto[locale] } : undefined })) };
 }

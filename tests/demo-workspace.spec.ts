@@ -24,7 +24,7 @@ test('the dashboard has a published museum with a QR code and an unfinished pavi
   await expect(cards).toHaveCount(2);
   const museum = cards.filter({ hasText: 'The Willow Museum' });
   await expect(museum.locator('.status-badge')).toHaveText('Published');
-  await expect(museum.locator('img.location-photo')).toHaveAttribute('src', /illustrations\//);
+  await expect(museum.locator('img.location-photo')).toHaveAttribute('src', /(illustrations|photos)\//);
   await expect(museum.getByText('Nothing needs attention.')).toBeVisible();
   await expect(museum.locator('.location-visits strong')).toHaveText('128');
   const pavilionCard = cards.filter({ hasText: 'Garden Pavilion' });
