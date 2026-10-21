@@ -1015,6 +1015,16 @@ try {
     await expect(view.getByLabel('Password',{exact:true})).toHaveAccessibleDescription(/Use at least 12 characters\.$/);
     await view.getByLabel('Password',{exact:true}).fill('a-long-enough-passphrase');
     await expect(view.getByLabel('Password',{exact:true})).not.toHaveAttribute('aria-invalid','true');
+    // The eye button shows what was typed and hides it again; it is a pressed/not-pressed button with one name.
+    const eye=view.getByRole('button',{name:'Show password',exact:true});
+    await expect(view.getByLabel('Password',{exact:true})).toHaveAttribute('type','password');
+    await expect(eye).toHaveAttribute('aria-pressed','false');
+    await eye.click();
+    await expect(view.getByLabel('Password',{exact:true})).toHaveAttribute('type','text');
+    await expect(view.getByLabel('Password',{exact:true})).toHaveValue('a-long-enough-passphrase');
+    await expect(eye).toHaveAttribute('aria-pressed','true');
+    await eye.click();
+    await expect(view.getByLabel('Password',{exact:true})).toHaveAttribute('type','password');
     // Back and Forward leave no warning behind, and what was typed is still there.
     await view.goto(`${base}/en/login`);await view.goBack();
     await expect(view.locator('[aria-invalid="true"]')).toHaveCount(0);

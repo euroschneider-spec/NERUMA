@@ -8,6 +8,7 @@ import { fill } from './account-deletion';
 const en = {
   missing: 'Fill in “{field}”.',
   tick: 'Tick this box to continue.',
+  showPassword: 'Show password',
   tooShort: 'Use at least {min} characters.',
   invalid: 'Check this field: the format is not right.',
   format: {
@@ -20,6 +21,7 @@ export type WarningCopy = typeof en;
 const ro: WarningCopy = {
   missing: 'Completează „{field}”.',
   tick: 'Bifează această casetă pentru a continua.',
+  showPassword: 'Arată parola',
   tooShort: 'Folosește cel puțin {min} caractere.',
   invalid: 'Verifică acest câmp: formatul nu este corect.',
   format: {
@@ -31,6 +33,7 @@ const ro: WarningCopy = {
 const de: WarningCopy = {
   missing: 'Füllen Sie „{field}“ aus.',
   tick: 'Setzen Sie hier ein Häkchen, um fortzufahren.',
+  showPassword: 'Passwort anzeigen',
   tooShort: 'Verwenden Sie mindestens {min} Zeichen.',
   invalid: 'Prüfen Sie dieses Feld: Das Format stimmt nicht.',
   format: {

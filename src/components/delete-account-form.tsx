@@ -5,6 +5,7 @@ import { signOut } from '@/app/auth/actions';
 import { getOrganisationCopy } from '@/lib/organisation-copy';
 import { fill, getDeletionCopy, longDate } from '@/lib/account-deletion';
 import type { Locale } from '@/lib/i18n';
+import { PasswordInput } from './form-field';
 
 /**
  * Password (and code), one tick that names the date, then the result: the account is locked and the data is ready. The page
@@ -44,7 +45,7 @@ export function DeleteAccountForm({ locale, enrolled, date, lockedUntil }: { loc
         <legend>{t.title}</legend>
         <div className="form-field">
           <label htmlFor="delete-password">{t.password}</label>
-          <input id="delete-password" type="password" name="password" autoComplete="current-password" required maxLength={128} />
+          <PasswordInput locale={locale} id="delete-password" name="password" autoComplete="current-password" required maxLength={128} />
         </div>
         {enrolled && (
           <div className="form-field">

@@ -10,7 +10,7 @@ import { MandateUpload } from './mandate-upload';
 import { ChoiceGroup } from './choice-group';
 import { getEvidenceCopy, type MandateDocument } from '@/lib/mandate-evidence';
 import { getVerificationCopy } from '@/lib/verification';
-import { CheckField, Field, useFormWarnings } from './form-field';
+import { CheckField, Field, PasswordInput, useFormWarnings } from './form-field';
 import { ResponsibilityNotice } from './responsibility-notice';
 
 export function OrganisationForm({ locale, mode, enabled, initial, initialDocuments=[] }: {
@@ -51,7 +51,7 @@ export function OrganisationForm({ locale, mode, enabled, initial, initialDocume
         {mode === 'register' && <section className="wide"><h3>{e.title}</h3><p>{e.hint}</p><p>{e.afterEmail}</p></section>}
         {mode !== 'onboard' && <>
           <Field w={w} name="email" label={t.email}><input type="email" name="email" autoComplete="email" required maxLength={254}/></Field>
-          <Field w={w} name="password" label={t.password} hint={mode === 'register' ? t.passwordHint : undefined}><input type="password" name="password" autoComplete={mode === 'register' ? 'new-password' : 'current-password'} required minLength={mode === 'register' ? 12 : 1} maxLength={128}/></Field>
+          <Field w={w} name="password" label={t.password} hint={mode === 'register' ? t.passwordHint : undefined}><PasswordInput locale={locale} name="password" autoComplete={mode === 'register' ? 'new-password' : 'current-password'} required minLength={mode === 'register' ? 12 : 1} maxLength={128}/></Field>
         </>}
       </div>
       {hasOrganisation && <>

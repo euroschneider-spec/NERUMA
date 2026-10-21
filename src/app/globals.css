@@ -265,6 +265,9 @@ main { min-height: 65vh; }
    itself must not inherit the indent, so it is reset. */
 .field > label, .label, .form-field > label, label.form-field, .choice-label { text-indent: 11px; }
 .form-field .label-row > label { padding-left: 11px; }
+.password-box { position: relative; display: flex; }
+.password-box input { padding-right: 52px; }
+.password-box .icon-button { position: absolute; top: 0; right: 0; height: 100%; }
 .form-field input, .form-field textarea, .form-field select, .field input, .field textarea, .field select { text-indent: 0; }
 .input, input, select, textarea {
   width: 100%; min-width: 0; min-height: 48px; padding: 6px 10px; font: inherit;

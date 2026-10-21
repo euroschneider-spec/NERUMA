@@ -78,6 +78,7 @@ Languages everywhere: **English, Romanian, German.** Root `/` opens English; an 
   country code, registry reference (optional).
 - **Representative**: name, role, and how their authority can be confirmed (20 to 2,000 characters).
 - **Account**: work email and password (12 to 128 characters).
+  Every password box has an eye button that shows what was typed and hides it again (registration, sign-in, the password forms, account deletion; every language).
 - **The responsibility text** (why accurate information matters, what the organisation answers for) sits directly above
   the statements; *For organisations* links to it.
 - **Two statements**, both required: "I am authorised to represent this organisation" and the responsibility statement for the
