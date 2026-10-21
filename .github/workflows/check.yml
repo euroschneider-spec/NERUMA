@@ -24,7 +24,7 @@ jobs:
   # Four shards of the same run: Playwright splits the tests, every test runs in exactly one shard.
   e2e:
     name: e2e (${{ matrix.shard }}/4)
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04 # ubuntu-latest is 26.04, which Playwright 1.58 cannot install Chromium on
     strategy:
       fail-fast: false
       matrix:
@@ -51,7 +51,7 @@ jobs:
   # The suite is split into groups that each start from a fresh fixture (scripts/test-workspace.mjs --group=...).
   workspace:
     name: workspace (${{ matrix.group }})
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04 # ubuntu-latest is 26.04, which Playwright 1.58 cannot install Chromium on
     strategy:
       fail-fast: false
       matrix:
