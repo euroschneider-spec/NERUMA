@@ -1,4 +1,4 @@
-import { demoEntrancePhoto, demoFacadePhoto, demoFacadePhotoSrc, demoEntrancePhotoDate, demoEntrancePhotoSrc, getDemoGuide, type SensoryLevel, type SensoryProfile } from './demo';
+import { demoEntrancePhoto, demoPavilionPhoto, demoPavilionPhotoSrc, demoEntrancePhotoDate, demoEntrancePhotoSrc, getDemoGuide, type SensoryLevel, type SensoryProfile } from './demo';
 import type { Locale } from './i18n';
 import {
   placeAttention,
@@ -73,7 +73,7 @@ const willowArt = ['entrance', 'reception', 'collection', 'interactive', 'quiet-
 /** The sample photos are the site's own illustrations; a photo the visitor adds is kept in their browser instead. */
 const sampleSources: Record<string, string> = {
   ...Object.fromEntries(willowPhotos.map((photo, i) => [photo, i === 0 ? demoEntrancePhotoSrc : `/illustrations/${willowArt[i]}.svg`])),
-  [pavilionPhoto]: demoFacadePhotoSrc,
+  [pavilionPhoto]: demoPavilionPhotoSrc,
 };
 export const demoSampleSource = (photoId: string): string | undefined => sampleSources[photoId];
 export const demoPhotoKey = (placeId: string, zoneId: string, photoId: string) =>
@@ -163,7 +163,7 @@ function sampleStored(placeId: string): Stored | null {
       const text = pavilion[locale];
       texts[locale] = {
         name: text.name, description: text.description, arrivalInfo: text.arrivalInfo,
-        zones: Object.fromEntries(text.steps.map(([title, description, note, next], i) => [pavilionZones[i], { title, description, note, next, alt: i === 0 ? demoFacadePhoto[locale].alt : '' }])),
+        zones: Object.fromEntries(text.steps.map(([title, description, note, next], i) => [pavilionZones[i], { title, description, note, next, alt: i === 0 ? demoPavilionPhoto[locale].alt : '' }])),
         fields: {},
       };
     }
@@ -173,7 +173,7 @@ function sampleStored(placeId: string): Stored | null {
         revision: 1, city: 'Willow Bay', address: 'Willow Square 4 — fictional address', countryCode: '', placeType: 'cultural',
         zones: pavilionZones.map((zoneId, i) => ({
           id: zoneId, type: 'visit-space', optional: false, hidden: [], sensory: pavilionSensory[i], fields: [],
-          photo: i === 0 ? { id: pavilionPhoto, storageKey: demoPhotoKey(placeId, zoneId, pavilionPhoto), rights: demoFacadePhoto.en.rights, photographedOn: demoEntrancePhotoDate } : undefined,
+          photo: i === 0 ? { id: pavilionPhoto, storageKey: demoPhotoKey(placeId, zoneId, pavilionPhoto), rights: demoPavilionPhoto.en.rights, photographedOn: demoEntrancePhotoDate } : undefined,
         })),
       },
       texts,
