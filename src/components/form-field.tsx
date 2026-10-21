@@ -1,6 +1,7 @@
 'use client';
 import { cloneElement, useEffect, useId, useState, startTransition } from 'react';
-import type { ChangeEvent, FormEvent, ReactElement } from 'react';
+import type { ChangeEvent, FormEvent, InputHTMLAttributes, ReactElement } from 'react';
+import { Eye, EyeOff } from 'lucide-react';
 import type { Locale } from '@/lib/i18n';
 import { getWarningCopy, warningFor } from '@/lib/form-warnings';
 
@@ -86,6 +87,23 @@ export function CheckField({ w, name, label, className = '' }: { w: FormWarnings
         {label}
       </label>
       {warning && <p id={`${id}-warning`} className="field-warning">{warning}</p>}
+    </div>
+  );
+}
+
+/**
+ * A password box with a button that shows what was typed. The button keeps one name and says whether it is pressed, so a screen
+ * reader hears "Show password, pressed" rather than a name that changes. Everything else goes to the input, so a `Field` can wrap it.
+ */
+export function PasswordInput({ locale, ...input }: { locale: Locale } & Omit<InputHTMLAttributes<HTMLInputElement>, 'type'>) {
+  const copy = getWarningCopy(locale);
+  const [shown, setShown] = useState(false);
+  return (
+    <div className="password-box">
+      <input {...input} type={shown ? 'text' : 'password'} />
+      <button type="button" className="icon-button" aria-label={copy.showPassword} aria-pressed={shown} onClick={() => setShown((value) => !value)}>
+        {shown ? <EyeOff size={20} aria-hidden="true" /> : <Eye size={20} aria-hidden="true" />}
+      </button>
     </div>
   );
 }

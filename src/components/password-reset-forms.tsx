@@ -4,7 +4,7 @@ import { changePassword, requestPasswordReset, setNewPassword } from '@/app/auth
 import type { Locale } from '@/lib/i18n';
 import { getResetCopy, MAX_PASSWORD, MIN_PASSWORD } from '@/lib/password-reset';
 import { getTwoFactorCopy } from '@/lib/two-factor';
-import { Field, useFormWarnings } from './form-field';
+import { Field, PasswordInput, useFormWarnings } from './form-field';
 
 /** Step 1: the email address. The answer is the same whether or not an account exists. */
 export function ResetRequestForm({ locale, enabled }: { locale: Locale; enabled: boolean }) {
@@ -45,10 +45,10 @@ export function SetPasswordForm({ locale, needsCode }: { locale: Locale; needsCo
           </>
         )}
         <Field w={w} name="password" label={t.newPassword} hint={t.hint}>
-          <input type="password" name="password" autoComplete="new-password" required minLength={MIN_PASSWORD} maxLength={MAX_PASSWORD} />
+          <PasswordInput locale={locale} name="password" autoComplete="new-password" required minLength={MIN_PASSWORD} maxLength={MAX_PASSWORD} />
         </Field>
         <Field w={w} name="repeat" label={t.repeatPassword}>
-          <input type="password" name="repeat" autoComplete="new-password" required minLength={MIN_PASSWORD} maxLength={MAX_PASSWORD} />
+          <PasswordInput locale={locale} name="repeat" autoComplete="new-password" required minLength={MIN_PASSWORD} maxLength={MAX_PASSWORD} />
         </Field>
         <button className="button" type="submit">{pending ? t.saving : t.save}</button>
       </fieldset>
@@ -69,7 +69,7 @@ export function ChangePasswordForm({ locale, needsCode }: { locale: Locale; need
       <form {...w.form} className="organisation-form" aria-labelledby="change-password" key={state.sent ? 'done' : 'open'}>
         <fieldset disabled={pending}>
           <Field w={w} name="current" label={t.currentPassword}>
-            <input type="password" name="current" autoComplete="current-password" required maxLength={MAX_PASSWORD} />
+            <PasswordInput locale={locale} name="current" autoComplete="current-password" required maxLength={MAX_PASSWORD} />
           </Field>
           {needsCode && (
             <Field w={w} name="code" label={getTwoFactorCopy(locale).code}>
@@ -77,10 +77,10 @@ export function ChangePasswordForm({ locale, needsCode }: { locale: Locale; need
             </Field>
           )}
           <Field w={w} name="password" label={t.newPassword} hint={t.hint}>
-            <input type="password" name="password" autoComplete="new-password" required minLength={MIN_PASSWORD} maxLength={MAX_PASSWORD} />
+            <PasswordInput locale={locale} name="password" autoComplete="new-password" required minLength={MIN_PASSWORD} maxLength={MAX_PASSWORD} />
           </Field>
           <Field w={w} name="repeat" label={t.repeatPassword}>
-            <input type="password" name="repeat" autoComplete="new-password" required minLength={MIN_PASSWORD} maxLength={MAX_PASSWORD} />
+            <PasswordInput locale={locale} name="repeat" autoComplete="new-password" required minLength={MIN_PASSWORD} maxLength={MAX_PASSWORD} />
           </Field>
           <button className="button" type="submit">{pending ? t.saving : t.save}</button>
         </fieldset>
