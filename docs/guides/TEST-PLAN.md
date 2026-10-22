@@ -194,8 +194,8 @@ Waiting for "Delete my account and export my data" (TECH-TASKS §13 step 3). Reh
 
 The machines test this against a fake Supabase (`scripts/workspace-fixture.mjs`); only the real one proves the email link, the template variables and the two-factor rule.
 
-- [ ] Paste the two templates from `supabase/templates/auth-email-settings.example.json` into Supabase (*Authentication → Emails → Templates*: **Confirm sign up** and **Reset password**, with the
-  subjects in the file) and check *Authentication → URL Configuration*: Site URL `https://neruma.lignorae.com`.
+- [x] Paste the two templates from `supabase/templates/auth-email-settings.example.json` into Supabase (*Authentication → Emails → Templates*: **Confirm sign up** and **Reset password**, with the
+  subjects in the file) and check *Authentication → URL Configuration*: Site URL `https://neruma.lignorae.com`. Pasted by the owner on 19 October 2026 (confirmation and reset); the Site URL check is still open (TECH-TASKS §4).
 - [ ] On the sign-in page click *Forgot your password?*, enter your own account's address: the same message appears as for an unknown address. The email arrives from `NERUMA <noreply@mail.lignorae.com>`, in your language, text and links only,
   with the link also written out.
 - [ ] Open the link: a page with one button. Press it: *Choose a new password*. Choose one of 12 or more characters: you land on sign-in with "Your password was changed", the old password is refused and the new one works.
