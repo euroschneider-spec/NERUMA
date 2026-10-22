@@ -981,6 +981,8 @@ try {
     return files;};
   // Password reset (docs/briefs/2026-10-18-password-reset.md): the fixture's Auth service issues one-time recovery tokens like Supabase's.
   const axeClean=async(target,label)=>{const result=await new AxeBuilder({page:target}).withTags(['wcag2a','wcag2aa','wcag21a','wcag21aa','wcag22aa']).analyze();assert.deepEqual(result.violations.map(v=>v.id),[],label);};
+  // The eye sits in the middle of its box: every password box on the page, the box and the button share one centre line.
+  const eyeCentred=async(target,label)=>{const offsets=await target.locator('.password-box').evaluateAll(boxes=>boxes.map(box=>{const a=box.querySelector('input').getBoundingClientRect(),b=box.querySelector('button').getBoundingClientRect(),c=box.querySelector('svg').getBoundingClientRect();return Math.max(Math.abs(a.top+a.height/2-b.top-b.height/2),Math.abs(a.top+a.height/2-c.top-c.height/2));}));assert.ok(offsets.length>0,label+': no password box');assert.ok(offsets.every(o=>o<=1),label+': the eye is off centre by '+offsets.join(', ')+'px');};
   const resetLink=async(email,locale='en')=>{const {token_hash:token}=await fixture(`last-recovery?email=${email}`);assert.ok(token,`a recovery token for ${email}`);return `${base}/${locale}/login/reset/continue?token_hash=${token}`;};
   // Warnings on forms (docs/briefs/2026-10-18-form-warnings.md): the screen still jumps to the first field that needs attention, every such field says what to do,
   // the warning goes when the field is right, and nothing is checked while typing or left showing after Back.
@@ -1019,6 +1021,7 @@ try {
     const eye=view.getByRole('button',{name:'Show password',exact:true});
     await expect(view.getByLabel('Password',{exact:true})).toHaveAttribute('type','password');
     await expect(eye).toHaveAttribute('aria-pressed','false');
+    await eyeCentred(view,'registration');
     await eye.click();
     await expect(view.getByLabel('Password',{exact:true})).toHaveAttribute('type','text');
     await expect(view.getByLabel('Password',{exact:true})).toHaveValue('a-long-enough-passphrase');
@@ -1072,6 +1075,7 @@ try {
     // The change-password form on the account page.
     await login(view,4);await view.goto(`${base}/en/account`);await view.waitForLoadState('networkidle');
     const box=view.getByRole('region',{name:'Change your password'});
+    await eyeCentred(box,'change password');
     await box.getByRole('button',{name:'Save new password',exact:true}).click();
     await expect(box.getByLabel('Current password',{exact:true})).toBeFocused();
     await expect(box.getByLabel('Current password',{exact:true})).toHaveAccessibleDescription('Fill in “Current password”.');
