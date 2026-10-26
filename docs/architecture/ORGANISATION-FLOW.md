@@ -12,7 +12,7 @@
 
 The dedicated Supabase project is `ywbcsvswisorlgajbkev`. The owner installed the first four migrations and previously confirmed the old signup → email confirmation → organisation creation flow. The fifth migration replaces immediate tenant creation with pending verification requests and revokes both old onboarding RPC entry points. See [the verification procedure](organisation-verification.md) for the new flow, administrator permissions and activation.
 
-The separate VIANORAE Vercel project has dedicated Preview/Production settings and the authorised temporary public subdomain `neruma.lignorae.com`. No service-role key or another application's credentials are used. Editable metadata only prefills suggestions; submitted identity and responsibilities are independently validated and recorded. Confirmed users without an approved organisation cannot access the online editor or private photographs.
+The separate VIANORAE Vercel project has dedicated Preview/Production settings and the public address `neruma.eu`. No service-role key or another application's credentials are used. Editable metadata only prefills suggestions; submitted identity and responsibilities are independently validated and recorded. Confirmed users without an approved organisation cannot access the online editor or private photographs.
 
 Manual approval requires independent entity and representative checks, an evidence reference and an applicant-facing decision. Decisions are versioned and audited; applicants can correct requests when additional information is requested. Platform administrators are explicitly bootstrapped through trusted SQL and are separate from organisation admins. A reviewer cannot approve their own application.
 

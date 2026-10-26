@@ -263,6 +263,14 @@ protection looks for is unchanged. `workspace` is a matrix of four groups of `sc
 on its own fixture; `e2e` is four Playwright shards (`--shard=n/4`); a group that needs state from another sets it up itself (the accounts group starts its own Stripe plan). Pushes to branches run only through their pull request; `main` still
 runs on push. A branch without a pull request gets no CI until one is opened.
 
+### The site address is neruma.eu
+
+Owner, 2026-10-26. The site lives at **`https://neruma.eu`**, not under `lignorae.com`. The earlier addresses (`vianorae.lignorae.com`, then
+`neruma.lignorae.com`, TECH-TASKS §17) were temporary. Docs, `.env.example` and the smoke-test examples name the new address; the history entries stay as written.
+Still on `lignorae.com`, because they are separate things the owner has not moved: the email sending domain `mail.lignorae.com` (verified in Resend) and the
+planned `support@lignorae.com` mailbox. Moving the site also means (owner steps, not code): add `neruma.eu` in Vercel and make it primary, set `VIANORAE_SITE_URL`,
+set Supabase *URL Configuration* (Site URL and `/auth/callback`), and update the Stripe webhook address. A QR code made on an old address keeps pointing to it.
+
 ## Not yet discussed
 
 - `DESIGN-TASKS.md` sections 5, 6 (other items) and 7.

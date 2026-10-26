@@ -103,7 +103,7 @@ image, no tracking pixels, no rewritten links. A text header "Neruma" in the log
   DNS) or a real mailbox. It must exist and be read before any email says "write to support@lignorae.com" reaches a real person. **Paused (no budget, 2026-10-18): the emails name no address for now**; when the mailbox exists, put the line back in both templates, the settings file and `email-template.test.ts`.
 - [x] Sending domain: SPF, DKIM and return-path records for `mail.lignorae.com` are in Vercel's DNS and Resend says verified. DMARC is not set yet: add a
   `_dmarc.mail` TXT record (`v=DMARC1; p=none; rua=mailto:<an address you read>`) once mail is flowing, and tighten it later.
-- [ ] Check that Supabase's Authentication → URL Configuration has the Site URL `https://neruma.lignorae.com` and `…/auth/callback` in the redirect list, and
+- [ ] Check that Supabase's Authentication → URL Configuration has the Site URL `https://neruma.eu` and `…/auth/callback` in the redirect list, and
   `VIANORAE_SITE_URL` is set in Vercel (the friend with Vercel access is checking).
 - [x] Restyle the confirmation email: text header, new colours, same wording, and the support address (brief `2026-10-18-password-reset.md`). **Paste the new template and subject into Supabase** (`TEST-PLAN.md` A12). Keep `supabase/templates/` as the source and the pasted
   example file in step.
@@ -555,7 +555,7 @@ Order, so that nothing is ever without a working address:
    `docs/guides/TESTING.md`, `docs/guides/TEST-PLAN.md`, `docs/planning/NEXT-STEPS.md`, `docs/architecture/ORGANISATION-FLOW.md`, `GOTCHA.md`; history entries
    stay as written); `euroschneider-spec/Vianorae` in `README.md` and `NEXT-STEPS.md`; the package name `vianorae-platform` in `package.json` and `package-lock.json`;
    and the naming rule in `CLAUDE.md` and `README.md`.
-7. [ ] **Check, after deploying:** `SMOKE_URL=https://neruma.lignorae.com npm run test:smoke`, (skip the old-QR-address check while no code has been printed).
+7. [ ] **Check, after deploying:** `SMOKE_URL=https://neruma.eu npm run test:smoke`, (skip the old-QR-address check while no code has been printed).
 
 ## 18. Going live: what is still missing (review of 2026-10-18; email is its own section, §4)
 
@@ -606,7 +606,7 @@ the section that holds the detail. Not legal advice: the legal items need a qual
 **Testing only people can do** (`TEST-PLAN.md` Part A)
 
 - [ ] Real phones, real authenticator apps, a screen reader, and publish plus QR on an actual phone.
-- [ ] After the address rename (§17): `SMOKE_URL=https://neruma.lignorae.com npm run test:smoke`.
+- [ ] After the address rename (§17): `SMOKE_URL=https://neruma.eu npm run test:smoke`.
 
 **Suggested order:** decide the controller and the seller, then book the lawyer for the texts; email, the address rename and the Frankfurt
 region; the backup rehearsal and the hand-tests with real devices; Stripe live mode and the start date last.

@@ -121,14 +121,14 @@ A hosted dev database for trying migrations against a real Supabase is described
 `tests/smoke.spec.ts` checks a real deployment, read-only, with no mocked data and no accounts created:
 
 ```sh
-SMOKE_URL=https://neruma.lignorae.com npm run test:smoke
+SMOKE_URL=https://neruma.eu npm run test:smoke
 ```
 
 With the project's public address and publishable key it also asks the database, as an anonymous visitor, what it will
 let anyone do. Run it after every change to Vercel's settings, after installing a migration, and before sharing a link:
 
 ```sh
-SMOKE_URL=https://neruma.lignorae.com SMOKE_SUPABASE_URL=https://<ref>.supabase.co SMOKE_SUPABASE_KEY=sb_publishable_… npm run test:smoke
+SMOKE_URL=https://neruma.eu SMOKE_SUPABASE_URL=https://<ref>.supabase.co SMOKE_SUPABASE_KEY=sb_publishable_… npm run test:smoke
 ```
 
 The full list of what is tested, what only a person can test, and what is still open is in

@@ -30,7 +30,7 @@ setting names below are what to look for.
   `sb_publishable_` and was copied from `neruma-prod` (Get Connected → Publishable key). `VIANORAE_WORKSPACE_ENABLED` is `1`.
   Expected: the three Supabase values name the same project. *If not, registration is silently switched off.*
 - [ ] **Run the smoke test against production** (needs no key for the first part):
-  `SMOKE_URL=https://neruma.lignorae.com npm run test:smoke`. Expected: 6 passed, 7 skipped.
+  `SMOKE_URL=https://neruma.eu npm run test:smoke`. Expected: 6 passed, 7 skipped.
 - [ ] **Run it again with the database part.** Copy the public key from Supabase and run the second command in
   [TESTING.md](TESTING.md#testing-a-deployed-site). Expected: all 13 pass. A failing line names the problem
   ("verification migration", "disable_signup", a table readable by anyone…).
@@ -43,8 +43,8 @@ setting names below are what to look for.
   either way, but it should be off.*
 - [ ] **Multi-Factor: *TOTP (App Authenticator)* is enabled** for enrolling and verifying. If you can see *Recovery codes*,
   enable them. *Without TOTP the two-factor screens show an error.*
-- [ ] **Authentication → URL Configuration.** Site URL is `https://neruma.lignorae.com`. The only redirect URL is
-  `https://neruma.lignorae.com/auth/callback`. No `*` wildcards, no `localhost` left in production.
+- [ ] **Authentication → URL Configuration.** Site URL is `https://neruma.eu`. The only redirect URL is
+  `https://neruma.eu/auth/callback`. No `*` wildcards, no `localhost` left in production.
 - [ ] **Storage.** Both buckets (`vianorae-private-photos`, `vianorae-mandate-evidence`) are **private**. Try
   `https://ywbcsvswisorlgajbkev.supabase.co/storage/v1/object/public/vianorae-mandate-evidence/x.pdf` in a browser:
   expected a "Bucket not found" / error page, never a file.
@@ -155,7 +155,7 @@ The automated scans (axe) catch contrast and labels; they can't tell if it is *u
   exactly `vianorae:reading:v1`.
 - [ ] Sign in as an organisation. Expected: only cookies starting `sb-` and ending `-auth-token`. Sign out: they are gone.
 - [ ] Tick *Remember this device*. Expected: a `neruma_device` cookie, 30 days, marked HttpOnly and Secure in the table.
-- [ ] Open the **Network** tab on a public page. Expected: every request goes to `neruma.lignorae.com`, nothing else.
+- [ ] Open the **Network** tab on a public page. Expected: every request goes to `neruma.eu`, nothing else.
 - [ ] Read the privacy page in English, Romanian and German. Expected: it matches what you just saw.
 - [ ] In the Supabase dashboard open **Authentication → Users**. Expected: only an email, a creation date, a sign-in date. No
   names of devices, no IP addresses of visitors (Supabase's own logs keep IPs; check how long it keeps them and note it
@@ -195,7 +195,7 @@ Waiting for "Delete my account and export my data" (TECH-TASKS §13 step 3). Reh
 The machines test this against a fake Supabase (`scripts/workspace-fixture.mjs`); only the real one proves the email link, the template variables and the two-factor rule.
 
 - [ ] Paste the two templates from `supabase/templates/auth-email-settings.example.json` into Supabase (*Authentication → Emails → Templates*: **Confirm sign up** and **Reset password**, with the
-  subjects in the file) and check *Authentication → URL Configuration*: Site URL `https://neruma.lignorae.com`.
+  subjects in the file) and check *Authentication → URL Configuration*: Site URL `https://neruma.eu`.
 - [ ] On the sign-in page click *Forgot your password?*, enter your own account's address: the same message appears as for an unknown address. The email arrives from `NERUMA <noreply@mail.lignorae.com>`, in your language, text and links only,
   with the link also written out.
 - [ ] Open the link: a page with one button. Press it: *Choose a new password*. Choose one of 12 or more characters: you land on sign-in with "Your password was changed", the old password is refused and the new one works.

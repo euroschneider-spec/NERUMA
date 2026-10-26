@@ -51,4 +51,4 @@ the whole reset against the fixture's Auth service with and without two-factor, 
 
 **Not proven by the machines, needs a try on the real site** (`docs/guides/TEST-PLAN.md` A12): the email link and template variables on the real Supabase, the real two-factor
 rule, opening the link on another device. **The templates must be pasted into Supabase** (*Authentication → Emails → Templates*), and the Site URL must be
-`https://neruma.lignorae.com` (*URL Configuration*). Until the new recovery template is pasted, Supabase sends its English default, whose link does not work with this flow.
+`https://neruma.eu` (*URL Configuration*). Until the new recovery template is pasted, Supabase sends its English default, whose link does not work with this flow.
