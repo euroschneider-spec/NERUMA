@@ -188,41 +188,14 @@ main { min-height: 65vh; }
 .skip-link:focus { top: 8px; color: var(--color-bg); }
 
 /* ── Buttons ──────────────────────────────────────────────────────────── */
-.btn {
-  display: inline-flex; align-items: center; justify-content: center; gap: 6px;
-  cursor: pointer; text-decoration: none;
-  font-family: var(--font-heading); font-weight: var(--font-heading-weight);
-  font-size: 0.875rem; line-height: 1.2; color: var(--color-text);
-  background: transparent; border: 1px solid transparent;
-  padding: var(--space-2) 14px; border-radius: var(--radius-md);
-  min-height: 36px;
-}
-.btn svg { display: block; flex: none; }
-.btn:hover { color: var(--color-text); }
-.btn:disabled, .btn[aria-disabled="true"] { opacity: 0.45; cursor: not-allowed; }
-.btn-primary { background: var(--color-accent); color: var(--color-bg); }
-.btn-primary:hover { background: var(--color-accent-600); color: var(--color-bg); }
-.btn-primary:active { background: var(--color-accent-700); }
-.btn-primary:disabled:hover { background: var(--color-accent); }
-.btn-secondary { border-color: var(--color-divider); }
-.btn-secondary:hover { background: color-mix(in srgb, var(--color-text) 7%, transparent); }
-.btn-secondary:active { background: color-mix(in srgb, var(--color-text) 14%, transparent); }
-.btn-ghost { color: var(--color-accent-700); padding-inline: var(--space-2); }
-.btn-ghost:hover { color: var(--color-accent-700); background: color-mix(in srgb, var(--color-accent) 10%, transparent); }
-.btn-icon { width: 44px; height: 44px; padding: 0; flex: none; }
-.btn-lg { min-height: 48px; padding: 0 20px; font-size: 0.9375rem; }
-.btn-block { width: 100%; justify-content: flex-start; text-align: left; }
-.btn-danger { border-color: var(--color-divider); color: var(--color-text); }
-.btn-danger:hover { background: color-mix(in srgb, #e5484d 14%, transparent); }
+/* Two sizes, one system (docs/briefs/2026-10-26-button-sizes.md). Taller on phones, where a finger taps; the
+   same two heights size the fields and the top bar. */
+:root { --button-h: 44px; --button-h-small: 36px; }
+@media (min-width: 451px) { :root { --button-h: 40px; --button-h-small: 32px; } }
 
-/* Sidebar navigation buttons: active = primary, inactive = borderless secondary. */
-.side-link { width: 100%; justify-content: flex-start; min-height: 42px; border-color: transparent; }
-.side-link:not(.btn-primary):hover { background: color-mix(in srgb, var(--color-text) 7%, transparent); }
-
-/* Legacy button classes used across the existing pages, on the new tokens. */
 .button {
   display: inline-flex; align-items: center; justify-content: center; gap: 10px;
-  min-height: 48px; padding: 0 20px; border-radius: var(--radius-md);
+  min-height: var(--button-h); padding: 0 20px; border-radius: var(--radius-md);
   background: var(--color-accent); color: var(--color-bg);
   font-family: var(--font-heading); font-weight: var(--font-heading-weight);
   font-size: 0.9375rem; line-height: 1.2; text-decoration: none; text-align: center;
@@ -231,7 +204,7 @@ main { min-height: 65vh; }
 .button:hover { background: var(--color-accent-600); color: var(--color-bg); }
 .button:active { background: var(--color-accent-700); }
 .button:disabled { opacity: 0.45; cursor: not-allowed; }
-.button-small { min-height: 32px; padding: 4px 14px; font-size: 0.875rem; gap: 6px; }
+.button-small { min-height: var(--button-h-small); padding: 4px 14px; font-size: 0.875rem; gap: 6px; }
 .button-outline { background: transparent; border-color: var(--color-divider); color: var(--color-text); }
 .button-outline:hover { background: color-mix(in srgb, var(--color-text) 7%, transparent); color: var(--color-text); }
 .quiet-link {
@@ -268,10 +241,10 @@ main { min-height: 65vh; }
 .password-box { position: relative; display: flex; }
 .password-box input { padding-right: 52px; }
 /* margin: 0 beats `.organisation-form button { margin-top: 20px }`, which pushed the eye below the middle of the box. */
-.password-box .icon-button { position: absolute; top: 0; right: 0; bottom: 0; margin: 0; }
+.password-box .icon-button { position: absolute; top: 0; right: 0; bottom: 0; margin: 0; min-height: 0; }
 .form-field input, .form-field textarea, .form-field select, .field input, .field textarea, .field select { text-indent: 0; }
 .input, input, select, textarea {
-  width: 100%; min-width: 0; min-height: 48px; padding: 6px 10px; font: inherit;
+  width: 100%; min-width: 0; min-height: var(--button-h); padding: 6px 10px; font: inherit;
   font-size: 1rem; color: var(--color-text); caret-color: var(--color-accent);
   background: var(--color-surface);
   border: 1px solid var(--color-divider); border-radius: var(--radius-md);
@@ -448,7 +421,7 @@ legend { padding-inline: var(--space-2); max-width: 100%; font-weight: var(--fon
   border-bottom: 1px solid var(--color-divider); background: var(--color-bg);
 }
 /* Language, light or dark, and the reading button share one height and text size, on every screen. */
-.topbar { --topbar-control: 36px; }
+.topbar { --topbar-control: var(--button-h-small); }
 .topbar .theme-toggle, .topbar .topbar-reading { gap: 6px; min-height: var(--topbar-control); padding: 0 12px; font-size: 0.8125rem; }
 .topbar .theme-toggle.is-icon { width: var(--topbar-control); padding: 0; justify-content: center; }
 .topbar .topbar-reading .app-label { display: inline; }
@@ -476,7 +449,7 @@ legend { padding-inline: var(--space-2); max-width: 100%; font-weight: var(--fon
 .navigation a:hover, .navigation a[aria-current] { color: var(--color-accent-700); }
 /* Example guide (outlined) and For organisations (filled) end the menu as buttons. */
 .navigation .nav-button {
-  justify-content: center; min-height: 40px; padding: 0 16px; font-weight: 600;
+  justify-content: center; min-height: var(--button-h); padding: 0 16px; font-weight: 600;
   border: 1px solid var(--color-divider); border-radius: var(--radius-md);
 }
 .navigation .nav-button:hover { background: color-mix(in srgb, var(--color-text) 7%, transparent); color: var(--color-text); }
@@ -835,7 +808,7 @@ legend { padding-inline: var(--space-2); max-width: 100%; font-weight: var(--fon
 .read-aloud { border: 1px solid var(--color-divider); border-radius: var(--radius-lg); padding: 16px; background: var(--color-surface); min-width: 0; margin-top: 16px; }
 .read-aloud h3 { font-size: 1rem; margin-bottom: 8px; }
 .read-aloud .button-row { gap: 8px; }
-.read-aloud .button { min-height: 44px; padding: 0 14px; font-size: 0.875rem; }
+.read-aloud .button { padding: 0 14px; font-size: 0.875rem; }
 .read-aloud button:disabled { opacity: 0.45; cursor: not-allowed; }
 .audio-rate { margin-top: 12px; max-width: 210px; }
 .audio-status { font-size: 0.875rem; margin: 12px 0 0; color: var(--v-muted); }
@@ -889,7 +862,7 @@ legend { padding-inline: var(--space-2); max-width: 100%; font-weight: var(--fon
 input.sr-only:focus-visible + label { outline: 2px solid var(--color-accent); outline-offset: 2px; }
 
 /* ── Reflow: nothing creates horizontal page scrolling at large text ─── */
-h1, h2, h3, h4, .eyebrow, .button, .btn, .brand, .source-label { overflow-wrap: anywhere; }
+h1, h2, h3, h4, .eyebrow, .button, .brand, .source-label { overflow-wrap: anywhere; }
 p, li, dt, dd, summary, label, figcaption, a, .lbl, .small-label, .small-note { overflow-wrap: anywhere; }
 .footer-bottom nav { flex-wrap: wrap; }
 
@@ -942,14 +915,12 @@ p, li, dt, dd, summary, label, figcaption, a, .lbl, .small-label, .small-note { 
   html[data-spacing="true"] .brand { font-size: 0.8125rem; }
   /* Small screens: tighter controls so the header leaves room for the page. Still above the 24px WCAG 2.2 AA target. */
   .topbar { gap: 6px 8px; }
-  .button { min-height: 40px; padding: 0 16px; }
+  .button { padding: 0 16px; }
   .button-small { padding: 4px 12px; font-size: 0.8125rem; }
-  .btn-lg { min-height: 40px; }
   .button-row .button { width: 100%; }
   /* Phones: titles about 30px, and fields as tall as the buttons beside them. */
   h1 { font-size: 2rem; }
   h2 { font-size: 1.625rem; }
-  .input, input, select { min-height: 40px; }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -983,7 +954,7 @@ p, li, dt, dd, summary, label, figcaption, a, .lbl, .small-label, .small-note { 
 .app-nav a:hover { background: color-mix(in srgb, var(--color-text) 7%, transparent); }
 .app-nav a[data-active="true"] { background: var(--color-accent); color: var(--color-bg); }
 .app-sidebar-foot { margin-top: auto; display: flex; flex-direction: column; gap: 8px; align-items: stretch; }
-.app-sidebar-foot .language-switch summary, .app-sidebar-foot .theme-toggle, .app-reading, .app-signout { width: 100%; min-height: 36px; justify-content: flex-start; }
+.app-sidebar-foot .language-switch summary, .app-sidebar-foot .theme-toggle, .app-reading, .app-signout { width: 100%; min-height: var(--button-h-small); justify-content: flex-start; }
 .app-sidebar-foot form { margin-top: 8px; padding-top: 16px; border-top: 1px solid var(--color-divider); }
 /* The sidebar sits at the bottom of the screen, so its language menu opens upwards. */
 .app-sidebar .language-switch nav { top: auto; bottom: calc(100% + 8px); }
@@ -1051,7 +1022,7 @@ p, li, dt, dd, summary, label, figcaption, a, .lbl, .small-label, .small-note { 
   .app-sidebar[data-collapsed="true"] .app-nav a,
   .app-sidebar[data-collapsed="true"] .app-signout,
   .app-sidebar[data-collapsed="true"] .app-reading,
-  .app-sidebar[data-collapsed="true"] .theme-toggle { width: 44px; min-height: 40px; justify-content: center; padding: 0; }
+  .app-sidebar[data-collapsed="true"] .theme-toggle { width: 44px; min-height: var(--button-h-small); justify-content: center; padding: 0; }
   /* Folded, each icon names itself on hover or keyboard focus (the language code needs no tip). */
   .app-sidebar[data-collapsed="true"] [data-tip] { position: relative; }
   .app-sidebar[data-collapsed="true"] [data-tip]:hover::after,
@@ -1061,7 +1032,7 @@ p, li, dt, dd, summary, label, figcaption, a, .lbl, .small-label, .small-note { 
     background: var(--color-surface); border: 1px solid var(--color-divider); border-radius: var(--radius-md); box-shadow: var(--shadow-lg); pointer-events: none;
   }
   .app-sidebar[data-collapsed="true"] .app-sidebar-foot { align-items: center; }
-  .app-sidebar[data-collapsed="true"] .app-sidebar-foot .language-switch summary { width: 44px; min-height: 40px; padding: 0; justify-content: center; white-space: nowrap; }
+  .app-sidebar[data-collapsed="true"] .app-sidebar-foot .language-switch summary { width: 44px; min-height: var(--button-h-small); padding: 0; justify-content: center; white-space: nowrap; }
   .app-sidebar[data-collapsed="true"] .language-switch summary svg { display: none; }
   .app-sidebar[data-collapsed="true"] .app-sidebar-foot form { padding-top: 12px; }
 }
