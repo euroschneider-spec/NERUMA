@@ -64,7 +64,7 @@ Decision needed before starting.
   and the Terms page its own copy.
 - [ ] Register (3784px, 427 words): four info blocks before the form, which starts ~2 screens down.
   Put the form first.
-- [ ] Builder (10282px, ~12 screens): all five steps are open at once. Make each step an accordion.
+- [x] Builder (10282px, ~12 screens): all five steps are open at once. Make each step an accordion. Done: the first step is open, the others folded, with Expand all / Collapse all (checked 2026-10-26).
 - [ ] Home (4709px): the six feature cards take one row each. Use two columns or a compact list.
 - [ ] Explore: three filters, each offering only "All", for one result. Hide them until there are more
   places.
@@ -72,7 +72,7 @@ Decision needed before starting.
   ~330px; put them in one row.
 - [x] Top bar on content pages wraps to two rows (92px) because of *Summary / Full page*: that control moved into
   the reading panel; the top bar fits one row down to 320px.
-- [ ] Login: the resend-confirmation section is as prominent as sign-in and repeats its heading
+- [x] Login: the resend-confirmation section is as prominent as sign-in and repeats its heading
   (h2 + legend). Collapse it behind "Didn't get the email?".
 - [ ] Trim copy, e.g. "A NERUMA guide describes a place before you visit it. You read it on your phone
   or computer. You do not need an account." → "Read about a place before you go — on any device, no
@@ -123,11 +123,11 @@ Done on 2026-10-12: the top bar keeps three controls and everything else lives i
 - [x] The dot before the hero tagline and the ✓ before "No account needed…" centre on the whole
   block. When the text wraps, they sit between the lines. Align them to the first line
   (`.eyebrow`, `.reassurance` in `globals.css`).
-- [ ] Login: "Work email" and "Password" labels differ in size and colour, and their inputs are 3px
+- [x] Login: "Work email" and "Password" labels differ in size and colour, and their inputs are 3px
   out of line. `organisation-form.tsx` mixes `<label class="form-field">` with
-  `<div class="form-field"><label>`. Use one pattern.
+  `<div class="form-field"><label>`. Use one pattern. Done: both labels are 13px, the same colour, and label and input tops match (449.2 / 477.4px at 1280, checked 2026-10-26).
 - [ ] Login: the notice, sign-in form and resend panel end at three different widths (984 / 982 /
-  1196px).
+  1196px). Measured 2026-10-26: equal at 320 and 390px; at 1280px the form ends at 984px (it is capped at 900px) while the resend panel and the button row end at 1196px.
 - [ ] Home feature grid: six cards make a row of four and a row of two at desktop. Use 3 × 2.
 - [ ] Two button systems: `.btn` (36px) and `.button` (48px), plus `.button-small` (32px), `.btn-lg`
   (48px) and a 40px phone override. Settle on three sizes in one system.
