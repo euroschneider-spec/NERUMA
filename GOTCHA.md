@@ -200,3 +200,15 @@ platform administrator's sign-in claims in the session, and had only worked beca
 **Takeaway**: to forbid *new* rows where the code writes with upsert, put the check in the function, not in a row trigger. When you tighten what a role may do,
 expect old tests to have relied on the old power: look at who the session is, not only at the failing statement.
 
+
+## 2026-10-26 — a longer example description broke the read-aloud test, in German only
+
+I lengthened the German text of step 4 of the example guide to describe a new photo. `tests/read-aloud.spec.ts` (German) failed: "expected the spoken text to contain" the description. The speech splitter (`speechChunks` in `src/lib/speech.ts`) cuts text into pieces of at most 220 characters, at sentence ends, and the test expects each guide description to arrive as one piece. English was 203 characters and passed, Romanian 209 and passed, German was 232 and failed.
+
+**Takeaway**: keep every description in `src/lib/demo.ts` (all three languages) at 220 characters or fewer. German is the longest language; count it first.
+
+## 2026-10-26 — a server I thought was stopped was still serving the old build
+
+I stopped the test server with `lsof -ti:3100 | xargs kill`, started a new one, and ran 42 browser tests that failed for no reason I could see. The new server had died with `EADDRINUSE`; an older `next-server` (started by an earlier command) was still answering on port 3100 with the previous build. `lsof` printed nothing for it, so I believed the port was free.
+
+**Takeaway**: stop servers by process name, not by port (`ps aux | grep next-server`, then `kill -9 <pid>`), and after starting one, check its log for `EADDRINUSE` before running any test. Also delete `.next/cache/images` after changing a file in `public/`: Next's image optimiser kept serving the old photo.
