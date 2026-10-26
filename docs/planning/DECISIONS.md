@@ -271,6 +271,13 @@ Still on `lignorae.com`, because they are separate things the owner has not move
 planned `support@lignorae.com` mailbox. Moving the site also means (owner steps, not code): add `neruma.eu` in Vercel and make it primary, set `VIANORAE_SITE_URL`,
 set Supabase *URL Configuration* (Site URL and `/auth/callback`), and update the Stripe webhook address. A QR code made on an old address keeps pointing to it.
 
+### A platform administrator can correct and take down, never add or publish
+
+Owner, 2026-10-26. A platform administrator may open an organisation's workspace, correct text and photos that are already there, and take a
+guide down. They never publish, create locations or add or remove steps: NERUMA can't see the building and can't validate what is in it, so what a
+guide says stays the organisation's responsibility. Every change is recorded and shown to the organisation in a change log. Brief:
+`docs/briefs/2026-10-26-superadmin-visits-organisation.md`.
+
 ## Not yet discussed
 
 - `DESIGN-TASKS.md` sections 5, 6 (other items) and 7.
