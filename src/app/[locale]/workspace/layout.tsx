@@ -69,8 +69,10 @@ export default async function WorkspaceLayout({ children, params }: { children: 
           report: reportsEnabled ? t.reportProblem : undefined,
           billing: billingEnabled ? getBillingCopy(locale).title : undefined,
           log: logEnabled ? v.logNav : undefined,
+          backToAdmin: visit ? v.backToAdmin : undefined,
         }}
         signOutAction={signOut.bind(null, locale)}
+        leaveVisitAction={visit ? endVisit.bind(null, locale) : undefined}
       />
       <div className="app-content">
         {deadline && (

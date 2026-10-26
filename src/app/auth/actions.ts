@@ -14,6 +14,7 @@ import { evidenceReady, verificationReady } from '@/lib/verification-server';
 import { landingPath } from '@/lib/roles';
 import { validEmail } from '@/lib/password-reset';
 import { getViewer } from '@/lib/viewer-server';
+import { currentVisit } from '@/lib/workspace-server';
 import { twoFactorStep } from '@/lib/two-factor';
 import { getTwoFactorStatus, trustRememberedDevice, twoFactorPath } from '@/lib/two-factor-server';
 
@@ -92,7 +93,16 @@ export async function onboardOrganisation(locale: string, _previous: AuthState, 
 
 export async function signOut(locale: string) {
   if (!isLocale(locale)) return;
-  if (authConfigured()) { const supabase = await createClient(); await supabase.auth.signOut(); }
+  if (authConfigured()) {
+    const supabase = await createClient();
+    // A platform administrator's visit ends with their session (brief 2026-10-26); anyone else has no visit and nothing happens.
+    try {
+      if (await currentVisit(supabase)) await supabase.rpc('end_organisation_visit');
+    } catch {
+      // The visit still ends by itself after eight hours.
+    }
+    await supabase.auth.signOut();
+  }
   redirect(`/${locale}/login`);
 }
 
