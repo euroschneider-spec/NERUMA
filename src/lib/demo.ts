@@ -37,16 +37,16 @@ const content: Record<Locale, string[][]> = {
     ['Der Ruheraum', 'Dieser kleine Raum bietet weicheres Licht, Stühle und ein Gartenfenster. Im Beispiel ist er während des Besuchs verfügbar.', 'Nutzen Sie den Raum für eine Pause. Fragen Sie, ob er besetzt ist. Er ist nicht schalldicht.', 'Kehren Sie zum Empfang zurück, um zu gehen oder den Besuch fortzusetzen.']
   ]
 };
-/** The first two sample photographs come from Unsplash (free to use, no credit needed); the third was supplied by the project owner. */
+/** The first two sample photographs come from Unsplash (free to use, no credit needed); the third is a free-to-use stock photo. */
 const unsplashRights: Record<Locale, string> = {
   en: 'Photo from Unsplash, free to use under the Unsplash licence; used as an example',
   ro: 'Fotografie de pe Unsplash, liberă de utilizat conform licenței Unsplash; folosită ca exemplu',
   de: 'Foto von Unsplash, frei nutzbar unter der Unsplash-Lizenz; als Beispiel verwendet'
 };
-const ownerRights: Record<Locale, string> = {
-  en: 'Photo supplied by the project owner, used as an example',
-  ro: 'Fotografie furnizată de proprietarul proiectului, folosită ca exemplu',
-  de: 'Foto vom Projektinhaber, als Beispiel verwendet'
+const stockRights: Record<Locale, string> = {
+  en: 'Free-to-use stock photo, used as an example',
+  ro: 'Fotografie stock liberă de utilizat, folosită ca exemplu',
+  de: 'Frei nutzbares Stockfoto, als Beispiel verwendet'
 };
 /** The entrance step of the example guide shows a photograph; the other steps use the site's illustrations. */
 export const demoEntrancePhoto: Record<Locale, { alt: string; rights: string }> = {
@@ -63,9 +63,9 @@ export const demoFacadePhoto: Record<Locale, { alt: string; rights: string }> = 
 export const demoFacadePhotoSrc = '/photos/facade.jpg';
 /** The third: the Garden Pavilion's first step in the demo workspace, which is also the picture on its dashboard card. */
 export const demoPavilionPhoto: Record<Locale, { alt: string; rights: string }> = {
-  en: { alt: 'A round stone pavilion with a green copper dome and open arches, standing in a garden of flower beds and lawn', rights: ownerRights.en },
-  ro: { alt: 'Un pavilion rotund din piatră, cu cupolă verde din cupru și arcade deschise, într-o grădină cu straturi de flori și gazon', rights: ownerRights.ro },
-  de: { alt: 'Ein runder Steinpavillon mit grüner Kupferkuppel und offenen Bögen in einem Garten mit Blumenbeeten und Rasen', rights: ownerRights.de }
+  en: { alt: 'A curved glass building in shades of blue, with a white wavy band of thin vertical fins wrapped around it', rights: stockRights.en },
+  ro: { alt: 'O clădire curbată din sticlă în nuanțe de albastru, înconjurată de o bandă albă ondulată de lamele verticale subțiri', rights: stockRights.ro },
+  de: { alt: 'Ein geschwungenes Glasgebäude in Blautönen, umgeben von einem weißen, wellenförmigen Band aus dünnen senkrechten Lamellen', rights: stockRights.de }
 };
 export const demoPavilionPhotoSrc = '/photos/pavilion.jpg';
 export const demoEntrancePhotoSrc = '/photos/entrance.jpg';

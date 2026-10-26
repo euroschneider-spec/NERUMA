@@ -15,8 +15,8 @@ Rules we follow:
 |---|---|---|---|---|---|
 | `public/photos/entrance.jpg` | Step 1 of the example guide and of Willow Museum in the demo workspace | Unsplash (page link not recorded) | Unsplash licence | not recorded | 2026-10-26 |
 | `public/photos/facade.jpg` | The example card in Explore | Unsplash (page link not recorded) | Unsplash licence | not recorded | 2026-10-26 |
-| `public/photos/pavilion.jpg` | Garden Pavilion in the demo workspace | Supplied by the project owner | Owner's to give | not recorded | before 2026-10-26 |
+| `public/photos/pavilion.jpg` | Garden Pavilion in the demo workspace, step 1 and its dashboard card | A free stock photo site (which one and the page link were not recorded) | Free to use, as reported by the owner; not verified | not recorded | 2026-10-26 |
 
-Still to fill in: the Unsplash page link and the photographer for the first two. Credit is not required, but the link proves where the file came from.
+Still to fill in: the Unsplash page link and the photographer for the first two, and the site, link and photographer for the pavilion photo. Credit is not required, but the link proves where the file came from.
 
-Both Unsplash photos were cropped to 3:2 (1200 x 800). The entrance crop leaves out a person walking in front of the door.
+All three photos were cropped to 3:2 (1200 x 800). The entrance crop leaves out a person walking in front of the door.
