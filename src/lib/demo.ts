@@ -37,24 +37,35 @@ const content: Record<Locale, string[][]> = {
     ['Der Ruheraum', 'Dieser kleine Raum bietet weicheres Licht, Stühle und ein Gartenfenster. Im Beispiel ist er während des Besuchs verfügbar.', 'Nutzen Sie den Raum für eine Pause. Fragen Sie, ob er besetzt ist. Er ist nicht schalldicht.', 'Kehren Sie zum Empfang zurück, um zu gehen oder den Besuch fortzusetzen.']
   ]
 };
+/** The first two sample photographs come from Unsplash (free to use, no credit needed); the third was supplied by the project owner. */
+const unsplashRights: Record<Locale, string> = {
+  en: 'Photo from Unsplash, free to use under the Unsplash licence; used as an example',
+  ro: 'Fotografie de pe Unsplash, liberă de utilizat conform licenței Unsplash; folosită ca exemplu',
+  de: 'Foto von Unsplash, frei nutzbar unter der Unsplash-Lizenz; als Beispiel verwendet'
+};
+const ownerRights: Record<Locale, string> = {
+  en: 'Photo supplied by the project owner, used as an example',
+  ro: 'Fotografie furnizată de proprietarul proiectului, folosită ca exemplu',
+  de: 'Foto vom Projektinhaber, als Beispiel verwendet'
+};
 /** The entrance step of the example guide shows a photograph; the other steps use the site's illustrations. */
 export const demoEntrancePhoto: Record<Locale, { alt: string; rights: string }> = {
-  en: { alt: 'A stone-clad museum building with a glass entrance at street level', rights: 'Photo supplied by the project owner, used as an example' },
-  ro: { alt: 'O clădire de muzeu placată cu piatră, cu intrare de sticlă la nivelul străzii', rights: 'Fotografie furnizată de proprietarul proiectului, folosită ca exemplu' },
-  de: { alt: 'Ein steinverkleidetes Museumsgebäude mit gläsernem Eingang auf Straßenebene', rights: 'Foto vom Projektinhaber, als Beispiel verwendet' }
+  en: { alt: 'A sandstone building with tall columns and an arched doorway; a plaque above it reads BIBLIOTHECA', rights: unsplashRights.en },
+  ro: { alt: 'O clădire din gresie cu coloane înalte și o ușă în arcadă; deasupra ei, o placă cu inscripția BIBLIOTHECA', rights: unsplashRights.ro },
+  de: { alt: 'Ein Sandsteingebäude mit hohen Säulen und einem Rundbogenportal; darüber eine Tafel mit der Aufschrift BIBLIOTHECA', rights: unsplashRights.de }
 };
 /** The second sample photograph, on the example card in Explore. */
 export const demoFacadePhoto: Record<Locale, { alt: string; rights: string }> = {
-  en: { alt: 'A museum building covered in thin vertical rods in red, orange, green and blue, with a band of dark glass above a covered walkway', rights: demoEntrancePhoto.en.rights },
-  ro: { alt: 'O clădire de muzeu acoperită cu bare verticale subțiri roșii, portocalii, verzi și albastre, cu o bandă de sticlă închisă deasupra unei treceri acoperite', rights: demoEntrancePhoto.ro.rights },
-  de: { alt: 'Ein Museumsgebäude, verkleidet mit dünnen senkrechten Stäben in Rot, Orange, Grün und Blau, mit einem dunklen Glasband über einem überdachten Gehweg', rights: demoEntrancePhoto.de.rights }
+  en: { alt: 'A red brick building with an orange canopy and the word LIBRARY in large white letters under a blue sky', rights: unsplashRights.en },
+  ro: { alt: 'O clădire din cărămidă roșie cu o copertină portocalie și cuvântul LIBRARY cu litere mari albe sub un cer albastru', rights: unsplashRights.ro },
+  de: { alt: 'Ein rotes Backsteingebäude mit orangefarbenem Vordach und dem Wort LIBRARY in großen weißen Buchstaben unter blauem Himmel', rights: unsplashRights.de }
 };
 export const demoFacadePhotoSrc = '/photos/facade.jpg';
 /** The third: the Garden Pavilion's first step in the demo workspace, which is also the picture on its dashboard card. */
 export const demoPavilionPhoto: Record<Locale, { alt: string; rights: string }> = {
-  en: { alt: 'A round stone pavilion with a green copper dome and open arches, standing in a garden of flower beds and lawn', rights: demoEntrancePhoto.en.rights },
-  ro: { alt: 'Un pavilion rotund din piatră, cu cupolă verde din cupru și arcade deschise, într-o grădină cu straturi de flori și gazon', rights: demoEntrancePhoto.ro.rights },
-  de: { alt: 'Ein runder Steinpavillon mit grüner Kupferkuppel und offenen Bögen in einem Garten mit Blumenbeeten und Rasen', rights: demoEntrancePhoto.de.rights }
+  en: { alt: 'A round stone pavilion with a green copper dome and open arches, standing in a garden of flower beds and lawn', rights: ownerRights.en },
+  ro: { alt: 'Un pavilion rotund din piatră, cu cupolă verde din cupru și arcade deschise, într-o grădină cu straturi de flori și gazon', rights: ownerRights.ro },
+  de: { alt: 'Ein runder Steinpavillon mit grüner Kupferkuppel und offenen Bögen in einem Garten mit Blumenbeeten und Rasen', rights: ownerRights.de }
 };
 export const demoPavilionPhotoSrc = '/photos/pavilion.jpg';
 export const demoEntrancePhotoSrc = '/photos/entrance.jpg';
