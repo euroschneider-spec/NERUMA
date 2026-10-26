@@ -601,16 +601,6 @@ legend { padding-inline: var(--space-2); max-width: 100%; font-weight: var(--fon
 .steps-grid p { font-size: 0.875rem; color: var(--v-muted); }
 .sources-note { margin-block: 24px 12px; max-width: 60ch; color: var(--v-muted); }
 
-.pilot {
-  background: var(--color-surface); border: 1px solid var(--color-divider); border-radius: var(--radius-lg);
-  max-width: 1112px; margin: 24px auto 72px; width: calc(100% - 48px); padding: clamp(28px, 5vw, 56px);
-  display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 340px), 1fr)); gap: 32px; align-items: end;
-}
-.pilot h2 { font-size: clamp(1.75rem, 3.6vw, 2.5rem); line-height: 1.15; letter-spacing: -0.01em; margin: 0; max-width: 16ch; }
-.pilot .input { min-height: 48px; font-size: 1rem; background: var(--color-bg); }
-.principle { padding: 32px; border: 1px solid var(--color-divider); border-radius: var(--radius-lg); display: flex; flex-direction: column; gap: 12px; background: var(--color-surface); }
-.principle p { font-size: 1.25rem; line-height: 1.45; font-weight: 500; margin: 0; }
-
 /* ── Content pages ───────────────────────────────────────────────────── */
 .page-heading { padding-top: 64px; padding-bottom: 32px; max-width: 850px; }
 .page-heading h1 { font-size: clamp(1.875rem, 4.8vw, 3.25rem); margin-bottom: 20px; }
