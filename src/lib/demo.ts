@@ -18,21 +18,21 @@ const content: Record<Locale, string[][]> = {
   en: [
     ['The main entrance', 'A wide, step-free path crosses the square to a covered entrance between tall stone columns. The doorway sits under an arch. The doors open automatically.', 'Street sounds may be noticeable. You can pause in the shade of the columns before entering.', 'Go through the doors. Reception is on your left.'],
     ['Reception & the foyer', 'The reception desk is on your left. A staff member can explain the route. Toilets are along the corridor to the right.', 'Groups may gather here. Ask about a shorter route or a quieter place to wait.', 'Continue straight ahead to the first gallery.'],
-    ['The collection gallery', 'Paintings hang on pale walls. There are benches in the centre. This example room has no background music.', 'Light is steady. You can walk around the room in either direction.', 'The next space is the interactive gallery. You can also go directly to the quiet room.'],
+    ['The collection gallery', 'The collection is in the original building, behind a porch with stone columns. Inside, paintings hang on pale walls. There are benches in the centre. There is no background music.', 'Light is steady. You can walk around the room in either direction.', 'The next space is the interactive gallery. You can also go directly to the quiet room.'],
     ['The interactive gallery', 'The interactive gallery is in the new wing, a modern building with deep-set windows. Inside, screens and hands-on displays fill the room. Some exhibits produce short sounds. Screen brightness can change.', 'You can skip this room. Staff can show you the route to the quiet room.', 'Continue to the quiet room, or return to reception.'],
     ['The quiet room', 'This small room has softer light, chairs and a window overlooking a garden. In this example, it is available throughout the visit.', 'Use the space for a pause. Ask staff if it is occupied. The room is not soundproof.', 'When you are ready, return to reception to leave or continue your visit.']
   ],
   ro: [
     ['Intrarea principală', 'Un traseu larg, fără trepte, traversează piața până la o intrare acoperită, între coloane înalte de piatră. Ușa se află sub o arcadă. Ușile se deschid automat.', 'Se pot auzi sunete de pe stradă. Poți lua o pauză la umbra coloanelor înainte de intrare.', 'Treci prin uși. Recepția este în stânga.'],
     ['Recepția și holul', 'Recepția este în stânga. Un membru al echipei poate explica traseul. Toaletele sunt pe coridorul din dreapta.', 'Aici se pot aduna grupuri. Poți cere un traseu mai scurt sau un loc mai liniștit pentru așteptare.', 'Mergi înainte spre prima galerie.'],
-    ['Galeria colecției', 'Tablourile sunt expuse pe pereți deschiși la culoare. În centru sunt bănci. În această sală exemplu nu există muzică de fundal.', 'Lumina este constantă. Poți parcurge sala în ambele direcții.', 'Urmează galeria interactivă. Poți merge și direct la camera liniștită.'],
+    ['Galeria colecției', 'Colecția se află în clădirea veche, în spatele unui portic cu coloane de piatră. Înăuntru, tablourile sunt expuse pe pereți deschiși la culoare. În centru sunt bănci. Nu există muzică de fundal.', 'Lumina este constantă. Poți parcurge sala în ambele direcții.', 'Urmează galeria interactivă. Poți merge și direct la camera liniștită.'],
     ['Galeria interactivă', 'Galeria interactivă se află în aripa nouă, o clădire modernă cu ferestre adânci. Înăuntru, sala este plină de ecrane și exponate interactive. Unele emit sunete scurte. Luminozitatea ecranelor se poate schimba.', 'Poți sări această sală. Personalul îți poate arăta traseul către camera liniștită.', 'Continuă spre camera liniștită sau revino la recepție.'],
     ['Camera liniștită', 'Această cameră mică are lumină mai blândă, scaune și o fereastră spre grădină. În exemplu, este disponibilă pe parcursul vizitei.', 'Poți lua o pauză aici. Întreabă personalul dacă este ocupată. Camera nu este izolată fonic.', 'Când ești pregătit, revino la recepție pentru a ieși sau a continua vizita.']
   ],
   de: [
     ['Der Haupteingang', 'Ein breiter, stufenloser Weg führt über den Platz zu einem überdachten Eingang zwischen hohen Steinsäulen. Die Tür liegt unter einem Rundbogen. Die Türen öffnen automatisch.', 'Straßengeräusche können hörbar sein. Im Schatten der Säulen können Sie vor dem Eintritt pausieren.', 'Gehen Sie durch die Türen. Der Empfang liegt links.'],
     ['Empfang & Foyer', 'Der Empfang liegt links. Das Personal kann den Weg erklären. Toiletten befinden sich im rechten Flur.', 'Hier können sich Gruppen sammeln. Fragen Sie nach einem kürzeren Weg oder einem ruhigeren Warteplatz.', 'Gehen Sie geradeaus zur ersten Galerie.'],
-    ['Die Sammlungsgalerie', 'Gemälde hängen an hellen Wänden. In der Mitte stehen Bänke. In diesem Beispielraum gibt es keine Hintergrundmusik.', 'Das Licht ist gleichmäßig. Sie können in beide Richtungen durch den Raum gehen.', 'Als Nächstes folgt die interaktive Galerie. Sie können auch direkt zum Ruheraum gehen.'],
+    ['Die Sammlungsgalerie', 'Die Sammlung befindet sich im Altbau, hinter einer Vorhalle mit Steinsäulen. Drinnen hängen Gemälde an hellen Wänden. In der Mitte stehen Bänke. Es gibt keine Hintergrundmusik.', 'Das Licht ist gleichmäßig. Sie können in beide Richtungen durch den Raum gehen.', 'Als Nächstes folgt die interaktive Galerie. Sie können auch direkt zum Ruheraum gehen.'],
     ['Die interaktive Galerie', 'Die interaktive Galerie liegt im neuen Flügel, einem modernen Bau mit tiefen Fensternischen. Drinnen gibt es Bildschirme und interaktive Stationen. Einige erzeugen kurze Geräusche. Die Helligkeit kann wechseln.', 'Sie können diesen Raum überspringen. Das Personal zeigt den Weg zum Ruheraum.', 'Weiter zum Ruheraum oder zurück zum Empfang.'],
     ['Der Ruheraum', 'Dieser kleine Raum bietet weicheres Licht, Stühle und ein Gartenfenster. Im Beispiel ist er während des Besuchs verfügbar.', 'Nutzen Sie den Raum für eine Pause. Fragen Sie, ob er besetzt ist. Er ist nicht schalldicht.', 'Kehren Sie zum Empfang zurück, um zu gehen oder den Besuch fortzusetzen.']
   ]
@@ -68,6 +68,13 @@ export const demoWingPhoto: Record<Locale, { alt: string; rights: string }> = {
   de: { alt: 'Die Ecke eines modernen grauen Gebäudes mit tiefen Fensternischen und gemusterter Metallfassade, von unten vor dunklem Himmel', rights: stockRights.de }
 };
 export const demoWingPhotoSrc = '/photos/wing.jpg';
+/** The fifth: the collection gallery step, shown from outside as the original building with a pillared porch. */
+export const demoHallPhoto: Record<Locale, { alt: string; rights: string }> = {
+  en: { alt: 'A white pediment with the words PUBLIC LIBRARY in bronze letters above two stone columns, against a deep blue sky', rights: stockRights.en },
+  ro: { alt: 'Un fronton alb cu inscripția PUBLIC LIBRARY din litere de bronz, deasupra a două coloane de piatră, pe un cer albastru intens', rights: stockRights.ro },
+  de: { alt: 'Ein weißer Giebel mit der Aufschrift PUBLIC LIBRARY in Bronzebuchstaben über zwei Steinsäulen vor tiefblauem Himmel', rights: stockRights.de }
+};
+export const demoHallPhotoSrc = '/photos/hall.jpg';
 /** The third: the Garden Pavilion's first step in the demo workspace, which is also the picture on its dashboard card. */
 export const demoPavilionPhoto: Record<Locale, { alt: string; rights: string }> = {
   en: { alt: 'A curved glass building in shades of blue, with a white wavy band of thin vertical fins wrapped around it', rights: stockRights.en },
@@ -77,7 +84,16 @@ export const demoPavilionPhoto: Record<Locale, { alt: string; rights: string }> 
 export const demoPavilionPhotoSrc = '/photos/pavilion.jpg';
 export const demoEntrancePhotoSrc = '/photos/entrance.jpg';
 export const demoEntrancePhotoDate = '2026-09-01';
+/** The steps of the example guide that show a photograph, by step number; the others show the site's illustrations. */
+export const demoStepPhotoSrc: Record<number, string> = { 0: demoEntrancePhotoSrc, 2: demoHallPhotoSrc, 3: demoWingPhotoSrc };
+export const demoStepPhoto: Record<number, Record<Locale, { alt: string; rights: string }>> = { 0: demoEntrancePhoto, 2: demoHallPhoto, 3: demoWingPhoto };
+const stepIds = ['entrance', 'reception', 'collection', 'interactive', 'quiet-room'];
+function stepPhoto(locale: Locale, i: number): ZonePhoto | undefined {
+  const words = demoStepPhoto[i]?.[locale];
+  if (!words) return undefined;
+  return { id: stepIds[i], src: demoStepPhotoSrc[i], photographedOn: demoEntrancePhotoDate, ...words };
+}
 export function getDemoGuide(locale: Locale): Guide {
   return { schemaVersion:1, title: locale==='en' ? 'The Willow Museum' : locale==='ro' ? 'Muzeul Willow' : 'Das Willow Museum', locale, sourceLevel:'venue_provided', isDemo:true,
-    zones: content[locale].map(([title,description,note,next], i) => ({ id:['entrance','reception','collection','interactive','quiet-room'][i], title,description,note,next, illustration:`/illustrations/${['entrance','reception','collection','interactive','quiet-room'][i]}.svg`, sensory: profiles[i], photo: i===0 ? { id:'entrance', src:demoEntrancePhotoSrc, photographedOn:demoEntrancePhotoDate, ...demoEntrancePhoto[locale] } : i===3 ? { id:'interactive', src:demoWingPhotoSrc, photographedOn:demoEntrancePhotoDate, ...demoWingPhoto[locale] } : undefined })) };
+    zones: content[locale].map(([title,description,note,next], i) => ({ id:stepIds[i], title,description,note,next, illustration:`/illustrations/${stepIds[i]}.svg`, sensory: profiles[i], photo: stepPhoto(locale, i) })) };
 }

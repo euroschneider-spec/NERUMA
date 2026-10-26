@@ -18,7 +18,7 @@ we may use.
 - [x] The example guide, the demo workspace and the Explore example card show the new photos, with alt text and a rights line in EN, RO and DE.
 - [x] `docs/guides/PHOTO-CREDITS.md` lists every photo with where it came from and why we may use it.
 - [x] The Garden Pavilion photo is replaced (a curved blue glass building; the place is described as a small glass pavilion).
-- [ ] The drawings are replaced: the interactive gallery step now has a photo (the new wing seen from outside); the other three (reception, collection, quiet room) wait for interior photos (ledger T-018).
+- [ ] The drawings are replaced: the interactive gallery and collection steps now have photos (the new wing and the original building, seen from outside); the other two (reception, quiet room) wait for interior photos (ledger T-018).
 
 ## Not in scope
 - The Vienna Parliament photo (Unsplash+ watermark: a paid preview) and the spiral staircase photo (an artwork is its subject).

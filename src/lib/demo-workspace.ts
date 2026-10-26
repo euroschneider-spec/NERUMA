@@ -1,4 +1,4 @@
-import { demoEntrancePhoto, demoWingPhoto, demoWingPhotoSrc, demoPavilionPhoto, demoPavilionPhotoSrc, demoEntrancePhotoDate, demoEntrancePhotoSrc, getDemoGuide, type SensoryLevel, type SensoryProfile } from './demo';
+import { demoStepPhoto, demoStepPhotoSrc, demoPavilionPhoto, demoPavilionPhotoSrc, demoEntrancePhotoDate, getDemoGuide, type SensoryLevel, type SensoryProfile } from './demo';
 import type { Locale } from './i18n';
 import {
   placeAttention,
@@ -72,7 +72,7 @@ const willowArt = ['entrance', 'reception', 'collection', 'interactive', 'quiet-
 
 /** The sample photos are the site's own illustrations; a photo the visitor adds is kept in their browser instead. */
 const sampleSources: Record<string, string> = {
-  ...Object.fromEntries(willowPhotos.map((photo, i) => [photo, i === 0 ? demoEntrancePhotoSrc : i === 3 ? demoWingPhotoSrc : `/illustrations/${willowArt[i]}.svg`])),
+  ...Object.fromEntries(willowPhotos.map((photo, i) => [photo, demoStepPhotoSrc[i] ?? `/illustrations/${willowArt[i]}.svg`])),
   [pavilionPhoto]: demoPavilionPhotoSrc,
 };
 export const demoSampleSource = (photoId: string): string | undefined => sampleSources[photoId];
@@ -116,17 +116,17 @@ const willowText: Record<Locale, { description: string; arrivalInfo: string; alt
   en: {
     description: 'A fictional museum used as an example. Everything here is invented.',
     arrivalInfo: 'The entrance on Willow Square is step-free. Reception is straight ahead.',
-    alt: ['The glass entrance doors with a bench beside them', 'The reception desk in the foyer', 'A gallery with paintings and benches', 'A room with screens and hands-on displays', 'A small quiet room with a window onto a garden'].map((text, i) => (i === 0 ? demoEntrancePhoto.en.alt : i === 3 ? demoWingPhoto.en.alt : `${text} (illustration)`)),
+    alt: ['The glass entrance doors with a bench beside them', 'The reception desk in the foyer', 'A gallery with paintings and benches', 'A room with screens and hands-on displays', 'A small quiet room with a window onto a garden'].map((text, i) => (demoStepPhoto[i]?.en.alt ?? `${text} (illustration)`)),
   },
   ro: {
     description: 'Un muzeu fictiv, folosit ca exemplu. Tot ce se vede aici este inventat.',
     arrivalInfo: 'Intrarea din Piața Willow este fără trepte. Recepția este chiar în față.',
-    alt: ['Ușile de sticlă ale intrării, cu o bancă alături', 'Biroul de recepție din hol', 'O galerie cu tablouri și bănci', 'O sală cu ecrane și exponate interactive', 'O cameră mică și liniștită, cu fereastră spre grădină'].map((text, i) => (i === 0 ? demoEntrancePhoto.ro.alt : i === 3 ? demoWingPhoto.ro.alt : `${text} (ilustrație)`)),
+    alt: ['Ușile de sticlă ale intrării, cu o bancă alături', 'Biroul de recepție din hol', 'O galerie cu tablouri și bănci', 'O sală cu ecrane și exponate interactive', 'O cameră mică și liniștită, cu fereastră spre grădină'].map((text, i) => (demoStepPhoto[i]?.ro.alt ?? `${text} (ilustrație)`)),
   },
   de: {
     description: 'Ein fiktives Museum als Beispiel. Alles hier ist erfunden.',
     arrivalInfo: 'Der Eingang am Willow-Platz ist stufenlos. Der Empfang liegt direkt gegenüber.',
-    alt: ['Die gläsernen Eingangstüren mit einer Bank daneben', 'Der Empfang im Foyer', 'Eine Galerie mit Gemälden und Bänken', 'Ein Raum mit Bildschirmen und interaktiven Stationen', 'Ein kleiner ruhiger Raum mit Fenster zum Garten'].map((text, i) => (i === 0 ? demoEntrancePhoto.de.alt : i === 3 ? demoWingPhoto.de.alt : `${text} (Illustration)`)),
+    alt: ['Die gläsernen Eingangstüren mit einer Bank daneben', 'Der Empfang im Foyer', 'Eine Galerie mit Gemälden und Bänken', 'Ein Raum mit Bildschirmen und interaktiven Stationen', 'Ein kleiner ruhiger Raum mit Fenster zum Garten'].map((text, i) => (demoStepPhoto[i]?.de.alt ?? `${text} (Illustration)`)),
   },
 };
 
@@ -151,7 +151,7 @@ function sampleStored(placeId: string): Stored | null {
         revision: 1, city: 'Willow Bay', address: 'Willow Square 1 — fictional address', countryCode: '', placeType: 'museum',
         zones: getDemoGuide('en').zones.map((zone, i) => ({
           id: willowZones[i], type: 'visit-space', optional: i === 3, hidden: [], sensory: zone.sensory, fields: [],
-          photo: { id: willowPhotos[i], storageKey: demoPhotoKey(placeId, willowZones[i], willowPhotos[i]), rights: i === 0 ? demoEntrancePhoto.en.rights : i === 3 ? demoWingPhoto.en.rights : 'NERUMA illustration — fictional example', photographedOn: i === 0 ? demoEntrancePhotoDate : photoDate },
+          photo: { id: willowPhotos[i], storageKey: demoPhotoKey(placeId, willowZones[i], willowPhotos[i]), rights: demoStepPhoto[i]?.en.rights ?? 'NERUMA illustration — fictional example', photographedOn: demoStepPhoto[i] ? demoEntrancePhotoDate : photoDate },
         })),
       },
       texts,
