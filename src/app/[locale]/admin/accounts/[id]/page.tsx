@@ -8,6 +8,7 @@ import { accountProfileReady } from '@/lib/verification-server';
 import { getVerificationCopy } from '@/lib/verification';
 import { uuidPattern } from '@/lib/workspace';
 import { AdminNav } from '@/components/admin-nav';
+import { VisitButton } from '@/components/visit-button';
 
 export const dynamic = 'force-dynamic';
 export const metadata = { title: 'Account · NERUMA', robots: { index: false, follow: false } };
@@ -64,6 +65,7 @@ export default async function AccountProfile({ params }: { params: Promise<{ loc
               <li key={org.id} className="verification-request">
                 <h3>{org.name}</h3>
                 <p>{org.role} · {statuses[profile.organisationStatuses[org.id]] ?? profile.organisationStatuses[org.id]}</p>
+                {profile.organisationStatuses[org.id] === 'approved' && <VisitButton locale={locale} organisation={org.id} label={t.visit} ariaLabel={fill(t.visitAria, { name: org.name })} />}
               </li>
             ))}
           </ul>

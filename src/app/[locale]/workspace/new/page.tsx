@@ -16,6 +16,8 @@ export default async function NewPlace({params,searchParams}:{params:Promise<{lo
   const t=getWorkspaceCopy(locale);const context=await workspaceSession(locale);const {org:chosen}=await searchParams;
   const organisation=chosen ? context.organisations.find(o=>o.id===chosen) : context.organisations[0];
   if(chosen && !organisation) notFound();
+  // Creating a location is the organisation's own: a platform administrator on a visit there doesn't get this page.
+  if(organisation && context.visit?.organisation===organisation.id) notFound();
   const fieldsEnabled=workspaceConfigured() && await stepFieldsReady(context.supabase);
   return <main id="main-content" className="app-main"><div className="app-heading"><h1>{t.newPlace}</h1></div>
     {!workspaceConfigured() ? <p className="notice">{t.readyLater}</p> : !organisation ? <p>{t.forbidden}</p> : <OnlineBuilder locale={locale} org={organisation.id} initial={newPlace()} persistedZoneIds={[]} fieldsEnabled={fieldsEnabled}/>}

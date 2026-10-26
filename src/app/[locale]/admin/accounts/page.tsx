@@ -6,14 +6,15 @@ import { ACCOUNTS_PER_PAGE, getSuperadminCopy, longDate, parseAccounts } from '@
 import { requireAdministrator } from '@/lib/superadmin-server';
 import { superadminReady } from '@/lib/verification-server';
 import { AdminNav } from '@/components/admin-nav';
+import { VisitButton } from '@/components/visit-button';
 
 export const dynamic = 'force-dynamic';
 export const metadata = { title: 'Accounts · NERUMA', robots: { index: false, follow: false } };
 
-export default async function Accounts({ params, searchParams }: { params: Promise<{ locale: string }>; searchParams: Promise<{ q?: string; page?: string }> }) {
+export default async function Accounts({ params, searchParams }: { params: Promise<{ locale: string }>; searchParams: Promise<{ q?: string; page?: string; visit?: string }> }) {
   const { locale } = await params;
   if (!isLocale(locale)) notFound();
-  const { q = '', page: pageParam = '1' } = await searchParams;
+  const { q = '', page: pageParam = '1', visit } = await searchParams;
   const search = q.trim().slice(0, 254);
   const page = Math.max(1, Math.min(10000, Math.floor(Number(pageParam)) || 1));
   const t = getSuperadminCopy(locale);
@@ -31,6 +32,7 @@ export default async function Accounts({ params, searchParams }: { params: Promi
       {head}
       <div className="content-body">
         <AdminNav locale={locale} />
+        {visit === 'error' && <p role="alert" className="notice notice-warning">{t.visitError}</p>}
         <form method="get" role="search" className="organisation-form">
           <div className="form-field">
             <label htmlFor="account-search">{t.search}</label>
@@ -56,7 +58,13 @@ export default async function Accounts({ params, searchParams }: { params: Promi
                 ].filter(Boolean).join(' · ')}
               </p>
               <p>{fill(t.created, { date: longDate(row.createdAt, locale) })} · {row.lastSignInAt ? fill(t.lastSignIn, { date: longDate(row.lastSignInAt, locale) }) : t.never}</p>
-              <p>{row.organisations.length ? row.organisations.map((org) => `${org.name} (${org.role})`).join(', ') : t.noOrganisation}</p>
+              {!row.organisations.length && <p>{t.noOrganisation}</p>}
+              {row.organisations.map((org) => (
+                <div key={org.id} className="row">
+                  <span>{org.name} ({org.role})</span>
+                  <VisitButton locale={locale} organisation={org.id} label={t.visit} ariaLabel={fill(t.visitAria, { name: org.name })} />
+                </div>
+              ))}
             </li>
           ))}
         </ul>

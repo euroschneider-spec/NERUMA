@@ -3,13 +3,16 @@ import { notFound } from 'next/navigation';
 import { getCopy, isLocale, longDate } from '@/lib/i18n';
 import { getOrganisationCopy } from '@/lib/organisation-copy';
 import { getWorkspaceCopy } from '@/lib/workspace';
-import { paymentsReady, problemReportsReady } from '@/lib/verification-server';
+import { paymentsReady, platformVisitReady, problemReportsReady } from '@/lib/verification-server';
 import { getBillingCopy } from '@/lib/billing';
 import { stripeConfigured } from '@/lib/stripe-server';
 import { workspaceSession } from '@/lib/workspace-server';
 import { signOut } from '@/app/auth/actions';
 import { OrgSidebar } from '@/components/org-sidebar';
 import { getTwoFactorCopy, upcomingDeadline } from '@/lib/two-factor';
+import { getVisitCopy } from '@/lib/platform-visit';
+import { fill } from '@/lib/publishing';
+import { endVisit } from '@/app/admin/visit-actions';
 
 export default async function WorkspaceLayout({ children, params }: { children: React.ReactNode; params: Promise<{ locale: string }> }) {
   const { locale } = await params;
@@ -17,9 +20,14 @@ export default async function WorkspaceLayout({ children, params }: { children: 
   const t = getWorkspaceCopy(locale);
   const context = await workspaceSession(locale);
   // Before the 2026-10-12 migration the button stays hidden, like the field controls before theirs.
-  const reportsEnabled = await problemReportsReady(context.supabase);
+  // A platform administrator on a visit reports nothing and has no billing: those belong to the organisation.
+  const visit = context.visit;
+  const v = getVisitCopy(locale);
+  const reportsEnabled = !visit && await problemReportsReady(context.supabase);
+  // The change log appears once its migration is installed, for every organisation.
+  const logEnabled = await platformVisitReady(context.supabase);
   // Plan & billing appears once Stripe is set up and the payments migration is installed (docs/guides/PAYMENTS.md).
-  const billingEnabled = stripeConfigured() && await paymentsReady(context.supabase);
+  const billingEnabled = !visit && stripeConfigured() && await paymentsReady(context.supabase);
   // Until two-factor is required for owners and admins, those without it see the date it starts.
   const deadline = upcomingDeadline(context.twoFactor);
   const twoFactor = getTwoFactorCopy(locale);
@@ -27,10 +35,25 @@ export default async function WorkspaceLayout({ children, params }: { children: 
   const memberships = context.memberships.map((membership) => ({
     organisation: membership.organisation,
     name: membership.name,
-    roleLabel: roleLabels[membership.role],
-    owner: membership.role === 'owner',
+    roleLabel: visit?.organisation === membership.organisation ? v.roleLabel : roleLabels[membership.role],
+    owner: membership.role === 'owner' && visit?.organisation !== membership.organisation,
   }));
   return (
+    <div className={visit ? 'admin-area' : undefined}>
+    {visit && (
+      <div className="admin-strip" role="region" aria-label={v.stripTitle}>
+        <div className="container admin-strip-inner">
+          <svg aria-hidden="true" focusable="false" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M12 3l8 3v6c0 4.5-3.2 8.2-8 9-4.8-.8-8-4.5-8-9V6l8-3z" />
+            <path d="M9 12l2 2 4-4" />
+          </svg>
+          <p><strong>{v.stripTitle}</strong> · {fill(v.stripBody, { name: visit.name })}</p>
+          <form action={endVisit.bind(null, locale)}>
+            <button type="submit" className="button button-small button-outline">{v.leave}</button>
+          </form>
+        </div>
+      </div>
+    )}
     <div className="app-shell">
       <a className="skip-link" href="#main-content">{getCopy(locale).skip}</a>
       <OrgSidebar
@@ -45,6 +68,7 @@ export default async function WorkspaceLayout({ children, params }: { children: 
           reading: getCopy(locale).settings,
           report: reportsEnabled ? t.reportProblem : undefined,
           billing: billingEnabled ? getBillingCopy(locale).title : undefined,
+          log: logEnabled ? v.logNav : undefined,
         }}
         signOutAction={signOut.bind(null, locale)}
       />
@@ -57,6 +81,7 @@ export default async function WorkspaceLayout({ children, params }: { children: 
         )}
         {children}
       </div>
+    </div>
     </div>
   );
 }
