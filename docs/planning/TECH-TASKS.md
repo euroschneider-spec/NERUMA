@@ -16,7 +16,7 @@ and 16; the order below is a proposal for the owner to confirm.
    - [x] Check the password minimum in the hosted project (§7, §13). Production says 12, length only (checked 2026-10-18); `neruma-dev` is left in §13.
 2. **Decide the provider principle** (§15): European providers, German preferred, not French (owner's lean, 2026-10-18). It settles
    email, payment and the hosting questions together.
-3. **Rename the site address** to `neruma.lignorae.com` (§17), before the email DNS records are made and before any QR code is printed.
+3. **Rename the site address** to `neruma.eu` (§17), before the email DNS records are made and before any QR code is printed.
 4. **Email** (§4), once the provider is chosen. It unlocks real confirmation emails, password reset, approval notices, team
    invitations, the Contact form and the administrator's report notification.
 5. **The first visit of a new organisation** (`DESIGN-TASKS.md` §8): people meet it now, as soon as someone registers.
@@ -526,7 +526,7 @@ and the EU–US Data Privacy Framework if the provider is certified; check, don'
 
 ## 17. Rename to neruma: the site address, the Vercel project and the GitHub repository (owner, 2026-10-18)
 
-**Confirmed by the owner, 2026-10-18: all three.** The site `vianorae.lignorae.com` becomes `neruma.lignorae.com`, the Vercel project `vianorae-platform` becomes
+**Confirmed by the owner, 2026-10-18: all three.** The site `vianorae.lignorae.com` became `neruma.lignorae.com` (and on 2026-10-26 the owner moved it on to `neruma.eu`, see DECISIONS.md), the Vercel project `vianorae-platform` becomes
 `neruma`, and the GitHub repository `euroschneider-spec/Vianorae` becomes `euroschneider-spec/neruma`. The brand shown to people is already NERUMA; until now
 VIANORAE was the repository and infrastructure name (`README.md`, `CLAUDE.md`).
 
@@ -542,8 +542,8 @@ Supabase redirect entry. From the first printed code on, the address in it must 
 Order, so that nothing is ever without a working address:
 
 1. [x] **DNS** (the place that manages `lignorae.com`): add the record Vercel asks for `neruma.lignorae.com` (a CNAME). Keep the `vianorae` record.
-2. [ ] **Vercel → Settings → Domains:** add `neruma.lignorae.com` and make it the primary address; remove `vianorae.lignorae.com` (no QR codes exist yet).
-   Open `https://neruma.lignorae.com/en/login` and check it works.
+2. [ ] **Vercel → Settings → Domains:** add `neruma.lignorae.com` (now `neruma.eu`) and make it the primary address; remove `vianorae.lignorae.com` (no QR codes exist yet).
+   Open `https://neruma.eu/en/login` and check it works.
 3. [x] **Supabase → Authentication → URL Configuration:** set the Site URL to the new address and add it to the redirect allowlist next to the old one. Also look for
    `vianorae-platform…vercel.app` entries: renaming the project changes those addresses (step 4). Remove the old ones only much later.
 4. [x] **Vercel project rename:** Settings → General → Project Name: `neruma`. Preview and default `*.vercel.app` addresses change with it. Check Settings → Git still

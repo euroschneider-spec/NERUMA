@@ -146,7 +146,7 @@ share a name with any column the function touches, including columns added later
 
 ## 2026-10-13 — the Supabase project reference in the docs didn't exist, and registration was switched off for days
 
-`vianorae.lignorae.com/en/register` showed the form greyed out with no explanation. The site switches the form off when
+`neruma.eu/en/register` showed the form greyed out with no explanation. The site switches the form off when
 `NEXT_PUBLIC_SUPABASE_URL`, `VIANORAE_SUPABASE_PROJECT_REF` and the key don't agree (`src/lib/supabase/config.ts`). They
 didn't: the docs, and Vercel, named `uzl…`, a project reference that has no address on the internet; the real `neruma-prod` is
 `ywbcsvswisorlgajbkev`. I copied the reference from the README into my instructions and told the owner to set the value back
