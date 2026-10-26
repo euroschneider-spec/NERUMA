@@ -2,7 +2,7 @@
 import Link from 'next/link';
 import { usePathname, useSearchParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
-import { CreditCard, History, LayoutDashboard, LifeBuoy, LogOut, PanelLeftClose, PanelLeftOpen, SlidersHorizontal } from 'lucide-react';
+import { ArrowLeft, CreditCard, History, LayoutDashboard, LifeBuoy, LogOut, PanelLeftClose, PanelLeftOpen, SlidersHorizontal } from 'lucide-react';
 import type { Locale } from '@/lib/i18n';
 import { ThemeToggle } from './theme-toggle';
 import { LanguageMenu } from './language-menu';
@@ -10,7 +10,7 @@ import { Brand } from './brand';
 import { ReadingButton } from './reading-settings';
 
 export type SidebarMembership = { organisation: string; name: string; roleLabel: string; owner?: boolean };
-export type SidebarCopy = { dashboard: string; signOut: string; sidebarLabel: string; collapse: string; expand: string; reading: string; report?: string; billing?: string; log?: string };
+export type SidebarCopy = { dashboard: string; signOut: string; sidebarLabel: string; collapse: string; expand: string; reading: string; report?: string; billing?: string; log?: string; backToAdmin?: string };
 
 /** Remembered in this browser only; a convenience, so a missing or blocked storage simply means "open". */
 const collapsedKey = 'neruma:sidebar-collapsed';
@@ -19,11 +19,13 @@ const collapsedKey = 'neruma:sidebar-collapsed';
  * The organisation's own navigation: who and where you are, the way around, language, theme and sign out.
  * The demo uses the same sidebar: `base` is where its pages live, and `exit` replaces Sign out with a plain link.
  */
-export function OrgSidebar({ locale, memberships, copy, signOutAction, base = 'workspace', exit }: {
+export function OrgSidebar({ locale, memberships, copy, signOutAction, leaveVisitAction, base = 'workspace', exit }: {
   locale: Locale;
   memberships: SidebarMembership[];
   copy: SidebarCopy;
   signOutAction?: () => Promise<void>;
+  /** A platform administrator on a visit: ends it and goes back to the administration (brief 2026-10-26). */
+  leaveVisitAction?: () => Promise<void>;
   base?: string;
   exit?: { href: string; label: string };
 }) {
@@ -95,6 +97,14 @@ export function OrgSidebar({ locale, memberships, copy, signOutAction, base = 'w
         )}
       </nav>
       <div className="app-sidebar-foot">
+        {leaveVisitAction && copy.backToAdmin && (
+          <form action={leaveVisitAction}>
+            <button type="submit" className="button button-small app-signout" data-tip={copy.backToAdmin}>
+              <ArrowLeft size={16} aria-hidden="true" />
+              <span className="app-label">{copy.backToAdmin}</span>
+            </button>
+          </form>
+        )}
         <LanguageMenu locale={locale} />
         <ThemeToggle locale={locale} />
         <ReadingButton label={copy.reading} className="app-reading"><SlidersHorizontal size={16} aria-hidden="true" /></ReadingButton>

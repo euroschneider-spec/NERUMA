@@ -463,6 +463,22 @@ try {
     await expect(adminPage).toHaveURL(/\/en\/admin\/accounts$/);
     await adminPage.goto(`${base}/en/workspace`);await expect(adminPage).toHaveURL(/\/en\/admin$/);
     await adminPage.goto(editUrl);await expect(adminPage).toHaveURL(/\/en\/admin$/);
+    // The sidebar has its own way back, and signing out ends a visit too: the next sign-in finds none.
+    await adminPage.goto(`${base}/en/admin/accounts`);
+    await adminPage.getByLabel('Search by email',{exact:true}).fill('owner1@');
+    await adminPage.getByRole('button',{name:'Search',exact:true}).click();
+    await adminPage.getByRole('button',{name:'Visit Fixture museum 1 as a platform administrator',exact:true}).click();
+    await expect(adminPage).toHaveURL(/\/en\/workspace\?org=[0-9a-f-]{36}$/);
+    await adminPage.getByRole('complementary').getByRole('button',{name:'Back to administration',exact:true}).click();
+    await expect(adminPage).toHaveURL(/\/en\/admin\/accounts$/);
+    await adminPage.getByLabel('Search by email',{exact:true}).fill('owner1@');
+    await adminPage.getByRole('button',{name:'Search',exact:true}).click();
+    await adminPage.getByRole('button',{name:'Visit Fixture museum 1 as a platform administrator',exact:true}).click();
+    await expect(strip).toBeVisible();
+    await adminPage.getByRole('complementary').getByRole('button',{name:'Sign out',exact:true}).click();
+    await adminPage.waitForURL('**/en/login');
+    await login(adminPage,3);
+    await adminPage.goto(`${base}/en/workspace`);await expect(adminPage).toHaveURL(/\/en\/admin$/);
     await page.goto(`${base}/en/workspace/log`);
     await expect(page.getByRole('heading',{name:'Change log',level:1})).toBeVisible();
     const entries=page.locator('.change-entry');
