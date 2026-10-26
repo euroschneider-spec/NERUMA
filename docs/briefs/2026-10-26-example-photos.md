@@ -17,11 +17,12 @@ we may use.
 ## Done when
 - [x] The example guide, the demo workspace and the Explore example card show the new photos, with alt text and a rights line in EN, RO and DE.
 - [x] `docs/guides/PHOTO-CREDITS.md` lists every photo with where it came from and why we may use it.
-- [ ] The Garden Pavilion photo and the five drawings are replaced (waits for more photos).
+- [x] The Garden Pavilion photo is replaced (a curved blue glass building; the place is described as a small glass pavilion).
+- [ ] The five drawings are replaced (waits for a decision: they stand for interior steps, and the photos so far are exteriors).
 
 ## Not in scope
 - The Vienna Parliament photo (Unsplash+ watermark: a paid preview) and the spiral staircase photo (an artwork is its subject).
-- The drawings in `public/illustrations/` and `pavilion.jpg`.
+- The drawings in `public/illustrations/`.
 - The "photographed on" date, `demoEntrancePhotoDate`, still reads 2026-09-01: the real date of the Unsplash photo is not known.
 
 ## Decisions
