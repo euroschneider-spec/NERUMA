@@ -19,6 +19,7 @@ npm run typecheck && npm run lint && npm run test:unit
 | `read-aloud`, `lib/speech` | `tests/read-aloud.spec.ts` |
 | `reading-settings`, `lib/reading-prefs` | `tests/reading-accessibility.spec.ts` + `tests/read-aloud.spec.ts` |
 | `admin/` pages, `admin-nav`, `lib/superadmin*`, `admin/superadmin-actions`, the superadmin migration | `npm run test:db` + `npm run test:workspace` + `npm run test:unit` + `tests/privacy-security.spec.ts` |
+| `admin/visit-actions`, `visit-button`, `lib/platform-visit`, `workspace/log`, the platform-visit migration, `has_role` | `npm run test:db` + `npm run test:workspace` (the visit: marked, correct and take down, no publish, the owner's change log) + `npm run test:unit` (`platform-visit.test.ts`) |
 | `auth/actions`, `lib/roles`, `lib/workspace*` | `tests/platform.spec.ts` + `npm run test:unit` |
 | `two-factor*`, `login/verify`, `lib/two-factor*` | `npm run test:db` + `npm run test:workspace` + `npm run test:unit` |
 | `publishing`, `publish-dialog`, `published-server`, `/q`, `/api/guide-photos`, Explore, the guide page | `npm run test:db` + `npm run test:workspace` (the whole flow: publish, visitor, QR, edit, unpublish, notice) + `tests/guide-example.spec.ts` + `npm run test:unit` |

@@ -185,3 +185,18 @@ PostgREST has nothing to join through and refuses the whole query. In production
 
 **Takeaway**: a fake REST layer proves nothing about embedded selects. When a query embeds, check the foreign key in the schema (the test above
 does), and treat the first sign-in of a real organisation on production as part of the test of any workspace change.
+
+## 2026-10-26: a trigger cannot tell "insert" from "insert … on conflict update", and a test leaned on a stale sign-in
+
+Building the platform administrator's visit, I first wanted a `before insert` trigger on `zones` to refuse new steps during a visit. `save_place_draft` writes
+every step with `insert … on conflict do update`, and Postgres runs `before insert` triggers (and the insert policy) on the proposed row **before** it looks for the
+conflict, so the same trigger would have refused every correction too. The rule that works: check the whole request at the top of the function
+(`private.check_visit_draft`), then set a transaction flag (`vianorae.visit_save`) that the triggers accept.
+
+The other cost: after the change to `private.has_role`, one old database test failed with "Only owners and admins can publish". Its setup ran `reset role` but left the
+platform administrator's sign-in claims in the session, and had only worked because that person could do anything. A test that sets data up must clear
+`request.jwt.claim.sub` and `request.jwt.claims` as well, not just the role.
+
+**Takeaway**: to forbid *new* rows where the code writes with upsert, put the check in the function, not in a row trigger. When you tighten what a role may do,
+expect old tests to have relied on the old power: look at who the session is, not only at the failing statement.
+

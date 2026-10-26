@@ -875,7 +875,10 @@ await db.query('insert into private.platform_admins values($1)', [visitor]);
 await db.query("insert into public.organizations(id,name,approval_status) values($1,'Visit museum','approved')", [orgV]);
 await db.query("insert into public.organization_members(organization_id,user_id,role) values($1,$2,'owner')", [orgV, ownerV]);
 await as(ownerV);
-let revisionV = await saveDraft(orgV, placeV, 0, 'en', visitDraft([stepV(stepOne, 'Entrance'), stepV(stepTwo, 'Cloakroom')]));
+const removedStep = id(486);
+let revisionV = await saveDraft(orgV, placeV, 0, 'en', visitDraft([stepV(stepOne, 'Entrance'), stepV(stepTwo, 'Cloakroom'), stepV(removedStep, 'Old step')]));
+// The owner takes the third step out again: its rows stay, switched off, and a visiting administrator must not see it as a missing step.
+revisionV = await saveDraft(orgV, placeV, revisionV, 'en', visitDraft([stepV(stepOne, 'Entrance'), stepV(stepTwo, 'Cloakroom')]));
 await db.exec('reset role');
 await db.query("update public.places set status='published',published_revision=$2 where id=$1", [placeV, revisionV]);
 await db.query(`insert into public.guide_versions(guide_id,place_id,organization_id,version,created_by,content)
@@ -908,7 +911,8 @@ await check('during a visit the administrator sees that organisation and no othe
   assert.equal(started.name, 'Visit museum');
   assert.equal((await db.query('select public.current_organisation_visit() v')).rows[0].v.name, 'Visit museum');
   assert.equal((await db.query('select count(*)::int n from public.places where organization_id=$1', [orgV])).rows[0].n, 1);
-  assert.equal((await db.query('select count(*)::int n from public.zones where organization_id=$1', [orgV])).rows[0].n, 2);
+  // Two steps in the draft, and the one the owner removed, still in the table.
+  assert.equal((await db.query('select count(*)::int n from public.zones where organization_id=$1', [orgV])).rows[0].n, 3);
   assert.equal((await db.query('select count(*)::int n from public.places where organization_id=$1', [orgA])).rows[0].n, 0);
 });
 await check('during a visit the administrator corrects what is there, and the change is logged with before and after', async () => {

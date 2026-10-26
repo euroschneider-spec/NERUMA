@@ -129,7 +129,9 @@ begin
  if not exists(select 1 from public.guides g where g.place_id=place and g.organization_id=org and g.locale=content_locale) then
   raise exception 'A platform administrator cannot add a language' using errcode='42501';
  end if;
- select coalesce(array_agg(z.id),'{}') into v_steps from public.zones z where z.place_id=place and z.organization_id=org and z.status<>'archived';
+ -- The steps the editor shows are the active ones of this language's guide; a step the organisation removed stays in the table, switched off.
+ select coalesce(array_agg(gs.zone_id),'{}') into v_steps from public.guide_steps gs join public.guides g on g.id=gs.guide_id
+  where g.place_id=place and g.organization_id=org and g.locale=content_locale and gs.active;
  if not (step_ids@>v_steps and step_ids<@v_steps) then
   raise exception 'A platform administrator cannot add or remove steps' using errcode='42501';
  end if;

@@ -278,6 +278,13 @@ guide down. They never publish, create locations or add or remove steps: NERUMA 
 guide says stays the organisation's responsibility. Every change is recorded and shown to the organisation in a change log. Brief:
 `docs/briefs/2026-10-26-superadmin-visits-organisation.md`.
 
+How it is built (decided while building, 2026-10-26): the visit is a row in the database (one per administrator, eight hours), not a cookie, so the
+database itself can tell a visit from a stray request. `private.has_role` used to let **any** platform administrator act as an owner of **any**
+organisation; it now lets one in only during a visit, and only as an admin, so owner-only things (members, organisation details) stay closed. Publishing and
+creating are refused by database triggers, and saving a draft during a visit checks that no step, language, location or own field is added. The change log is its own
+table, filled by triggers only during a visit; the organisation reads it through a function that shows "NERUMA support", while an administrator sees the address.
+Problem reports and the review queue read organisation and place names through two read-only policies, so they work without a visit.
+
 ## Not yet discussed
 
 - `DESIGN-TASKS.md` sections 5, 6 (other items) and 7.
