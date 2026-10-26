@@ -434,9 +434,11 @@ legend { padding-inline: var(--space-2); max-width: 100%; font-weight: var(--fon
 .stack { display: flex; flex-direction: column; gap: var(--gap, 12px); }
 .row { display: flex; flex-wrap: wrap; align-items: center; gap: var(--gap, 8px); }
 .kicker, .eyebrow { font-size: 0.75rem; letter-spacing: 0.1em; text-transform: uppercase; font-weight: 600; color: var(--color-accent-700); }
-.eyebrow { display: flex; align-items: center; gap: 8px; margin-bottom: 16px; }
-.tiny-sun { height: 8px; width: 8px; border-radius: 50%; background: var(--color-accent); flex: none; }
-.reassurance { display: flex; align-items: center; gap: 7px; margin-top: 20px; font-size: 0.8125rem; color: var(--v-muted); }
+.eyebrow { display: flex; align-items: flex-start; gap: 8px; margin-bottom: 16px; }
+/* The dot and the check mark sit beside the first line, not the middle of the block, when the text wraps. */
+.tiny-sun { height: 8px; width: 8px; border-radius: 50%; background: var(--color-accent); flex: none; margin-top: calc((1lh - 8px) / 2); }
+.reassurance { display: flex; align-items: flex-start; gap: 7px; margin-top: 20px; font-size: 0.8125rem; color: var(--v-muted); }
+.reassurance svg { flex: none; margin-top: calc((1lh - 15px) / 2); }
 
 /* ── Site chrome ─────────────────────────────────────────────────────── */
 .topbar {

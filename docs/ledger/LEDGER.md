@@ -7,7 +7,6 @@ Done: `- [x] T-001 | title | note | cost`.
 
 ## Open
 
-- [ ] T-005 | Home: the dot before the tagline and the check mark sit between lines when the text wraps | DESIGN-TASKS section 7. Quick win.
 - [ ] T-006 | Delete the unused styles .pilot and .principle | DESIGN-TASKS section 7. Quick win.
 - [ ] T-007 | Check and tick: builder steps as accordions, Sign in label mismatch, Sign in widths | Probably already done. Measure Sign in at 320, 390 and 1280px before ticking.
 - [ ] T-008 | Tick the four boxes of DESIGN-TASKS section 8 | Done in pull request 77.
@@ -21,3 +20,4 @@ Done: `- [x] T-001 | title | note | cost`.
 - [x] T-001 | Sign in: fold the resend-confirmation section behind "Didn't get the email?" | Folded in a details element (EN/RO/DE); workspace test opens it first. Pull request 83, CI green. | not measured
 - [x] T-002 | Home: feature cards 3 x 2 on desktop, two columns on phones | New .channel-grid-six: 2 columns, 3 from 900px. Pull request open, CI decides. | not measured
 - [x] T-003 | Explore: hide the filters while there is only one place | Country and city filters show only once a published place exists; category stays. Pull request open, CI decides. | not measured
+- [x] T-005 | Home: the dot before the tagline and the check mark sit between lines when the text wraps | Both now align to the first line (`.tiny-sun`, `.reassurance svg`); measured at 320px in RO. Pull request open, CI decides. | not measured

@@ -120,7 +120,7 @@ Done on 2026-10-12: the top bar keeps three controls and everything else lives i
 
 ## 7. Alignment and control sizes (left from the first review)
 
-- [ ] The dot before the hero tagline and the ✓ before "No account needed…" centre on the whole
+- [x] The dot before the hero tagline and the ✓ before "No account needed…" centre on the whole
   block. When the text wraps, they sit between the lines. Align them to the first line
   (`.eyebrow`, `.reassurance` in `globals.css`).
 - [ ] Login: "Work email" and "Password" labels differ in size and colour, and their inputs are 3px
