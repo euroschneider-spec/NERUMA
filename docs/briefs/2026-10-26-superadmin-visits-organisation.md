@@ -1,5 +1,5 @@
 ---
-status: idea   # idea → building → done
+status: building   # idea → building → done
 date: 2026-10-26
 ---
 
