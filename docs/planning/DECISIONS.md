@@ -285,6 +285,12 @@ creating are refused by database triggers, and saving a draft during a visit che
 table, filled by triggers only during a visit; the organisation reads it through a function that shows "NERUMA support", while an administrator sees the address.
 Problem reports and the review queue read organisation and place names through two read-only policies, so they work without a visit.
 
+### Buttons: one system, two sizes
+
+Owner, 2026-10-26 (`docs/briefs/2026-10-26-button-sizes.md`). Two sizes, not three: *normal* and *small*. Each is taller on phones, where a finger taps, and
+shorter on desktop, where a mouse does: normal 44px / 40px, small 36px / 32px. The main action is told apart by colour, not by a bigger box; a large size can come
+back if a page needs one. Fields and the top bar use the same two heights. The old `.btn` set was unused and is gone.
+
 ## Not yet discussed
 
 - `DESIGN-TASKS.md` sections 5, 6 (other items) and 7.

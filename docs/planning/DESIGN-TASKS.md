@@ -129,8 +129,8 @@ Done on 2026-10-12: the top bar keeps three controls and everything else lives i
 - [ ] Login: the notice, sign-in form and resend panel end at three different widths (984 / 982 /
   1196px). Measured 2026-10-26: equal at 320 and 390px; at 1280px the form ends at 984px (it is capped at 900px) while the resend panel and the button row end at 1196px.
 - [ ] Home feature grid: six cards make a row of four and a row of two at desktop. Use 3 × 2.
-- [ ] Two button systems: `.btn` (36px) and `.button` (48px), plus `.button-small` (32px), `.btn-lg`
-  (48px) and a 40px phone override. Settle on three sizes in one system.
+- [x] Two button systems (PR #94, `docs/briefs/2026-10-26-button-sizes.md`): `.btn` (36px) and `.button` (48px), plus `.button-small` (32px), `.btn-lg`
+  (48px) and a 40px phone override. Settle on three sizes in one system. Done as two sizes: normal 44/40px and small 36/32px (phone/desktop).
 - [x] Inputs (36–37px) sit next to 48px buttons. Match the heights. Done (PR #73): fields are 48px, 40px on phones like the buttons.
 - [x] (PR #16) Top bar on phones: language 32px, Cool/Warm 34px, Light 40px. The Light button picks up the
   phone `.button` override. Make all three the same height.

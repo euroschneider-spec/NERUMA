@@ -7,7 +7,6 @@ Done: `- [x] T-001 | title | note | cost`.
 
 ## Open
 
-- [ ] T-009 | Buttons: settle on three sizes in one button system | DESIGN-TASKS section 7. Needs a brief first.
 - [ ] T-010 | Dashboard on phones: tabs in one scrolling row, the three stat cards in one row | DESIGN-TASKS section 4. Needs a brief first.
 - [ ] T-011 | Register: put the form first, before the four information blocks | DESIGN-TASKS section 4. Needs a brief first.
 - [ ] T-012 | Account and admin pages align left like every other page | DESIGN-TASKS section 7.
