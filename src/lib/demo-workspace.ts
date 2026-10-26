@@ -85,7 +85,7 @@ const pavilion: Record<Locale, { name: string; description: string; arrivalInfo:
     description: 'A small glass pavilion in the museum garden, used for quiet talks and workshops.',
     arrivalInfo: 'Enter from the garden path behind the museum. The path and the pavilion are step-free.',
     steps: [
-      ['The garden path', 'A level gravel path leads from the museum café to the pavilion. Birdsong and wind in the willows are usually the loudest sounds.', 'Benches stand along the path if you want to pause.', 'The pavilion door is at the end of the path.'],
+      ['Arriving at the pavilion', 'From the museum café a level gravel path leads to the pavilion, a curved glass building with a white wavy band of fins around it. Birdsong and wind in the willows are usually the loudest sounds.', 'Benches stand along the path if you want to pause.', 'The pavilion door is at the end of the path.'],
       ['Inside the pavilion', 'One bright room with folding chairs and large windows. Talks are small and usually end by early evening.', 'The light changes with the weather.', 'Staff at the door can show you a quieter seat.'],
     ],
   },
@@ -94,7 +94,7 @@ const pavilion: Record<Locale, { name: string; description: string; arrivalInfo:
     description: 'Un pavilion mic de sticlă în grădina muzeului, folosit pentru discuții și ateliere liniștite.',
     arrivalInfo: 'Intrați pe aleea din grădină, din spatele muzeului. Aleea și pavilionul sunt fără trepte.',
     steps: [
-      ['Aleea din grădină', 'O alee plană de pietriș duce de la cafeneaua muzeului la pavilion. Cele mai puternice sunete sunt de obicei cântecul păsărilor și vântul prin sălcii.', 'Pe alee sunt bănci, dacă vrei să faci o pauză.', 'Ușa pavilionului este la capătul aleii.'],
+      ['Ajungerea la pavilion', 'De la cafeneaua muzeului, o alee plană de pietriș duce la pavilion, o clădire curbată din sticlă, înconjurată de o bandă albă ondulată de lamele. Cele mai puternice sunete sunt de obicei cântecul păsărilor și vântul prin sălcii.', 'Pe alee sunt bănci, dacă vrei să faci o pauză.', 'Ușa pavilionului este la capătul aleii.'],
       ['În pavilion', 'O singură încăpere luminoasă, cu scaune pliante și ferestre mari. Discuțiile sunt mici și se termină de obicei la începutul serii.', 'Lumina se schimbă odată cu vremea.', 'Personalul de la ușă îți poate arăta un loc mai liniștit.'],
     ],
   },
@@ -103,7 +103,7 @@ const pavilion: Record<Locale, { name: string; description: string; arrivalInfo:
     description: 'Ein kleiner Glaspavillon im Museumsgarten für ruhige Vorträge und Workshops.',
     arrivalInfo: 'Der Zugang führt über den Gartenweg hinter dem Museum. Weg und Pavillon sind stufenlos.',
     steps: [
-      ['Der Gartenweg', 'Ein ebener Kiesweg führt vom Museumscafé zum Pavillon. Vogelgesang und Wind in den Weiden sind meist die lautesten Geräusche.', 'Entlang des Wegs stehen Bänke, falls Sie pausieren möchten.', 'Die Tür des Pavillons liegt am Ende des Wegs.'],
+      ['Ankunft am Pavillon', 'Vom Museumscafé führt ein ebener Kiesweg zum Pavillon, einem geschwungenen Glasgebäude mit einem weißen, wellenförmigen Lamellenband. Vogelgesang und Wind in den Weiden sind meist die lautesten Geräusche.', 'Entlang des Wegs stehen Bänke, falls Sie pausieren möchten.', 'Die Tür des Pavillons liegt am Ende des Wegs.'],
       ['Im Pavillon', 'Ein heller Raum mit Klappstühlen und großen Fenstern. Die Vorträge sind klein und enden meist am frühen Abend.', 'Das Licht ändert sich mit dem Wetter.', 'Das Personal an der Tür zeigt Ihnen einen ruhigeren Platz.'],
     ],
   },
