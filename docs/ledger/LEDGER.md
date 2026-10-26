@@ -15,6 +15,9 @@ Done: `- [x] T-001 | title | note | cost`.
 - [ ] T-011 | Register: put the form first, before the four information blocks | DESIGN-TASKS section 4. Needs a brief first.
 - [ ] T-012 | Account and admin pages align left like every other page | DESIGN-TASKS section 7.
 - [ ] T-013 | Language: pick EN/RO/DE from the browser at the root address | TECH-TASKS section 2. Needs a brief first.
+- [ ] T-014 | Photos: let the organisation move and zoom a photo inside its frame, like a profile picture | Needs a brief first: which frame ratio, whether the crop is stored as numbers (position, zoom) or baked into the image, and the keyboard way to move it. Photos live in the private Storage bucket `vianorae-private-photos`, re-encoded to WebP by `src/app/api/workspace/photos/route.ts`.
+- [ ] T-015 | QR code: show the location's name with it (on the image and in the download file name) | Needs a brief first. Today the SVG is the code only and the file is `neruma-guide-qr-<code>.svg` (`src/app/api/qr/[code]/route.ts`, `src/components/qr-dialog.tsx`). The database never gives the name to the public code route on purpose (`resolve_qr`), so the name must come from the signed-in side.
+- [ ] T-016 | Check the QR code after the domain change: print one from production and scan it | Codes follow the address they are made on, so one made on an old domain still points there. Decide whether `VIANORAE_SITE_URL` should fix the address, and whether the old domain keeps redirecting.
 
 ## Done
 - [x] T-001 | Sign in: fold the resend-confirmation section behind "Didn't get the email?" | Folded in a details element (EN/RO/DE); workspace test opens it first. Pull request 83, CI green. | not measured
