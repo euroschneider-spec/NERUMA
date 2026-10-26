@@ -390,7 +390,8 @@ legend { padding-inline: var(--space-2); max-width: 100%; font-weight: var(--fon
   --color-accent: #8f5f00; --color-accent-600: #7d5200; --color-accent-700: #774e00; --color-accent-100: #fdf1d0; --color-accent-800: #573900;
 }
 .admin-strip { background: var(--color-accent-100); color: var(--color-accent-800); border-bottom: 2px solid var(--color-accent); font-size: 0.9375rem; }
-.admin-strip-inner { display: flex; align-items: center; gap: 10px; padding-block: 10px; }
+.admin-strip-inner { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; padding-block: 10px; }
+.admin-strip-inner > form { margin: 0 0 0 auto; flex: none; }
 .account-email { font-size: 1.25rem; overflow-wrap: anywhere; }
 .account-heading { font-size: clamp(1.5rem, 6vw, 2.25rem); overflow-wrap: anywhere; }
 .admin-strip svg { flex: none; }
@@ -434,9 +435,11 @@ legend { padding-inline: var(--space-2); max-width: 100%; font-weight: var(--fon
 .stack { display: flex; flex-direction: column; gap: var(--gap, 12px); }
 .row { display: flex; flex-wrap: wrap; align-items: center; gap: var(--gap, 8px); }
 .kicker, .eyebrow { font-size: 0.75rem; letter-spacing: 0.1em; text-transform: uppercase; font-weight: 600; color: var(--color-accent-700); }
-.eyebrow { display: flex; align-items: center; gap: 8px; margin-bottom: 16px; }
-.tiny-sun { height: 8px; width: 8px; border-radius: 50%; background: var(--color-accent); flex: none; }
-.reassurance { display: flex; align-items: center; gap: 7px; margin-top: 20px; font-size: 0.8125rem; color: var(--v-muted); }
+.eyebrow { display: flex; align-items: flex-start; gap: 8px; margin-bottom: 16px; }
+/* The dot and the check mark sit beside the first line, not the middle of the block, when the text wraps. */
+.tiny-sun { height: 8px; width: 8px; border-radius: 50%; background: var(--color-accent); flex: none; margin-top: calc((1lh - 8px) / 2); }
+.reassurance { display: flex; align-items: flex-start; gap: 7px; margin-top: 20px; font-size: 0.8125rem; color: var(--v-muted); }
+.reassurance svg { flex: none; margin-top: calc((1lh - 15px) / 2); }
 
 /* ── Site chrome ─────────────────────────────────────────────────────── */
 .topbar {
@@ -598,16 +601,6 @@ legend { padding-inline: var(--space-2); max-width: 100%; font-weight: var(--fon
 .steps-grid h3 { font-size: 1.25rem; margin-bottom: 8px; }
 .steps-grid p { font-size: 0.875rem; color: var(--v-muted); }
 .sources-note { margin-block: 24px 12px; max-width: 60ch; color: var(--v-muted); }
-
-.pilot {
-  background: var(--color-surface); border: 1px solid var(--color-divider); border-radius: var(--radius-lg);
-  max-width: 1112px; margin: 24px auto 72px; width: calc(100% - 48px); padding: clamp(28px, 5vw, 56px);
-  display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 340px), 1fr)); gap: 32px; align-items: end;
-}
-.pilot h2 { font-size: clamp(1.75rem, 3.6vw, 2.5rem); line-height: 1.15; letter-spacing: -0.01em; margin: 0; max-width: 16ch; }
-.pilot .input { min-height: 48px; font-size: 1rem; background: var(--color-bg); }
-.principle { padding: 32px; border: 1px solid var(--color-divider); border-radius: var(--radius-lg); display: flex; flex-direction: column; gap: 12px; background: var(--color-surface); }
-.principle p { font-size: 1.25rem; line-height: 1.45; font-weight: 500; margin: 0; }
 
 /* ── Content pages ───────────────────────────────────────────────────── */
 .page-heading { padding-top: 64px; padding-bottom: 32px; max-width: 850px; }
@@ -1181,3 +1174,11 @@ figure.gg-photo { margin: 0; }
 .onboarding-steps li[data-state="upcoming"] .onboarding-mark { border-color: var(--v-muted); }
 @media (min-width: 640px) { .onboarding-steps { grid-template-columns: repeat(3, auto); justify-content: start; gap: 32px; } }
 .submit-reason { margin: 12px 0 0; font-size: 0.875rem; color: var(--v-muted); }
+
+/* The change log an organisation reads (a platform administrator's changes, brief 2026-10-26). */
+.change-log { list-style: none; margin: 24px 0 0; padding: 0; display: flex; flex-direction: column; gap: 16px; }
+.change-entry { border: 1px solid var(--color-divider); border-radius: var(--radius-md); background: var(--color-surface); padding: 16px 20px; min-width: 0; overflow-wrap: anywhere; }
+.change-entry h2 { font-size: 1.0625rem; margin: 0 0 4px; }
+.change-lines { margin: 12px 0 0; display: flex; flex-direction: column; gap: 8px; }
+.change-lines dt { font-weight: 600; }
+.change-lines dd { margin: 0; }

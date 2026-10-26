@@ -9,6 +9,7 @@ import type { SensoryProfile } from './demo';
 import { publishingReady, stepFieldsReady, verificationReady } from './verification-server';
 import type { Publication } from './publishing';
 import { getViewer } from './viewer-server';
+import { isOrganisationRole } from './roles';
 import { requireSecondFactor } from './two-factor-server';
 
 export const workspaceConfigured = () => authConfigured() && process.env.VIANORAE_WORKSPACE_ENABLED === '1';
@@ -22,10 +23,37 @@ export const workspaceSession = cache(async (locale: Locale) => {
   const twoFactor = await requireSecondFactor(supabase, locale);
   const viewer = await getViewer(supabase, user.id);
   if (!viewer) throw new Error('workspace-unavailable');
-  const organisations = viewer.memberships.map(m => ({ id: m.organisation, name: m.name }));
-  if(!organisations.length) redirect(`/${locale}/account`);
-  return { supabase, user, organisations, memberships: viewer.memberships, twoFactor };
+  // A platform administrator reaches an organisation only through a visit (brief 2026-10-26): they see that one organisation, as an admin.
+  const visit = viewer.isPlatformAdmin ? await currentVisit(supabase) : null;
+  const memberships = visit && !viewer.memberships.some(m => m.organisation === visit.organisation)
+    ? [...viewer.memberships, { organisation: visit.organisation, name: visit.name, role: 'admin' as const }]
+    : viewer.memberships;
+  const organisations = memberships.map(m => ({ id: m.organisation, name: m.name }));
+  if(!organisations.length) redirect(viewer.isPlatformAdmin ? `/${locale}/admin` : `/${locale}/account`);
+  return { supabase, user, organisations, memberships, twoFactor, visit };
 });
+
+export type Visit = { organisation: string; name: string };
+/** The organisation the signed-in platform administrator is visiting, or null. The database answers only for an administrator with the second factor. */
+export async function currentVisit(supabase: SupabaseClient): Promise<Visit | null> {
+  try {
+    const { data, error } = await supabase.rpc('current_organisation_visit');
+    if (error || !data || typeof data !== 'object') return null;
+    const { organisation, name } = data as { organisation?: unknown; name?: unknown };
+    return typeof organisation === 'string' && uuidPattern.test(organisation) && typeof name === 'string' ? { organisation, name } : null;
+  } catch {
+    return null;
+  }
+}
+
+/** How the signed-in person reaches an organisation: their own role, or 'visitor' for a platform administrator on a visit there. */
+export async function organisationAccess(supabase: SupabaseClient, userId: string, org: string): Promise<'owner' | 'admin' | 'visitor' | null> {
+  const role = await supabase.from('organization_members').select('role').eq('user_id', userId).eq('organization_id', org).maybeSingle();
+  if (role.error) return null;
+  if (role.data) return isOrganisationRole(role.data.role) ? role.data.role : null;
+  return (await currentVisit(supabase))?.organisation === org ? 'visitor' : null;
+}
+
 export async function listPlaces(supabase: SupabaseClient, org: string, locale: Locale): Promise<PlaceSummary[]> {
   // Before the publishing migration these columns and the QR table link don't exist: read without them.
   const publishing = await publishingReady(supabase);

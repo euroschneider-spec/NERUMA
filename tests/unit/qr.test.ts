@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { exampleLocales, isExampleQrCode, requestedLocale } from '@/lib/qr';
+import { exampleLocales, isExampleQrCode, qrOrigin, requestedLocale } from '@/lib/qr';
 import { chooseLocale } from '@/lib/publishing';
 
 describe('QR codes', () => {
@@ -12,6 +12,19 @@ describe('QR codes', () => {
     expect(requestedLocale(new URL('https://x.test/q/a'))).toBeNull();
     expect(requestedLocale(new URL('https://x.test/q/a?locale=fr'))).toBeNull();
     expect(requestedLocale(new URL('https://x.test/q/a?locale=ro'))).toBe('ro');
+  });
+});
+
+describe('the address a printed code opens', () => {
+  const asked = new URL('https://preview-abc.vercel.app/api/qr/x');
+  it('is the site address when one is configured, whatever address the code was asked for on', () => {
+    expect(qrOrigin(asked, 'https://neruma.eu')).toBe('https://neruma.eu');
+    expect(qrOrigin(asked, 'https://neruma.eu/some/path')).toBe('https://neruma.eu');
+  });
+  it('is the address asked for when none is configured, or the setting is not an address', () => {
+    expect(qrOrigin(asked, undefined)).toBe('https://preview-abc.vercel.app');
+    expect(qrOrigin(asked, '')).toBe('https://preview-abc.vercel.app');
+    expect(qrOrigin(asked, 'neruma.eu')).toBe('https://preview-abc.vercel.app');
   });
 });
 

@@ -94,6 +94,8 @@ const copy = {
     viewingAs: 'You are viewing this account as a platform administrator.', backToAccounts: '← Accounts', profileStatus: 'Status', confirmedYes: 'Email confirmed',
     organisationsTitle: 'Organisations', applicationTitle: 'Organisation request', submittedOn: 'Submitted {date}',
     cancel: 'Cancel', you: 'You', removeNote: 'You can’t remove yourself, and the last administrator can’t be removed.',
+    visit: 'Visit', visitAria: 'Visit {name} as a platform administrator', visitError: 'The visit could not be started. Try again, or reload the page.',
+    visitNote: 'A visit opens the organisation’s own workspace. You can correct what is there and take a guide down; every change is recorded and the organisation sees it.',
   },
   ro: {
     stripTitle: 'Administrarea platformei', signedInAs: 'Conectat ca {email}', title: 'Administrare', intro: 'Ce te așteaptă și cine are cont.', dashboard: 'Panou', account: 'Contul meu',
@@ -114,6 +116,8 @@ const copy = {
     viewingAs: 'Vezi acest cont ca administrator al platformei.', backToAccounts: '← Conturi', profileStatus: 'Stare', confirmedYes: 'Email confirmat',
     organisationsTitle: 'Organizații', applicationTitle: 'Cererea organizației', submittedOn: 'Trimisă la {date}',
     cancel: 'Anulează', you: 'Tu', removeNote: 'Nu te poți elimina pe tine și nici ultimul administrator.',
+    visit: 'Vizitează', visitAria: 'Vizitează {name} ca administrator al platformei', visitError: 'Vizita nu a putut fi pornită. Încearcă din nou sau reîncarcă pagina.',
+    visitNote: 'O vizită deschide spațiul de lucru al organizației. Poți corecta ce există și retrage un ghid; fiecare modificare este înregistrată, iar organizația o vede.',
   },
   de: {
     stripTitle: 'Plattform-Verwaltung', signedInAs: 'Angemeldet als {email}', title: 'Verwaltung', intro: 'Was auf Sie wartet und wer ein Konto hat.', dashboard: 'Übersicht', account: 'Mein Konto',
@@ -134,6 +138,8 @@ const copy = {
     viewingAs: 'Sie sehen dieses Konto als Plattform-Administrator.', backToAccounts: '← Konten', profileStatus: 'Status', confirmedYes: 'E-Mail bestätigt',
     organisationsTitle: 'Organisationen', applicationTitle: 'Organisationsantrag', submittedOn: 'Eingereicht am {date}',
     cancel: 'Abbrechen', you: 'Sie', removeNote: 'Sie können sich nicht selbst entfernen, und der letzte Administrator kann nicht entfernt werden.',
+    visit: 'Besuchen', visitAria: '{name} als Plattform-Verwalter besuchen', visitError: 'Der Besuch konnte nicht gestartet werden. Versuchen Sie es erneut oder laden Sie die Seite neu.',
+    visitNote: 'Ein Besuch öffnet den Arbeitsbereich der Organisation. Sie können Vorhandenes korrigieren und einen Guide zurückziehen; jede Änderung wird festgehalten und die Organisation sieht sie.',
   },
 } as const;
 

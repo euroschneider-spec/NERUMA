@@ -53,7 +53,7 @@ function session(user,aal='aal1',sessionId=randomUUID()) {
 const send=(res,status,value,headers={})=>{res.writeHead(status,{'Content-Type':'application/json',...headers});res.end(JSON.stringify(value));};
 const safe=value=>{if(!/^[a-z_]+$/.test(value)) throw new Error('Unsafe identifier');return value;};
 // Functions whose JSON body maps straight onto their named parameters.
-const simpleRpcs={my_account_deletion:[],request_account_deletion:[],request_account_deletion_for:['p_email'],restore_account:['p_user'],account_deletions:[],organisation_holds:[],
+const simpleRpcs={platform_visit_schema_version:[],start_organisation_visit:['org'],end_organisation_visit:[],current_organisation_visit:[],organisation_change_log:['org','p_limit'],my_account_deletion:[],request_account_deletion:[],request_account_deletion_for:['p_email'],restore_account:['p_user'],account_deletions:[],organisation_holds:[],
   account_erasure_files:['p_user'],organisation_erasure_files:['p_org'],erase_account:['p_user'],erase_held_organisation:['p_org'],export_my_data:[],
   export_user_data:['p_user'],export_files:['p_user'],delete_problem_report:['p_report'],account_deletion_schema_version:[],
   admin_overview:[],admin_accounts:['p_search','p_limit','p_offset','p_admins_only'],add_platform_admin:['p_email'],remove_platform_admin:['p_user'],superadmin_schema_version:[],admin_account:['p_user'],account_profile_schema_version:[],
@@ -206,7 +206,7 @@ createServer(async(req,res)=>{
     }
     if (url.pathname==='/auth/v1/logout') {if(url.searchParams.get('scope')==='others') {for(const [other,owner] of tokens) if(owner.id===user.id && sessionIds.get(other)!==sessionIds.get(token)) tokens.delete(other);res.writeHead(204);return res.end();}tokens.delete(token);res.writeHead(204);return res.end();}
     // What a visitor may ask without signing in: schema checks, and the functions that return published data only.
-    const anonymousRpc=['workspace_schema_version','organization_verification_schema_version','mandate_evidence_schema_version','publishing_schema_version','two_factor_schema_version','remember_device_schema_version','account_deletion_schema_version','superadmin_schema_version','account_profile_schema_version','payments_schema_version','billing_record_subscription','published_guide','published_places','resolve_qr'].map(name=>`/rest/v1/rpc/${name}`);
+    const anonymousRpc=['workspace_schema_version','organization_verification_schema_version','mandate_evidence_schema_version','publishing_schema_version','two_factor_schema_version','remember_device_schema_version','account_deletion_schema_version','superadmin_schema_version','platform_visit_schema_version','account_profile_schema_version','payments_schema_version','billing_record_subscription','published_guide','published_places','resolve_qr'].map(name=>`/rest/v1/rpc/${name}`);
     if (!user && !anonymousRpc.includes(url.pathname) && !(req.method==='GET' && url.pathname.startsWith('/storage/v1/object/'))) return send(res,401,{code:'42501',message:'Sign in required'});
     await locked(async()=>{
       await db.exec('begin');

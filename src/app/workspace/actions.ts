@@ -8,8 +8,7 @@ import { getWorkspaceCopy, parsePlaceDraft, parseReportMessage, uuidPattern } fr
 import { approvedOrganization, paymentsReady, problemReportsReady, publishingReady } from '@/lib/verification-server';
 import { parseLanguageChecks, type LanguageCheck, type PublishResult, type UnpublishResult } from '@/lib/publishing';
 import { responsibilityVersion } from '@/lib/organisation-copy';
-import { workspaceConfigured } from '@/lib/workspace-server';
-import { isOrganisationRole } from '@/lib/roles';
+import { organisationAccess, workspaceConfigured } from '@/lib/workspace-server';
 import { managesInStripe } from '@/lib/billing';
 import { getBillingStatus } from '@/lib/billing-server';
 import { siteOrigin } from '@/lib/request-guards';
@@ -25,8 +24,8 @@ export async function savePlaceDraft(org: string, locale: string, input: unknown
     const user=await confirmedUser(supabase);
     if(!user) return {ok:false,error:'auth'};
     if(!await approvedOrganization(supabase,org)) return {ok:false,error:'auth'};
-    const role=await supabase.from('organization_members').select('role').eq('user_id',user.id).eq('organization_id',org).maybeSingle();
-    if(role.error || !role.data || !isOrganisationRole(role.data.role)) return {ok:false,error:'auth'};
+    // A platform administrator on a visit saves too; the database then allows only corrections (no new steps, languages or locations).
+    if(!await organisationAccess(supabase,user.id,org)) return {ok:false,error:'auth'};
     const result=await supabase.rpc('save_place_draft',{org,place:draft.id,expected_revision:draft.revision,content_locale:locale,draft});
     if(result.error) return {ok:false,error:result.error.code==='40001'?'conflict':result.error.code==='42501'?'auth':'error'};
     const revision=Number(result.data);
@@ -55,15 +54,15 @@ export async function submitProblemReport(org: string, locale: string, _previous
   } catch { return {message:t.reportError,done:false}; }
 }
 
-/** The signed-in owner or admin of an approved organisation (and which of the two), or null. The database checks the same again. */
+/** The signed-in owner or admin of an approved organisation (and which of the two), or a platform administrator on a visit there, or null. The database checks the same again. */
 async function publisher(org: string) {
   if (!workspaceConfigured() || !uuidPattern.test(org)) return null;
   const supabase = await createClient();
   const user = await confirmedUser(supabase);
   if (!user || !await approvedOrganization(supabase, org) || !await publishingReady(supabase)) return null;
-  const role = await supabase.from('organization_members').select('role').eq('user_id', user.id).eq('organization_id', org).maybeSingle();
-  if (role.error || !role.data || (role.data.role !== 'owner' && role.data.role !== 'admin')) return null;
-  return { supabase, owner: role.data.role === 'owner' };
+  const access = await organisationAccess(supabase, user.id, org);
+  if (!access) return null;
+  return { supabase, owner: access === 'owner', visitor: access === 'visitor' };
 }
 
 /** Which languages could go live now, read from the saved version. */
@@ -81,8 +80,10 @@ export async function getPublicationCheck(org: string, place: string): Promise<L
 export async function publishPlace(org: string, place: string, revision: number, agreed: boolean): Promise<PublishResult> {
   if (!uuidPattern.test(place) || !Number.isSafeInteger(revision) || revision < 1 || agreed !== true) return { ok: false, error: 'invalid' };
   try {
-    const supabase = (await publisher(org))?.supabase;
-    if (!supabase) return { ok: false, error: 'auth' };
+    const access = await publisher(org);
+    // A platform administrator never publishes; the database refuses it too.
+    if (!access || access.visitor) return { ok: false, error: 'auth' };
+    const supabase = access.supabase;
     const result = await supabase.rpc('publish_place', { org, place, expected_revision: revision, responsibility: responsibilityVersion });
     if (result.error) return { ok: false, error: result.error.code === '40001' ? 'conflict' : result.error.code === '42501' ? 'auth' : result.error.code === '22023' ? 'nothing' : result.error.code === 'P0402' ? 'plan' : 'error' };
     const data = result.data as { live?: unknown; slug?: unknown; code?: unknown } | null;

@@ -12,7 +12,7 @@ async function check(name,fn){await fn();checks++;console.log(`PASS ${name}`);}
 async function as(user,role='authenticated',aal='aal2',session=user,iat=Math.floor(Date.now()/1000)){await db.exec(`reset role; set role ${role}; select set_config('request.jwt.claim.sub','${user||''}',false); select set_config('request.jwt.claims','${user?JSON.stringify({sub:user,aal,session_id:session,iat}):''}',false);`);}
 async function count(table){return (await db.query(`select count(*)::int as n from public.${table}`)).rows[0].n;}
 async function denied(sql){await assert.rejects(()=>db.exec(sql));}
-await check('all 31 public tables use RLS',async()=>{const result=await db.query("select tablename from pg_tables where schemaname='public' and not rowsecurity");assert.deepEqual(result.rows,[]);assert.equal((await db.query("select count(*)::int n from pg_tables where schemaname='public'")).rows[0].n,31);});
+await check('all 32 public tables use RLS',async()=>{const result=await db.query("select tablename from pg_tables where schemaname='public' and not rowsecurity");assert.deepEqual(result.rows,[]);assert.equal((await db.query("select count(*)::int n from pg_tables where schemaname='public'")).rows[0].n,32);});
 await db.exec(`insert into auth.users values ${[owner,admin,editor,outsider,ownerB,assessor,reviewer,dual].map(x=>`('${x}')`).join(',')};
 insert into public.organizations(id,name,approval_status) values('${orgA}','Demo A','approved'),('${orgB}','Demo B','approved');
 insert into public.organization_members(organization_id,user_id,role) values('${orgA}','${owner}','owner'),('${orgA}','${admin}','admin'),('${orgA}','${editor}','editor'),('${orgB}','${ownerB}','owner'),('${orgA}','${assessor}','assessor'),('${orgA}','${reviewer}','reviewer'),('${orgA}','${dual}','owner'),('${orgB}','${dual}','owner');
@@ -737,13 +737,13 @@ await db.exec('reset role');
 // date, an organisation can't publish and visitors see "unavailable"; a failed payment leaves 30 days.
 const billOwner=id(70),billAdmin=id(71),billOrg=id(170),billPlace=id(270),billGuide=id(370);
 const billingSecret='fixture-only-billing-secret-0123456789abcdef';
-await db.exec('reset role');
+await db.exec("reset role; select set_config('request.jwt.claim.sub','',false); select set_config('request.jwt.claims','',false);");
 await db.query('insert into auth.users(id) values($1),($2)',[billOwner,billAdmin]);
 await db.query("insert into public.organizations(id,name,approval_status) values($1,'Paying museum','approved')",[billOrg]);
 await db.query("insert into public.organization_members(organization_id,user_id,role) values($1,$2,'owner'),($1,$3,'admin')",[billOrg,billOwner,billAdmin]);
 await db.query("insert into public.places(id,organization_id,slug,city) values($1,$2,'paying-museum','Example C')",[billPlace,billOrg]);
 await db.query("insert into public.guides(id,place_id,organization_id,locale) values($1,$2,$3,'en')",[billGuide,billPlace,billOrg]);
-await db.query(`insert into public.guide_versions(guide_id,place_id,organization_id,version,content) values($1,$2,$3,1,'{"source_level":"venue_provided","zones":[{"title":"Entrance"},{},{}]}')`,[billGuide,billPlace,billOrg]);
+await db.query(`insert into public.guide_versions(guide_id,place_id,organization_id,version,content,created_by) values($1,$2,$3,1,'{"source_level":"venue_provided","zones":[{"title":"Entrance"},{},{}]}',$4)`,[billGuide,billPlace,billOrg,billOwner]);
 await db.query("update public.guides set status='published',current_version=1,published_at=now() where id=$1",[billGuide]);
 await db.query("update public.places set status='published',published_revision=0 where id=$1",[billPlace]);
 await db.query("insert into public.qr_redirects(public_code,place_id,organization_id) values('paying-a',$1,$2)",[billPlace,billOrg]);
@@ -858,6 +858,132 @@ await check('every table the dashboard embeds under a place has a foreign key to
   }
  }
 });
+// A platform administrator visits an organisation (brief 2026-10-26-superadmin-visits-organisation.md): no access without a visit,
+// during one they correct and take down but never publish or add, and every change lands in the organisation's change log.
+const visitor = id(80);
+const ownerV = id(81);
+const orgV = id(180);
+const placeV = id(280);
+const stepOne = id(481);
+const stepTwo = id(482);
+const sensoryV = { sound: 'unknown', light: 'moderate', crowding: 'variable', smell: 'unknown', temperature: 'unknown', visual: 'low' };
+const stepV = (stepId, title) => ({ id: stepId, title, description: 'A step-free way in', note: '', next: '', type: 'entrance', optional: false, sensory: sensoryV });
+const visitDraft = (steps) => ({ name: 'Visit museum', city: 'Demo city', address: '', countryCode: 'RO', placeType: 'museum', description: 'A draft', arrivalInfo: '', zones: steps });
+await db.exec('reset role');
+await db.query('insert into auth.users(id,email,email_confirmed_at) values($1,$2,now()),($3,$4,now())', [visitor, 'visitor@example.test', ownerV, 'owner.visit@example.test']);
+await db.query('insert into private.platform_admins values($1)', [visitor]);
+await db.query("insert into public.organizations(id,name,approval_status) values($1,'Visit museum','approved')", [orgV]);
+await db.query("insert into public.organization_members(organization_id,user_id,role) values($1,$2,'owner')", [orgV, ownerV]);
+await as(ownerV);
+const removedStep = id(486);
+let revisionV = await saveDraft(orgV, placeV, 0, 'en', visitDraft([stepV(stepOne, 'Entrance'), stepV(stepTwo, 'Cloakroom'), stepV(removedStep, 'Old step')]));
+// The owner takes the third step out again: its rows stay, switched off, and a visiting administrator must not see it as a missing step.
+revisionV = await saveDraft(orgV, placeV, revisionV, 'en', visitDraft([stepV(stepOne, 'Entrance'), stepV(stepTwo, 'Cloakroom')]));
+await db.exec('reset role');
+await db.query("update public.places set status='published',published_revision=$2 where id=$1", [placeV, revisionV]);
+await db.query(`insert into public.guide_versions(guide_id,place_id,organization_id,version,created_by,content)
+  select id,place_id,organization_id,1,$2,'{"source_level":"venue_provided","zones":[{"title":"Entrance"},{},{}]}' from public.guides where place_id=$1`, [placeV, ownerV]);
+await db.query("update public.guides set status='published',current_version=1,published_at=now() where place_id=$1", [placeV]);
+
+await as(visitor);
+await check('a platform administrator sees no organisation content until they start a visit', async () => {
+  assert.equal((await db.query('select count(*)::int n from public.places where organization_id=$1', [orgV])).rows[0].n, 0);
+  assert.equal((await db.query('select count(*)::int n from public.zones where organization_id=$1', [orgV])).rows[0].n, 0);
+  assert.equal((await db.query('select public.current_organisation_visit() v')).rows[0].v, null);
+  await assert.rejects(() => db.query('select public.organisation_change_log($1)', [orgV]), /Only owners and admins/);
+});
+await check('only a platform administrator with the second factor can start a visit, and only at an approved organisation', async () => {
+  await as(ownerV);
+  await assert.rejects(() => db.query('select public.start_organisation_visit($1)', [orgV]), /Platform administrator required/);
+  assert.equal((await db.query('select public.current_organisation_visit() v')).rows[0].v, null);
+  await as(outsider);
+  await assert.rejects(() => db.query('select public.start_organisation_visit($1)', [orgV]), /Platform administrator required/);
+  await as(visitor, 'authenticated', 'aal1');
+  await assert.rejects(() => db.query('select public.start_organisation_visit($1)', [orgV]), /Platform administrator required/);
+  await as(null, 'anon');
+  await denied(`select public.start_organisation_visit('${orgV}')`);
+  await as(visitor);
+  await assert.rejects(() => db.query('select public.start_organisation_visit($1)', [id(999)]), /not available/);
+});
+await check('during a visit the administrator sees that organisation and no other', async () => {
+  await as(visitor);
+  const started = (await db.query('select public.start_organisation_visit($1) v', [orgV])).rows[0].v;
+  assert.equal(started.name, 'Visit museum');
+  assert.equal((await db.query('select public.current_organisation_visit() v')).rows[0].v.name, 'Visit museum');
+  assert.equal((await db.query('select count(*)::int n from public.places where organization_id=$1', [orgV])).rows[0].n, 1);
+  // Two steps in the draft, and the one the owner removed, still in the table.
+  assert.equal((await db.query('select count(*)::int n from public.zones where organization_id=$1', [orgV])).rows[0].n, 3);
+  assert.equal((await db.query('select count(*)::int n from public.places where organization_id=$1', [orgA])).rows[0].n, 0);
+});
+await check('during a visit the administrator corrects what is there, and the change is logged with before and after', async () => {
+  revisionV = await saveDraft(orgV, placeV, revisionV, 'en', visitDraft([stepV(stepOne, 'Main entrance'), stepV(stepTwo, 'Cloakroom')]));
+  const log = (await db.query('select public.organisation_change_log($1) l', [orgV])).rows[0].l;
+  const edit = log.find((row) => row.entity === 'zone_translations');
+  assert.equal(edit.action, 'edit');
+  assert.deepEqual(edit.changes.title, { from: 'Entrance', to: 'Main entrance' });
+  assert.equal(edit.by, 'visitor@example.test');
+  assert.equal(edit.place_name, 'Visit museum');
+  assert.equal(log.some((row) => row.entity === 'zones'), false, 'an unchanged step is not logged');
+});
+await check('a visit never adds or removes a step, a language, a location or an own field', async () => {
+  const extra = id(483);
+  await assert.rejects(() => saveDraft(orgV, placeV, revisionV, 'en', visitDraft([stepV(stepOne, 'Main entrance'), stepV(stepTwo, 'Cloakroom'), stepV(extra, 'New step')])), /add or remove steps/);
+  await assert.rejects(() => saveDraft(orgV, placeV, revisionV, 'en', visitDraft([stepV(stepOne, 'Main entrance')])), /add or remove steps/);
+  await assert.rejects(() => saveDraft(orgV, placeV, revisionV, 'de', visitDraft([stepV(stepOne, 'Haupteingang'), stepV(stepTwo, 'Garderobe')])), /add a language/);
+  await assert.rejects(() => saveDraft(orgV, id(284), 0, 'en', visitDraft([stepV(id(484), 'Entrance')])), /create a location/);
+  const withField = visitDraft([{ ...stepV(stepOne, 'Main entrance'), fields: [{ id: id(485), kind: 'text', label: 'Lift', value: 'Left of the desk' }] }, stepV(stepTwo, 'Cloakroom')]);
+  await assert.rejects(() => saveDraft(orgV, placeV, revisionV, 'en', withField), /add fields/);
+  await denied(`insert into public.zones(place_id,organization_id,type,sort_order) values('${placeV}','${orgV}','gallery',2)`);
+  await denied(`insert into public.guides(place_id,organization_id,locale) values('${placeV}','${orgV}','de')`);
+  await denied(`insert into public.places(organization_id,slug,city) values('${orgV}','another','X')`);
+});
+await check('a visit never publishes, and never manages members or the organisation itself', async () => {
+  await assert.rejects(() => db.query("select public.publish_place($1,$2,$3,'2026-10')", [orgV, placeV, revisionV]));
+  await denied(`update public.places set slug='changed' where id='${placeV}'`);
+  await denied(`insert into public.guide_versions(guide_id,place_id,organization_id,version,content) select id,place_id,organization_id,2,'{"source_level":"venue_provided","zones":[{},{},{}]}' from public.guides where place_id='${placeV}'`);
+  await denied(`insert into public.organization_members(organization_id,user_id,role) values('${orgV}','${outsider}','owner')`);
+  await denied(`update public.organizations set name='Renamed' where id='${orgV}'`);
+});
+await check('a visit takes the guide down, and the log says so', async () => {
+  assert.equal((await db.query('select public.unpublish_place($1,$2) r', [orgV, placeV])).rows[0].r, true);
+  const log = (await db.query('select public.organisation_change_log($1) l', [orgV])).rows[0].l;
+  assert.equal(log.some((row) => row.entity === 'places' && row.action === 'take_down'), true);
+});
+await check('the organisation reads the change log without learning who the administrator was; nobody else reads it', async () => {
+  await as(ownerV);
+  const log = (await db.query('select public.organisation_change_log($1) l', [orgV])).rows[0].l;
+  assert.ok(log.length >= 2);
+  assert.ok(log.every((row) => row.by === null), 'the organisation sees "NERUMA support", not an address');
+  await as(ownerB);
+  await assert.rejects(() => db.query('select public.organisation_change_log($1)', [orgV]), /Only owners and admins/);
+  await as(null, 'anon');
+  await denied(`select public.organisation_change_log('${orgV}')`);
+  await as(ownerV);
+  await denied('select * from public.organization_change_log');
+});
+await check('ending the visit, or letting it run out, closes the access again', async () => {
+  await as(visitor);
+  assert.equal((await db.query('select public.end_organisation_visit() r')).rows[0].r, true);
+  assert.equal((await db.query('select public.end_organisation_visit() r')).rows[0].r, false);
+  assert.equal((await db.query('select count(*)::int n from public.places where organization_id=$1', [orgV])).rows[0].n, 0);
+  await db.query('select public.start_organisation_visit($1)', [orgV]);
+  assert.equal((await db.query('select count(*)::int n from public.places where organization_id=$1', [orgV])).rows[0].n, 1);
+  await db.exec('reset role');
+  await db.query("update private.admin_visits set started_at=now()-interval '9 hours' where user_id=$1", [visitor]);
+  await as(visitor);
+  assert.equal((await db.query('select count(*)::int n from public.places where organization_id=$1', [orgV])).rows[0].n, 0);
+  assert.equal((await db.query('select public.current_organisation_visit() v')).rows[0].v, null);
+});
+await check('a platform administrator who is removed loses a visit in progress', async () => {
+  await as(visitor);
+  await db.query('select public.start_organisation_visit($1)', [orgV]);
+  await db.exec('reset role');
+  await db.query('delete from private.platform_admins where user_id=$1', [visitor]);
+  await as(visitor);
+  assert.equal((await db.query('select count(*)::int n from public.places where organization_id=$1', [orgV])).rows[0].n, 0);
+});
+await db.exec('reset role');
+
 // Personal data is written down (docs/guides/PERSONAL-DATA.md). A column that points at a user, or looks like an email, a name,
 // a note, a file name, a free-text message or a snapshot, can't be added without being listed there; and nothing listed may be stale.
 await check('every column that can hold personal data is listed in docs/guides/PERSONAL-DATA.md, and nothing listed is stale',async()=>{

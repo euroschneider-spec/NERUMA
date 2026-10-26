@@ -5,7 +5,7 @@ import { test, expect } from '@playwright/test';
 // settings missing in Vercel, a migration not installed, a project the site can't reach (TECH-TASKS §11, "No test runs
 // against the deployed Vercel preview"; the registration form was switched off on production for exactly such a reason).
 //
-//   SMOKE_URL=https://neruma.lignorae.com npx playwright test tests/smoke.spec.ts
+//   SMOKE_URL=https://neruma.eu npx playwright test tests/smoke.spec.ts
 //
 // Optional, and only public values: with the project's address and publishable key it also asks the database, as an
 // anonymous visitor, what it will let anyone do:

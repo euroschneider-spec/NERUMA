@@ -35,17 +35,19 @@ export default async function Workspace({params,searchParams}:{params:Promise<{l
   const plan=billing ? planState(billing) : null;
   const b=getBillingCopy(locale);
   const planNotice=!billing ? null : plan==='grace' ? fill(b.dashboardGrace,{date:longDate(billing.graceUntil!,locale)}) : billing.allowed ? null : plan==='ended' ? b.dashboardEnded : b.dashboardNone;
-  const owner=context.memberships.find(m=>m.organisation===organisation?.id)?.role==='owner';
+  // A platform administrator on a visit corrects and takes down; adding a location is the organisation's own (brief 2026-10-26).
+  const visiting=context.visit?.organisation===organisation?.id;
+  const owner=!visiting && context.memberships.find(m=>m.organisation===organisation?.id)?.role==='owner';
   return <main id="main-content" className="app-main">
     <div className="app-heading">
       <h1>{t.dashboard}</h1>
-      {organisation && workspaceConfigured() && places.length>0 && <Link className="button" href={newPlaceHref}>{t.newPlace}</Link>}
+      {organisation && workspaceConfigured() && places.length>0 && !visiting && <Link className="button" href={newPlaceHref}>{t.newPlace}</Link>}
     </div>
     {planNotice && <p className="notice notice-warning">{planNotice}{owner && stripeConfigured() && <>{' '}<Link href={`/${locale}/workspace/billing?org=${organisation!.id}`}>{b.dashboardLink}</Link></>}</p>}
     {context.organisations.length>1 && <nav className="button-row" aria-label={getOrganisationCopy(locale).organisation}>{context.organisations.map(o=><Link key={o.id} className="quiet-link" href={`/${locale}/workspace?org=${o.id}`} aria-current={o.id===organisation?.id?'page':undefined}>{o.name}</Link>)}</nav>}
     {!workspaceConfigured() ? <p>{t.readyLater}</p> : !organisation ? <p>{t.forbidden}</p> : <section aria-labelledby="locations-heading">
       <h2 id="locations-heading">{t.locationsHeading}</h2>
-      {!places.length ? <div className="empty-state"><p>{t.empty}</p><Link className="button" href={newPlaceHref}>{t.newPlace}</Link></div> : <LocationCards places={places} locale={locale} base={`/${locale}/workspace`} sample={sampleOnly && !publishing ? 'all' : 'none'} qrCode="willow-museum" visits={sampleVisits} publishing={publishing}/>}
+      {!places.length ? <div className="empty-state"><p>{t.empty}</p>{!visiting && <Link className="button" href={newPlaceHref}>{t.newPlace}</Link>}</div> : <LocationCards places={places} locale={locale} base={`/${locale}/workspace`} sample={sampleOnly && !publishing ? 'all' : 'none'} qrCode="willow-museum" visits={sampleVisits} publishing={publishing}/>}
     </section>}
   </main>;
 }

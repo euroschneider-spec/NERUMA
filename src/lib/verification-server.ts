@@ -32,6 +32,8 @@ export const superadminReady=(supabase:SupabaseClient)=>schemaVersionIsOne(supab
 export const accountProfileReady=(supabase:SupabaseClient)=>schemaVersionIsOne(supabase,'account_profile_schema_version');
 // Payments exist only after the 2026-10-18 migration; before it, Plan & billing says they aren't available yet.
 export const paymentsReady=(supabase:SupabaseClient)=>schemaVersionIsOne(supabase,'payments_schema_version');
+// Platform administrators visiting an organisation exist only after the 2026-10-26 migration.
+export const platformVisitReady=(supabase:SupabaseClient)=>schemaVersionIsOne(supabase,'platform_visit_schema_version');
 export const evidenceReady=(supabase:SupabaseClient)=>schemaVersionIsOne(supabase,'mandate_evidence_schema_version');
 
 export async function approvedOrganization(supabase:SupabaseClient,org:string):Promise<boolean> {

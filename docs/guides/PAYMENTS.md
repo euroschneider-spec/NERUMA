@@ -28,7 +28,7 @@ Owner                    NERUMA                        Stripe
 - **Only owners** see *Plan & billing*. Admins who try to publish without a plan are told to ask an owner.
 - **The organisation's id travels with the payment** (in Stripe, on the subscription, as `organization_id` under *Metadata*). That
   is how NERUMA knows whose payment it is.
-- **The webhook** is the address Stripe calls after every change: `https://neruma.lignorae.com/api/stripe/webhook`. It accepts
+- **The webhook** is the address Stripe calls after every change: `https://neruma.eu/api/stripe/webhook`. It accepts
   only messages signed with the webhook's signing secret, made in the last five minutes. It then asks Stripe for the subscription as
   it is now (events can arrive late or out of order), and writes it to the database through one function that can do nothing but
   record a plan, and only with `VIANORAE_BILLING_SECRET`.
@@ -59,7 +59,7 @@ with **Test mode** switched on (the switch at the top of Stripe's dashboard). Te
    and when all retries fail, **cancel the subscription**. Switch on the emails to customers about failed payments and expiring cards.
 7. **Invoices.** *Settings → Billing → Invoices*: company details, VAT number, footer. Switch on "Email finalised invoices to customers".
 8. **The webhook.** *Developers → Webhooks → Add endpoint*:
-   - URL: `https://neruma.lignorae.com/api/stripe/webhook`
+   - URL: `https://neruma.eu/api/stripe/webhook`
    - Events: `customer.subscription.created`, `customer.subscription.updated`, `customer.subscription.deleted`,
      `customer.subscription.paused`, `customer.subscription.resumed`
    - Save, then reveal and copy the **signing secret**: it starts with `whsec_`.
@@ -148,7 +148,7 @@ Only after the email provider and the lawyer-checked terms and privacy text (TEC
 3. In Vercel, replace the three Stripe values with the live ones. Keep `VIANORAE_BILLING_SECRET` as it is. Redeploy.
 4. *Plan & billing* no longer says *Test mode*. Pay once with a real card, check the invoice email, then refund it in Stripe
    (*Payments → the payment → Refund*) and cancel that subscription.
-5. Run the deployed-site check: `SMOKE_URL=https://neruma.lignorae.com npm run test:smoke`.
+5. Run the deployed-site check: `SMOKE_URL=https://neruma.eu npm run test:smoke`.
 
 ## 6. Everyday tasks and when something goes wrong
 

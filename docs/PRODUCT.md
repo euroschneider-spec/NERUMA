@@ -163,6 +163,11 @@ Languages everywhere: **English, Romanian, German.** Root `/` opens English; an 
   organisation without a plan once payments are on, visitors, Explore and the QR code see "This guide isn't available right now". Paying
   again brings everything back at the same address and QR code; nothing is deleted.
 
+### Change log
+- From the sidebar: what **NERUMA support** changed in the organisation's guides, newest first: what kind of change, when (date and time, UTC),
+  which location, and the words before and after. It never names the administrator. Empty until NERUMA support has changed something;
+  nothing the organisation's own team does is listed here.
+
 ### Report a problem
 - From the sidebar: a message to NERUMA (10 to 2,000 characters), optionally about one location. Up to 5 an hour, 20 a day. The
   confirmation says plainly it was **saved, not emailed**.
@@ -195,6 +200,13 @@ Languages everywhere: **English, Romanian, German.** Root `/` opens English; an 
   erase a hidden organisation when due (**not while a Stripe subscription still runs** for it or its last owner: the button is greyed out
   and says why on hover until it is cancelled in Stripe); start a deletion for someone who wrote in and download their data to send it to them.
   Problem reports from a deleted sender are labelled and can be deleted by hand. Steps: `docs/guides/ACCOUNT-DELETION.md`.
+- **Visiting an organisation**: a **Visit** button beside each organisation on the Accounts list and the account profile (approved organisations
+  only). It opens that organisation's own workspace, with a yellow strip on every page ("You are viewing … as a platform administrator", and a
+  **Leave visit** button) and the sidebar role "Platform administrator (visiting)". During a visit the administrator can **correct text and
+  photos that are already there** and **take a guide down** (asked first, in words that say it is done as a platform administrator). They can
+  **not** publish, create a location, add or remove a step, add an own field or a language, use Plan & billing or Report a problem, or manage
+  members. Without a visit an administrator sees no organisation's content. A visit ends with **Leave visit**, when the administrator is
+  removed, or after eight hours. Every change is written to the organisation's change log.
 - **Two-factor** is always required, and "remember this device" is never offered to them.
 
 ---

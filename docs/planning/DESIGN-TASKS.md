@@ -64,7 +64,7 @@ Decision needed before starting.
   and the Terms page its own copy.
 - [ ] Register (3784px, 427 words): four info blocks before the form, which starts ~2 screens down.
   Put the form first.
-- [ ] Builder (10282px, ~12 screens): all five steps are open at once. Make each step an accordion.
+- [x] Builder (10282px, ~12 screens): all five steps are open at once. Make each step an accordion. Done: the first step is open, the others folded, with Expand all / Collapse all (checked 2026-10-26).
 - [ ] Home (4709px): the six feature cards take one row each. Use two columns or a compact list.
 - [ ] Explore: three filters, each offering only "All", for one result. Hide them until there are more
   places.
@@ -72,7 +72,7 @@ Decision needed before starting.
   ~330px; put them in one row.
 - [x] Top bar on content pages wraps to two rows (92px) because of *Summary / Full page*: that control moved into
   the reading panel; the top bar fits one row down to 320px.
-- [ ] Login: the resend-confirmation section is as prominent as sign-in and repeats its heading
+- [x] Login: the resend-confirmation section is as prominent as sign-in and repeats its heading
   (h2 + legend). Collapse it behind "Didn't get the email?".
 - [ ] Trim copy, e.g. "A NERUMA guide describes a place before you visit it. You read it on your phone
   or computer. You do not need an account." → "Read about a place before you go — on any device, no
@@ -120,14 +120,14 @@ Done on 2026-10-12: the top bar keeps three controls and everything else lives i
 
 ## 7. Alignment and control sizes (left from the first review)
 
-- [ ] The dot before the hero tagline and the ✓ before "No account needed…" centre on the whole
+- [x] The dot before the hero tagline and the ✓ before "No account needed…" centre on the whole
   block. When the text wraps, they sit between the lines. Align them to the first line
   (`.eyebrow`, `.reassurance` in `globals.css`).
-- [ ] Login: "Work email" and "Password" labels differ in size and colour, and their inputs are 3px
+- [x] Login: "Work email" and "Password" labels differ in size and colour, and their inputs are 3px
   out of line. `organisation-form.tsx` mixes `<label class="form-field">` with
-  `<div class="form-field"><label>`. Use one pattern.
+  `<div class="form-field"><label>`. Use one pattern. Done: both labels are 13px, the same colour, and label and input tops match (449.2 / 477.4px at 1280, checked 2026-10-26).
 - [ ] Login: the notice, sign-in form and resend panel end at three different widths (984 / 982 /
-  1196px).
+  1196px). Measured 2026-10-26: equal at 320 and 390px; at 1280px the form ends at 984px (it is capped at 900px) while the resend panel and the button row end at 1196px.
 - [ ] Home feature grid: six cards make a row of four and a row of two at desktop. Use 3 × 2.
 - [ ] Two button systems: `.btn` (36px) and `.button` (48px), plus `.button-small` (32px), `.btn-lg`
   (48px) and a 40px phone override. Settle on three sizes in one system.
@@ -135,7 +135,7 @@ Done on 2026-10-12: the top bar keeps three controls and everything else lives i
 - [x] (PR #16) Top bar on phones: language 32px, Cool/Warm 34px, Light 40px. The Light button picks up the
   phone `.button` override. Make all three the same height.
 - [x] The reading-settings tab (36px wide) covers content on phones: the tab is gone.
-- [ ] Unused CSS: `.pilot` and `.principle` aren't referenced by any page. Delete them.
+- [x] Unused CSS: `.pilot` and `.principle` aren't referenced by any page. Deleted.
 - [ ] Account and admin pages: `.verification-page` centres a 900px column, while other pages align
   left to the header. Check while signed in.
 
@@ -143,7 +143,7 @@ Done on 2026-10-12: the top bar keeps three controls and everything else lives i
 
 Found when the owner signed in as a brand-new organisation account on production. Brief to write before building.
 
-- [ ] **No path.** The account page shows blocks of text. Show three steps ("1. Email confirmed ✓ · 2. Send your request · 3. Wait for approval") with the form directly under them.
-- [ ] **Too early.** "Delete my account" and "Open demo workspace" appear before the person has sent a request. Show deletion only when there is something to delete, at the bottom; drop the demo link here.
-- [ ] **A disabled button with no reason.** *Submit for manual review* stays disabled until a mandate document is uploaded and says nothing. Say why under it ("Upload your mandate document to continue") and keep that line available to screen readers.
-- [ ] **The wrong words on a load error.** The workspace error page says "Your draft was not saved" for any failure, including a dashboard that couldn't load. Say what failed.
+- [x] **No path.** The account page shows blocks of text. Show three steps ("1. Email confirmed ✓ · 2. Send your request · 3. Wait for approval") with the form directly under them. Done (PR #77).
+- [x] **Too early.** "Delete my account" and "Open demo workspace" appear before the person has sent a request. Show deletion only when there is something to delete, at the bottom; drop the demo link here. Done (PR #77).
+- [x] **A disabled button with no reason.** *Submit for manual review* stays disabled until a mandate document is uploaded and says nothing. Say why under it ("Upload your mandate document to continue") and keep that line available to screen readers. Done (PR #77).
+- [x] **The wrong words on a load error.** The workspace error page says "Your draft was not saved" for any failure, including a dashboard that couldn't load. Say what failed. Done (PR #77).

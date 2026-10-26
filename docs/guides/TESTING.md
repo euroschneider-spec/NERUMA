@@ -19,6 +19,7 @@ npm run typecheck && npm run lint && npm run test:unit
 | `read-aloud`, `lib/speech` | `tests/read-aloud.spec.ts` |
 | `reading-settings`, `lib/reading-prefs` | `tests/reading-accessibility.spec.ts` + `tests/read-aloud.spec.ts` |
 | `admin/` pages, `admin-nav`, `lib/superadmin*`, `admin/superadmin-actions`, the superadmin migration | `npm run test:db` + `npm run test:workspace` + `npm run test:unit` + `tests/privacy-security.spec.ts` |
+| `admin/visit-actions`, `visit-button`, `lib/platform-visit`, `workspace/log`, the platform-visit migration, `has_role` | `npm run test:db` + `npm run test:workspace` (the visit: marked, correct and take down, no publish, the owner's change log) + `npm run test:unit` (`platform-visit.test.ts`) |
 | `auth/actions`, `lib/roles`, `lib/workspace*` | `tests/platform.spec.ts` + `npm run test:unit` |
 | `two-factor*`, `login/verify`, `lib/two-factor*` | `npm run test:db` + `npm run test:workspace` + `npm run test:unit` |
 | `publishing`, `publish-dialog`, `published-server`, `/q`, `/api/guide-photos`, Explore, the guide page | `npm run test:db` + `npm run test:workspace` (the whole flow: publish, visitor, QR, edit, unpublish, notice) + `tests/guide-example.spec.ts` + `npm run test:unit` |
@@ -121,14 +122,14 @@ A hosted dev database for trying migrations against a real Supabase is described
 `tests/smoke.spec.ts` checks a real deployment, read-only, with no mocked data and no accounts created:
 
 ```sh
-SMOKE_URL=https://neruma.lignorae.com npm run test:smoke
+SMOKE_URL=https://neruma.eu npm run test:smoke
 ```
 
 With the project's public address and publishable key it also asks the database, as an anonymous visitor, what it will
 let anyone do. Run it after every change to Vercel's settings, after installing a migration, and before sharing a link:
 
 ```sh
-SMOKE_URL=https://neruma.lignorae.com SMOKE_SUPABASE_URL=https://<ref>.supabase.co SMOKE_SUPABASE_KEY=sb_publishable_… npm run test:smoke
+SMOKE_URL=https://neruma.eu SMOKE_SUPABASE_URL=https://<ref>.supabase.co SMOKE_SUPABASE_KEY=sb_publishable_… npm run test:smoke
 ```
 
 The full list of what is tested, what only a person can test, and what is still open is in

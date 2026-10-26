@@ -18,7 +18,7 @@ Do it on `neruma-dev` first if you are trying it out. Production is `neruma-prod
 
 ## 2. Make them a superadmin (the app)
 
-1. Sign in at `https://neruma.lignorae.com/en/login` as an existing superadmin (email, password, then the 6-digit code).
+1. Sign in at `https://neruma.eu/en/login` as an existing superadmin (email, password, then the 6-digit code).
 2. Open **Administrators** in the menu (`/en/admin/administrators`).
 3. Type the new person's email and click **Add administrator**.
 4. The message says "Added." and they appear in the list. "There is no confirmed account with that email" means step 1 is

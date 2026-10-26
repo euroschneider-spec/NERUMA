@@ -1,12 +1,12 @@
 import QRCode from 'qrcode';
-import { isExampleQrCode, requestedLocale } from '@/lib/qr';
+import { isExampleQrCode, qrOrigin, requestedLocale } from '@/lib/qr';
 import { resolveQrCode } from '@/lib/published-server';
 
 export async function GET(request: Request, { params }: { params: Promise<{ code: string }> }) {
   const { code } = await params;
   if (!isExampleQrCode(code) && !await resolveQrCode(code)) return new Response('Unknown guide code', { status: 404 });
   const url = new URL(request.url);
-  const destination = new URL(`/q/${code}`, url.origin);
+  const destination = new URL(`/q/${code}`, qrOrigin(url, process.env.VIANORAE_SITE_URL));
   // The printed code carries no language; only a caller that asks for one gets it.
   const asked = requestedLocale(url);
   if (asked) destination.searchParams.set('locale', asked);

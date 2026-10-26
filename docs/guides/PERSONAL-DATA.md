@@ -41,6 +41,8 @@ Whose data: the **applicant or member** (the person who registers), the **admini
 | `public.problem_reports` (`reporter_email`, `message`, `reporter_id`, `closed_by`) | A report to NERUMA: sender's email and free text | The sender's organisation (owners, admins); administrators | No | **Yes** |
 | `public.audit_log` (`actor_id`, `before_json`, `after_json`) | A **row-by-row history of changes** to places, steps, guides, own fields and **problem reports**: so the reporter's email and message are copied here too | Owners and admins of the organisation | No | **Yes** (`actor_id`) |
 | `public.guide_versions.created_by` | Who published each version. Published versions are immutable. | The organisation | The version is public; the author is not | **Yes** |
+| `public.organization_change_log` (`actor_id`, `changes`) | What a **platform administrator changed** while visiting an organisation: which record, from what into what, when, and which administrator | The organisation's owners and admins see the change, never the administrator's address; platform administrators see the address | No | No: `actor_id` is emptied with the administrator's account; the rows go with the organisation |
+| `private.admin_visits` | Which platform administrator is visiting which organisation now (one row each, valid eight hours) | Nobody through the app | No | No: removed with the user |
 | `private.platform_admins` | Who is an administrator | Platform administrators, who also see every account (email, dates, organisations, two-factor on or off) in `/admin/accounts` and on each account's profile page (`/admin/accounts/<id>`, which adds the organisation request and any deletion); nothing new is stored, and views are not recorded | No | **Yes** |
 | `private.remembered_devices`, `private.trusted_sessions` | A hash of a remembered-device token, and dates. No device name, browser or IP. | The account holder (dates only) | No | No: removed with the user |
 | `private.account_deletions`, `private.deletion_takedowns` | A deletion in progress: who, when asked, when due, which administrator started it, which guides went down | Platform administrators | No | No: removed with the user |
@@ -114,6 +116,7 @@ longer exists. A new table with personal data therefore can't be added without b
 <!-- personal-data-columns:start -->
 private.account_deletions.requested_by
 private.account_deletions.user_id
+private.admin_visits.user_id
 private.deletion_takedowns.user_id
 private.organisation_holds.former_owner
 private.platform_admins.user_id
@@ -141,6 +144,7 @@ public.organization_applications.official_website
 public.organization_applications.registry_reference
 public.organization_applications.representative_name
 public.organization_applications.representative_role
+public.organization_change_log.actor_id
 public.organization_evidence_documents.applicant_id
 public.organization_evidence_documents.filename
 public.organization_members.user_id

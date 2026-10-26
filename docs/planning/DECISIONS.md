@@ -263,6 +263,28 @@ protection looks for is unchanged. `workspace` is a matrix of four groups of `sc
 on its own fixture; `e2e` is four Playwright shards (`--shard=n/4`); a group that needs state from another sets it up itself (the accounts group starts its own Stripe plan). Pushes to branches run only through their pull request; `main` still
 runs on push. A branch without a pull request gets no CI until one is opened.
 
+### The site address is neruma.eu
+
+Owner, 2026-10-26. The site lives at **`https://neruma.eu`**, not under `lignorae.com`. The earlier addresses (`vianorae.lignorae.com`, then
+`neruma.eu`, TECH-TASKS §17) were temporary. Docs, `.env.example` and the smoke-test examples name the new address; the history entries name the new address too, except where the old names are the point (the §17 rename steps).
+Still on `lignorae.com`, because they are separate things the owner has not moved: the email sending domain `mail.lignorae.com` (verified in Resend) and the
+planned `support@lignorae.com` mailbox. Moving the site also means (owner steps, not code): add `neruma.eu` in Vercel and make it primary, set `VIANORAE_SITE_URL`,
+set Supabase *URL Configuration* (Site URL and `/auth/callback`), and update the Stripe webhook address. A QR code made on an old address keeps pointing to it.
+
+### A platform administrator can correct and take down, never add or publish
+
+Owner, 2026-10-26. A platform administrator may open an organisation's workspace, correct text and photos that are already there, and take a
+guide down. They never publish, create locations or add or remove steps: NERUMA can't see the building and can't validate what is in it, so what a
+guide says stays the organisation's responsibility. Every change is recorded and shown to the organisation in a change log. Brief:
+`docs/briefs/2026-10-26-superadmin-visits-organisation.md`.
+
+How it is built (decided while building, 2026-10-26): the visit is a row in the database (one per administrator, eight hours), not a cookie, so the
+database itself can tell a visit from a stray request. `private.has_role` used to let **any** platform administrator act as an owner of **any**
+organisation; it now lets one in only during a visit, and only as an admin, so owner-only things (members, organisation details) stay closed. Publishing and
+creating are refused by database triggers, and saving a draft during a visit checks that no step, language, location or own field is added. The change log is its own
+table, filled by triggers only during a visit; the organisation reads it through a function that shows "NERUMA support", while an administrator sees the address.
+Problem reports and the review queue read organisation and place names through two read-only policies, so they work without a visit.
+
 ## Not yet discussed
 
 - `DESIGN-TASKS.md` sections 5, 6 (other items) and 7.

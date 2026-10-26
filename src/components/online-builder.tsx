@@ -16,6 +16,7 @@ import { PublishButton } from './publish-button';
 import { PublishDialog } from './publish-dialog';
 import { getPublishingCopy, type Publication } from '@/lib/publishing';
 import { getBillingCopy } from '@/lib/billing';
+import { getVisitCopy } from '@/lib/platform-visit';
 import { unpublishPlace } from '@/app/workspace/actions';
 import { ConfirmDialog } from './confirm-dialog';
 import { Field, useFormWarnings } from './form-field';
@@ -30,10 +31,12 @@ function RemoveField({label,disabled,onClick,enabled=true}:{label:string;disable
  * The step editor. In the demo (`mode='demo'`) it is the same editor, but saving and photos stay in the visitor's
  * browser and publishing is switched off; the live workspace saves to the database.
  */
-export function OnlineBuilder({locale,org,initial,persistedZoneIds,missingTranslation=false,fieldsEnabled=false,mode='live',publication}: {
-  locale:Locale;org:string;initial:PlaceDraft;persistedZoneIds:string[];missingTranslation?:boolean;fieldsEnabled?:boolean;mode?:WorkspaceMode;publication?:Publication;
+export function OnlineBuilder({locale,org,initial,persistedZoneIds,missingTranslation=false,fieldsEnabled=false,mode='live',publication,visiting=false}: {
+  locale:Locale;org:string;initial:PlaceDraft;persistedZoneIds:string[];missingTranslation?:boolean;fieldsEnabled?:boolean;mode?:WorkspaceMode;publication?:Publication;visiting?:boolean;
 }) {
   const t=getWorkspaceCopy(locale);const common=getCopy(locale);const o=getOrganisationCopy(locale);const router=useRouter();
+  // A platform administrator on a visit corrects and takes down; adding steps or fields and publishing are the organisation's own (brief 2026-10-26).
+  const visit=getVisitCopy(locale);
   const savedText=mode==='demo' ? t.demoSaved : t.saved;
   const p=getPublishingCopy(locale);
   // Publishing is live only in the real workspace, and only once its migration exists (`publication` is then set).
@@ -111,11 +114,11 @@ export function OnlineBuilder({locale,org,initial,persistedZoneIds,missingTransl
   // Publish: off in the demo, off before the publishing migration, waits for a saved version, otherwise it opens the confirm step.
   const canPublish=mode==='live' && live!==undefined;
   const publishButtons=<>
-    {!canPublish ? <PublishButton label={t.publish} hint={mode==='demo' ? t.publishDemo : t.publishSoon} />
+    {visiting ? null : !canPublish ? <PublishButton label={t.publish} hint={mode==='demo' ? t.publishDemo : t.publishSoon} />
       : dirty || draft.revision===0 ? <PublishButton label={t.publish} hint={p.publishSaveFirst} />
       : <button className="button button-outline" type="button" disabled={disabled} onClick={()=>setPublishOpen(true)}>{t.publish}</button>}
     {canPublish && live?.published && <>
-      <button className="button button-outline" type="button" disabled={disabled} onClick={()=>setTakeDown(true)}>{p.unpublish}</button>
+      <button className="button button-outline" type="button" disabled={disabled} onClick={()=>setTakeDown(true)}>{visiting ? visit.takeDown : p.unpublish}</button>
       {live.slug && <Link className="quiet-link" href={`/${locale}/places/${live.slug}/guide`} target="_blank" rel="noopener noreferrer">{p.viewPublic}</Link>}
     </>}
   </>;
@@ -181,7 +184,7 @@ export function OnlineBuilder({locale,org,initial,persistedZoneIds,missingTransl
                 : <ChoiceGroup className="wide" label={t.ownAnswer} value={own.answer} onChange={value=>ownField(index,fieldIndex,{answer:value as OwnField['answer']})} options={yesNoAnswers.map(answer=>({value:answer,label:answer==='yes' ? t.answerYes : answer==='no' ? t.answerNo : t.answerUnanswered}))}/>}
             </div>
           </div>)}
-          {fieldsEnabled && <div className="add-field" role="group" aria-labelledby={`add-field-${zone.id}`}>
+          {fieldsEnabled && !visiting && <div className="add-field" role="group" aria-labelledby={`add-field-${zone.id}`}>
             <span id={`add-field-${zone.id}`} className="choice-label">{t.addField}</span>
             <div className="add-field-options">
               {zone.hidden.map(name=><button key={name} id={`add-${zone.id}-${name}`} type="button" className="button button-outline button-small" disabled={disabled} onClick={()=>showField(index,zone.id,name)}><Plus size={14} aria-hidden="true"/>{offeredLabel(name)}</button>)}
@@ -189,22 +192,22 @@ export function OnlineBuilder({locale,org,initial,persistedZoneIds,missingTransl
             </div>
             {zone.fields.length>=MAX_OWN_FIELDS && <p className="small-note">{t.fieldLimit}</p>}
           </div>}
-          <div className="zone-remove"><button type="button" className="text-button" disabled={disabled || draft.zones.length===1} onClick={()=>setConfirmRemove(zone.id)} aria-label={`${t.removeZone}: ${zone.title || index+1}`}>{t.removeZone}</button></div>
+          {!visiting && <div className="zone-remove"><button type="button" className="text-button" disabled={disabled || draft.zones.length===1} onClick={()=>setConfirmRemove(zone.id)} aria-label={`${t.removeZone}: ${zone.title || index+1}`}>{t.removeZone}</button></div>}
           </div>
         </section>;})}
         {foldBar(false)}
-        <div className="editor-add"><button id="add-zone" className="button button-outline" type="button" disabled={disabled || draft.zones.length>=8} onClick={()=>{const zone=newZone();setOpenZones(current=>new Set(current).add(zone.id));change(current=>({...current,zones:[...current.zones,zone]}));}}>{t.addZone}</button></div>
+        {!visiting && <div className="editor-add"><button id="add-zone" className="button button-outline" type="button" disabled={disabled || draft.zones.length>=8} onClick={()=>{const zone=newZone();setOpenZones(current=>new Set(current).add(zone.id));change(current=>({...current,zones:[...current.zones,zone]}));}}>{t.addZone}</button></div>}
       </fieldset>
       {actions(true)}
     </form>
-    {canPublish && <PublishDialog open={publishOpen} locale={locale} org={org} placeId={draft.id} revision={draft.revision} onClose={()=>setPublishOpen(false)}
+    {canPublish && !visiting && <PublishDialog open={publishOpen} locale={locale} org={org} placeId={draft.id} revision={draft.revision} onClose={()=>setPublishOpen(false)}
       onPublished={result=>{setLive({published:true,slug:result.slug});setError(null);setMessage(p.publishDone);router.refresh();}}
       onFailed={failure=>{setError(failure==='auth'?'auth':failure==='conflict'?'conflict':'other');setMessage(failure==='conflict'?p.publishConflict:failure==='auth'?p.publishAuth:failure==='nothing'?p.publishNothing:failure==='plan'?getBillingCopy(locale).publishNeedsPlan:p.publishError);}}/>}
-    {canPublish && <ConfirmDialog open={takeDown} title={p.unpublishTitle} body={p.unpublishBody} confirm={p.unpublish} cancel={t.cancel} onCancel={()=>setTakeDown(false)}
+    {canPublish && <ConfirmDialog open={takeDown} title={visiting ? visit.takeDownTitle : p.unpublishTitle} body={visiting ? visit.takeDownBody : p.unpublishBody} confirm={visiting ? visit.takeDownConfirm : p.unpublish} cancel={t.cancel} onCancel={()=>setTakeDown(false)}
       onConfirm={async()=>{
         setTakeDown(false);
         const result=await unpublishPlace(org,draft.id).catch(()=>({ok:false}));
-        if(result.ok){setLive({published:false,slug:live?.slug});setError(null);setMessage(p.unpublishDone);router.refresh();}
+        if(result.ok){setLive({published:false,slug:live?.slug});setError(null);setMessage(visiting ? visit.takeDownDone : p.unpublishDone);router.refresh();}
         else {setError('other');setMessage(p.unpublishError);}
       }}/>}
     <ConfirmDialog open={confirmRemove!==null} title={t.removeConfirmTitle} body={t.removeConfirmBody} confirm={t.removeConfirm} cancel={t.cancel}
