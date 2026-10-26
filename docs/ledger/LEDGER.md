@@ -16,7 +16,6 @@ Done: `- [x] T-001 | title | note | cost`.
 - [ ] T-017 | Sign in on desktop: the form ends at 984px, the resend panel and the button row at 1196px | Found measuring T-007 at 1280px. At 320 and 390px all end together. Decide which width wins (the form is capped at 900px, shared with Register) and make the three match.
 
 ## Done
-- [x] T-009 | Buttons: settle on one button system | Two sizes, not three (owner's choice): normal 44px phone / 40px desktop, small 36 / 32; fields and top bar follow; `.btn*` deleted. Pull request 94. | not measured
 - [x] T-001 | Sign in: fold the resend-confirmation section behind "Didn't get the email?" | Folded in a details element (EN/RO/DE); workspace test opens it first. Pull request 83, CI green. | not measured
 - [x] T-002 | Home: feature cards 3 x 2 on desktop, two columns on phones | New .channel-grid-six: 2 columns, 3 from 900px. Pull request open, CI decides. | not measured
 - [x] T-003 | Explore: hide the filters while there is only one place | Country and city filters show only once a published place exists; category stays. Pull request open, CI decides. | not measured
