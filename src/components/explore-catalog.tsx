@@ -48,6 +48,7 @@ export function ExploreCatalog({locale,places=[]}:{locale:Locale;places?:Publish
       </label>
     </div>
     <p role="status">{total?total+' '+t.results:t.noResults}</p>
+    {total===0?<button type="button" className="button button-outline" onClick={()=>{setCountry('all');setCity('all');setCategory('all');}}>{t.clearFilters}</button>:null}
     <div className="place-grid">
     {shown.map(place=><article className="place-card place-card-published" key={place.slug}><div className="place-card-content"><h2>{place.name}</h2><p>{[place.city,place.countryCode?regionName(place.countryCode):''].filter(Boolean).join(', ')}</p><p className="source-label">{t.source}</p><Link className="quiet-link" href={`/${locale}/places/${place.slug}/guide`}>{t.openGuide}<ArrowRight size={17} aria-hidden="true"/></Link></div></article>)}
     {showExample?<article className="place-card"><Image src={demoFacadePhotoSrc} alt={demoFacadePhoto[locale].alt} width={600} height={400}/><div className="place-card-content"><span className="badge">{t.fictional}</span><h2>{t.museum}</h2><p>{t.museumLocation}</p><p className="source-label">{t.source}</p><Link className="quiet-link" href={`/${locale}/places/willow-museum/guide`}>{t.openGuide}<ArrowRight size={17} aria-hidden="true"/></Link></div></article>:null}
