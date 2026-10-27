@@ -87,11 +87,12 @@ export function parsePublishedGuide(value: unknown): PublishedGuide | null {
 }
 
 /** One entry in Explore. */
-export type PublishedPlace = { slug: string; name: string; city: string; placeType: string; locale: Locale; locales: Locale[]; steps: number };
+export type PublishedPlace = { slug: string; name: string; city: string; countryCode: string; placeType: string; locale: Locale; locales: Locale[]; steps: number };
 export function parsePublishedPlaces(value: unknown): PublishedPlace[] {
   if (!Array.isArray(value)) return [];
   return value.filter(record).filter((item) => slugPattern.test(String(item.slug)) && isLocale(String(item.locale))).map((item) => ({
-    slug: String(item.slug), name: text(item.name, 160), city: text(item.city, 160), placeType: text(item.placeType, 30),
+    slug: String(item.slug), name: text(item.name, 160), city: text(item.city, 160),
+    countryCode: /^[A-Z]{2}$/.test(String(item.countryCode)) ? String(item.countryCode) : '', placeType: text(item.placeType, 30),
     locale: item.locale as Locale, locales: localeList(item.locales), steps: count(item.steps),
   }));
 }

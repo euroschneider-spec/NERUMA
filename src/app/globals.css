@@ -699,6 +699,8 @@ legend { padding-inline: var(--space-2); max-width: 100%; font-weight: var(--fon
 /* ── Explore ─────────────────────────────────────────────────────────── */
 .filters { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr)); gap: 16px; margin-bottom: 32px; }
 .place-card { max-width: 420px; border: 1px solid var(--color-divider); border-radius: var(--radius-lg); overflow: hidden; background: var(--color-surface); }
+.place-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr)); gap: 24px; align-items: start; }
+.place-grid .place-card { max-width: none; }
 .place-card-content { padding: 24px; }
 .place-card-content h2 { font-size: 1.5625rem; margin-bottom: 8px; }
 

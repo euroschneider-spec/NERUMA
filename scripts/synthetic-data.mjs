@@ -14,7 +14,7 @@ import assert from 'node:assert/strict';
 import sharp from 'sharp';
 import { testDatabase } from './pglite-supabase.mjs';
 import { FIXTURE_ADMIN_TOTP_SECRET, FIXTURE_OWNER_TOTP_SECRET } from './fixture-totp.mjs';
-import { cluj, kunsthaus, hotel, placeDesArts, longName, pavilion, harbour, railway, mill, people } from './synthetic-data/content.mjs';
+import { cluj, kunsthaus, hotel, placeDesArts, longName, pavilion, harbour, railway, mill, showcase, people } from './synthetic-data/content.mjs';
 
 export { people };
 const id = (n) => `00000000-0000-4000-8000-${String(n).padStart(12, '0')}`;
@@ -33,6 +33,7 @@ const orgs = {
   arts: { n: 113, name: 'Place des Arts Society (fictional)', type: 'cultural', owner: 'owner.arts@example.test' },
   harbour: { n: 114, name: 'Harbour Lights Museum (fictional)', type: 'museum', owner: 'owner.harbour@example.test' },
   railway: { n: 115, name: 'Old Railway Museum (fictional)', type: 'museum', owner: 'owner.railway@example.test' },
+  showcase: { n: 117, name: 'Showcase Venues (fictional)', type: 'institution', owner: 'owner.showcase@example.test' },
   archive: { n: 116, name: 'Archive of Everything (fictional)', type: 'institution', owner: 'owner.large@example.test', volume: true },
 };
 
@@ -175,6 +176,9 @@ export async function loadSyntheticData(db, { volume = false } = {}) {
     // Taken down by its owner: the address and the QR code stay, and say the guide isn't available.
     then: async ({ org, place }) => { await db.query('select public.unpublish_place($1,$2)', [org, place]); },
   });
+  for (const [index, [key, spec]] of showcase.entries()) {
+    await createPlace({ key, org: o('showcase'), owner: person(orgs.showcase.owner), place: id(1200 + index), spec });
+  }
   await createPlace({ key: 'harbour', org: o('harbour'), owner: person(orgs.harbour.owner), place: id(1108), spec: harbour });
   await actAsSystem(db);
   // The organisation was suspended after publishing.

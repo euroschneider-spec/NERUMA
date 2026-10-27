@@ -515,8 +515,6 @@ and the EU–US Data Privacy Framework if the provider is certified; check, don'
 
 ## 16. Other things a person can notice today (`docs/PRODUCT.md` §8)
 
-- [ ] **Explore filters.** Country and city are shown and do nothing; the category filter offers Theatre and Clinic (which no location can be) and misses
-  institution, public service and other.
 - [ ] **Privacy page** still describes "the demonstration, before live accounts" and doesn't name the data controller, retention or processors. **Terms** are a
   draft for the demonstration. Both need a lawyer before real organisations (see §15).
 - [ ] **Contact** prepares a message but doesn't send it (needs email, §4).
@@ -598,7 +596,6 @@ the section that holds the detail. Not legal advice: the legal items need a qual
 
 **What a person notices today** (§16)
 
-- [ ] Explore: the country and city filters do nothing, and the category list offers types nobody can choose.
 - [ ] No way to invite a colleague (needs email).
 - [ ] The Contact form doesn't send anything (needs email).
 - [ ] A new organisation lands on an empty dashboard (`DESIGN-TASKS.md` §8).
