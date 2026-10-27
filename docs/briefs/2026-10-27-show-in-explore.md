@@ -35,11 +35,14 @@ owner chose this on 27 October.
 - Telling an organisation by email that the feature was switched on.
 
 ## Decisions
-Proposed, to confirm with the owner:
+Confirmed by the owner unless marked proposed:
 - The flag belongs to the **organisation** (off by default); the switch belongs to each **location** (on by default once the
-  feature is on). The location's choice is kept when the feature is switched off, so switching it back on restores it.
-- **Existing organisations start with the feature off**, since the owner wants to decide by hand. Every organisation now live
-  leaves Explore when this ships until it is switched on.
+  feature is on). *Proposed, waiting for the owner:* the location's choice is kept when the feature is switched off, so switching
+  it back on restores it.
+- **The feature starts off for every organisation.** No real organisation is live yet, so nothing disappears from Explore when this
+  ships (owner, 2026-10-27).
+- The platform administrator's switch is on the **Accounts side**, next to the existing *Visit* button for an organisation, so it
+  is found where organisations are already managed.
 - Only a platform administrator can change the flag, only with two-factor, as for the other administrator actions. Owners and admins
   can change the location switch, as for publishing.
 - The database decides what Explore lists (flag on, location switch on, guide published); the page never filters on its own. Fail closed.
