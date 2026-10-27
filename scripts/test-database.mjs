@@ -246,7 +246,7 @@ await check('a visitor reads the published guide, in their language or a publish
  const de=await guideFor(published.slug,'de');assert.equal(de.locale,'en');
  assert.equal(await photoVisible(pubKey),true);
  assert.deepEqual(await qr(pubCode),{status:'published',slug:published.slug,locales:['en','ro']});
- const list=await placesList('ro');assert.equal(list.length,1);assert.equal(list[0].name,'Muzeul vizitatorului');assert.equal(list[0].slug,published.slug);
+ const list=await placesList('ro');assert.equal(list.length,1);assert.equal(list[0].name,'Muzeul vizitatorului');assert.equal(list[0].slug,published.slug);assert.equal(list[0].country,'RO');assert.equal(list[0].placeType,'museum');assert.equal(list[0].city,'Demo city');
  assert.equal(await qr('nosuchcode'),null);assert.equal(await guideFor('no-such-guide','en'),null);
  // Photos of drafts stay private.
  assert.equal(await photoVisible(key),false);

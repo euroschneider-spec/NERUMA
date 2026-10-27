@@ -297,6 +297,12 @@ Owner, 2026-10-27 (`docs/briefs/2026-10-26-example-photos.md`, `docs/guides/PHOT
 licence asks for no credit, so none is shown; the rights line only says where the photo is from. Paid Unsplash+ files, photos with an artwork as the subject, and photos
 with a recognisable person, a logo or a brand are not used. The owner's wish to take our own photos stays open as ledger T-018, but the licence does not require it.
 
+### Explore filters: country, city, type of place
+
+Owner, 2026-10-27 (`docs/briefs/2026-10-27-explore-filters.md`). Visitors filter Explore by country, city and type of place, each offering only what a published
+guide has. The visitor's language is not a filter (the site already follows it). Name search, accessibility filters, ads, sorting and a map come later. A filter that
+would offer only "All" is hidden, so a single published place shows no filters.
+
 ## Not yet discussed
 
 - `DESIGN-TASKS.md` sections 5, 6 (other items) and 7.

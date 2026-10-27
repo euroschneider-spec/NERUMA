@@ -364,6 +364,10 @@ try {
     await expect(visitor.getByText('Demonstration',{exact:false})).toHaveCount(0);
     await visitor.goto(`${base}/en/explore`);
     await expect(visitor.getByRole('heading',{name:'Fixture Gallery',level:2})).toBeVisible();
+    // One real place: no country, city or type has two choices yet, so Explore offers no filters.
+    await expect(visitor.getByLabel('Country',{exact:true})).toHaveCount(0);
+    await expect(visitor.getByLabel('City',{exact:true})).toHaveCount(0);
+    await expect(visitor.getByLabel('Category',{exact:true})).toHaveCount(0);
   });
   await check('the QR code opens the guide; only published photos are public',async()=>{
     await visitor.goto(`${base}${qrPath}`);

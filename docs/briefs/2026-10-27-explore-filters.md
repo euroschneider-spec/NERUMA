@@ -1,5 +1,5 @@
 ---
-status: idea   # idea → building → done
+status: done   # idea → building → done
 date: 2026-10-27
 ---
 
@@ -19,13 +19,13 @@ nothing, and the category list offers Theatre and Clinic, which no place can be,
 ## Done when
 On a phone first:
 
-- [ ] Explore has a country filter, a city filter and a type-of-place filter. Each lists only values that have a published guide, in the
+- [x] Explore has a country filter, a city filter and a type-of-place filter. Each lists only values that have a published guide, in the
       visitor's language.
-- [ ] Choosing a country narrows the city list to that country's cities. The cards narrow to match.
-- [ ] The type list offers exactly the types a place can be (institution, museum, hotel, cultural venue, public service, other) that have a
+- [x] Choosing a country narrows the city list to that country's cities. The cards narrow to match.
+- [x] The type list offers exactly the types a place can be (institution, museum, hotel, cultural venue, public service, other) that have a
       published guide, and no others.
-- [ ] If the filters leave no places, the page says so plainly and offers a "Clear filters" button.
-- [ ] Works with keyboard and screen reader, in EN, RO and DE.
+- [x] If the filters leave no places, the page says so plainly and offers a "Clear filters" button.
+- [x] Works with keyboard and screen reader, in EN, RO and DE.
 
 ## Not in scope
 - Search by name (later).
@@ -36,7 +36,16 @@ On a phone first:
 - Countries and cities that have no published guide yet.
 
 ## Decisions
-- Ledger T-003 hides the filters while there is only one place. Keep that behaviour unless the owner says otherwise.
+- Ledger T-003 hid the filters while there is only one place. Now each filter is hidden when it would offer only "All", which covers that case.
+- The country comes from the place's country code (new column in `published_places`, migration `20261027090000_explore_country.sql`); country names come from the browser's `Intl.DisplayNames`, so no list of names to maintain.
+- Types are named as in the guide builder (`placeTypeName`). A place whose organisation left the country out still shows under "All" but is never offered under a country.
+- The fictional example appears only when no country or city is chosen, and for "Museum" or "All" types.
 
 ## Result
-Filled in at the end.
+Pull request: euroschneider-spec/vianorae#103.
+
+Changed: migration `20261027090000_explore_country.sql`, `src/lib/explore-filters.ts`, `src/components/explore-catalog.tsx`, `publishing.ts`, three "Clear filters" texts.
+
+Ran: typecheck, lint, `test:unit` (new `explore-filters.test.ts`, `explore-catalog.test.tsx`), `test:db`, `test:workspace --group=workspace`, `tests/platform.spec.ts` and `tests/top-bar.spec.ts`.
+
+Not run: the other three workspace groups (CI runs them), the remaining browser specs, and a check on a real database with several countries.
