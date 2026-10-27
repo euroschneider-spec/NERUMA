@@ -10,7 +10,7 @@ import { sensoryChannels, sensoryLevels } from './workspace';
 /** Where a language stands before publishing, from `publication_check`. */
 export type LanguageCheck = {
   locale: Locale; started: boolean; ready: boolean; published: boolean;
-  steps: number; missingText: number; missingAlt: number; hasName: boolean;
+  steps: number; includedSteps: number; missingText: number; missingAlt: number; hasName: boolean;
 };
 export type PublishResult = { ok: true; live: Locale[]; slug: string; code: string } | { ok: false; error: 'invalid' | 'conflict' | 'auth' | 'nothing' | 'plan' | 'error' };
 export type UnpublishResult = { ok: boolean };
@@ -28,6 +28,8 @@ export function parseLanguageChecks(value: unknown): LanguageCheck[] {
   return value.filter(record).filter((item) => isLocale(String(item.locale))).map((item) => ({
     locale: item.locale as Locale, started: item.started === true, ready: item.ready === true, published: item.published === true,
     steps: count(item.steps), missingText: count(item.missingText), missingAlt: count(item.missingAlt), hasName: item.hasName === true,
+    // Before the one-step migration the database doesn't say; every step with its words counted.
+    includedSteps: 'includedSteps' in item ? count(item.includedSteps) : Math.max(0, count(item.steps) - count(item.missingText)),
   }));
 }
 
@@ -149,14 +151,16 @@ const en = {
   publishLive: 'Goes live',
   publishWaits: 'Waits',
   waitNotStarted: 'not started',
-  waitFewSteps: 'fewer than 3 steps',
+  waitNoStep: 'no step with a name and a description',
+  waitTooManySteps: 'more than 8 steps',
+  publishLeftOut: '{n} step(s) left out: no name or description in this language',
   waitNoName: 'no location name',
   waitMissingText: '{n} step(s) without a name or description',
   waitMissingAlt: '{n} photo(s) without a description',
   waitKeepsPrevious: 'visitors keep the previous version',
   publishAgree: 'We have checked this guide and take responsibility for it.',
   publishConfirm: 'Publish now',
-  publishNothing: 'No language is ready yet. Each step needs a name and a description, every photo a description, and a guide needs at least 3 steps.',
+  publishNothing: 'No language is ready yet. A language needs the location name and at least one step with a name and a description, and every photo a description.',
   publishSaveFirst: 'Save your changes first, then publish.',
   publishing: 'Publishing…',
   publishDone: 'Published. Visitors see this version now.',
@@ -188,14 +192,16 @@ const ro: PublishingCopy = {
   publishLive: 'Se publică',
   publishWaits: 'Așteaptă',
   waitNotStarted: 'neînceput',
-  waitFewSteps: 'mai puțin de 3 pași',
+  waitNoStep: 'niciun pas cu nume și descriere',
+  waitTooManySteps: 'mai mult de 8 pași',
+  publishLeftOut: '{n} pas(i) lăsat(i) deoparte: fără nume sau descriere în această limbă',
   waitNoName: 'fără numele locației',
   waitMissingText: '{n} pas(i) fără nume sau descriere',
   waitMissingAlt: '{n} fotografie(i) fără descriere',
   waitKeepsPrevious: 'vizitatorii păstrează versiunea anterioară',
   publishAgree: 'Am verificat acest ghid și ne asumăm responsabilitatea pentru el.',
   publishConfirm: 'Publică acum',
-  publishNothing: 'Nicio limbă nu este gata. Fiecare pas are nevoie de nume și descriere, fiecare fotografie de descriere, iar un ghid are nevoie de cel puțin 3 pași.',
+  publishNothing: 'Nicio limbă nu este gata. O limbă are nevoie de numele locației și de cel puțin un pas cu nume și descriere, iar fiecare fotografie de o descriere.',
   publishSaveFirst: 'Salvează mai întâi modificările, apoi publică.',
   publishing: 'Se publică…',
   publishDone: 'Publicat. Vizitatorii văd acum această versiune.',
@@ -226,14 +232,16 @@ const de: PublishingCopy = {
   publishLive: 'Wird veröffentlicht',
   publishWaits: 'Wartet',
   waitNotStarted: 'nicht begonnen',
-  waitFewSteps: 'weniger als 3 Schritte',
+  waitNoStep: 'kein Schritt mit Name und Beschreibung',
+  waitTooManySteps: 'mehr als 8 Schritte',
+  publishLeftOut: '{n} Schritt(e) ausgelassen: kein Name oder keine Beschreibung in dieser Sprache',
   waitNoName: 'kein Name des Ortes',
   waitMissingText: '{n} Schritt(e) ohne Name oder Beschreibung',
   waitMissingAlt: '{n} Foto(s) ohne Beschreibung',
   waitKeepsPrevious: 'Besucher sehen weiter die vorherige Version',
   publishAgree: 'Wir haben diesen Guide geprüft und übernehmen die Verantwortung dafür.',
   publishConfirm: 'Jetzt veröffentlichen',
-  publishNothing: 'Noch keine Sprache ist bereit. Jeder Schritt braucht Name und Beschreibung, jedes Foto eine Beschreibung, und ein Guide braucht mindestens 3 Schritte.',
+  publishNothing: 'Noch keine Sprache ist bereit. Eine Sprache braucht den Namen des Ortes und mindestens einen Schritt mit Name und Beschreibung, und jedes Foto eine Beschreibung.',
   publishSaveFirst: 'Speichern Sie zuerst Ihre Änderungen, dann veröffentlichen Sie.',
   publishing: 'Wird veröffentlicht…',
   publishDone: 'Veröffentlicht. Besucher sehen jetzt diese Version.',
@@ -253,13 +261,19 @@ export const getPublishingCopy = (locale: Locale): PublishingCopy => ({ en, ro, 
 export const fill = (template: string, values: Record<string, string | number>) =>
   template.replace(/\{(\w+)\}/g, (_, key: string) => String(values[key] ?? ''));
 
+/** For a language that goes live: how many steps are left out of it because they have no words in it, or null when none. */
+export function leftOutNote(check: LanguageCheck, locale: Locale): string | null {
+  return check.ready && check.missingText > 0 ? fill(getPublishingCopy(locale).publishLeftOut, { n: check.missingText }) : null;
+}
+
 /** Why a language isn't ready yet, in the owner's words. */
 export function waitingReasons(check: LanguageCheck, locale: Locale): string[] {
   const t = getPublishingCopy(locale);
   const reasons: string[] = [];
   if (!check.started) return [t.waitNotStarted];
   if (!check.hasName) reasons.push(t.waitNoName);
-  if (check.steps < 3) reasons.push(t.waitFewSteps);
+  if (check.includedSteps < 1) reasons.push(t.waitNoStep);
+  if (check.steps > 8) reasons.push(t.waitTooManySteps);
   if (check.missingText) reasons.push(fill(t.waitMissingText, { n: check.missingText }));
   if (check.missingAlt) reasons.push(fill(t.waitMissingAlt, { n: check.missingAlt }));
   if (check.published) reasons.push(t.waitKeepsPrevious);

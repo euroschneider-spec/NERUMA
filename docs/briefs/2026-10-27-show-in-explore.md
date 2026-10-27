@@ -23,8 +23,8 @@ owner chose this on 27 October.
       The owner then sees a **Show in Explore** switch on each location, already on.
 - [x] That owner turns a location off: it disappears from Explore, while its QR code and guide address still work. Turning it on
       brings it back.
-- [x] An organisation without the feature has no switch and none of its places is in Explore, published or not. Switching the
-      feature off removes the switch and the places from Explore at once, and writes a change-log note.
+- [x] An organisation without the feature sees the switch greyed out with a tooltip saying to contact NERUMA, and none of its places is in
+      Explore, published or not. Switching the feature off greys the switch out and removes the places from Explore at once, and writes a change-log note.
 - [x] All of it reads right in English, Romanian and German, and on a phone.
 
 ## Not in scope
@@ -40,6 +40,7 @@ Confirmed by the owner unless marked proposed:
   feature is on). The location's choice is kept when the feature is switched off, so switching it back on restores it (owner, 2026-10-27).
 - **The feature starts off for every organisation.** No real organisation is live yet, so nothing disappears from Explore when this
   ships (owner, 2026-10-27).
+- Without the feature the organisation's switch is **greyed out, with a tooltip to contact NERUMA**, not hidden (owner, 2026-10-27, after the first build).
 - The platform administrator's switch is on the **Accounts side**, next to the existing *Visit* button for an organisation, so it
   is found where organisations are already managed.
 - Only a platform administrator can change the flag, only with two-factor, as for the other administrator actions. Owners and admins

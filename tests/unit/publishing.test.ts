@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { fill, guideFromPublished, parseLanguageChecks, parsePublishedGuide, parsePublishedPlaces, parseQrTarget, parsePublishedContent, waitingReasons } from '@/lib/publishing';
+import { fill, guideFromPublished, leftOutNote, parseLanguageChecks, parsePublishedGuide, parsePublishedPlaces, parseQrTarget, parsePublishedContent, waitingReasons } from '@/lib/publishing';
 
 const zone = (extra = {}) => ({ id: 'z1', title: 'Entrance', description: 'Step-free.', note: '', next: 'Reception', optional: true,
   sensory: { sound: 'low', light: 'moderate', crowding: 'loud', smell: 'unknown', temperature: 'unknown', visual: 'high' },
@@ -50,19 +50,34 @@ describe('the lists a visitor and an owner read', () => {
     expect(parseQrTarget({ status: 'published', slug: 'x', locales: [] })).toBeNull();
   });
   it('language checks keep only the three languages', () => {
-    const checks = parseLanguageChecks([{ locale: 'en', started: true, ready: true, published: false, steps: 3, missingText: 0, missingAlt: 0, hasName: true }, { locale: 'fr' }, 7]);
+    const checks = parseLanguageChecks([{ locale: 'en', started: true, ready: true, published: false, steps: 3, includedSteps: 2, missingText: 1, missingAlt: 0, hasName: true }, { locale: 'fr' }, 7]);
     expect(checks).toHaveLength(1);
-    expect(checks[0]).toMatchObject({ locale: 'en', ready: true, steps: 3 });
+    expect(checks[0]).toMatchObject({ locale: 'en', ready: true, steps: 3, includedSteps: 2 });
+  });
+  it('an answer from before the one-step migration still reads: the steps with their words are the included ones', () => {
+    expect(parseLanguageChecks([{ locale: 'en', started: true, steps: 4, missingText: 1 }])[0].includedSteps).toBe(3);
+    expect(parseLanguageChecks([{ locale: 'en', started: true, steps: 1, missingText: 3 }])[0].includedSteps).toBe(0);
   });
 });
 
 describe('why a language waits', () => {
-  const base = { locale: 'ro' as const, started: true, ready: false, published: false, steps: 3, missingText: 0, missingAlt: 0, hasName: true };
+  const base = { locale: 'ro' as const, started: true, ready: false, published: false, steps: 3, includedSteps: 3, missingText: 0, missingAlt: 0, hasName: true };
   it('names each reason in the owner\'s language', () => {
     expect(waitingReasons({ ...base, started: false }, 'en')).toEqual(['not started']);
-    expect(waitingReasons({ ...base, steps: 2, missingText: 1, missingAlt: 2, hasName: false }, 'en'))
-      .toEqual(['no location name', 'fewer than 3 steps', '1 step(s) without a name or description', '2 photo(s) without a description']);
-    expect(waitingReasons({ ...base, steps: 2, published: true }, 'de')).toEqual(['weniger als 3 Schritte', 'Besucher sehen weiter die vorherige Version']);
+    expect(waitingReasons({ ...base, steps: 2, includedSteps: 0, missingText: 2, missingAlt: 2, hasName: false }, 'en'))
+      .toEqual(['no location name', 'no step with a name and a description', '2 step(s) without a name or description', '2 photo(s) without a description']);
+    expect(waitingReasons({ ...base, steps: 2, includedSteps: 0, missingText: 2, published: true }, 'de'))
+      .toEqual(['kein Schritt mit Name und Beschreibung', '2 Schritt(e) ohne Name oder Beschreibung', 'Besucher sehen weiter die vorherige Version']);
+  });
+  it('one step is enough, and nine are too many', () => {
+    expect(waitingReasons({ ...base, steps: 1, includedSteps: 1 }, 'en')).toEqual([]);
+    expect(waitingReasons({ ...base, steps: 9, includedSteps: 9 }, 'en')).toEqual(['more than 8 steps']);
+  });
+  it('says how many steps a language that goes live leaves out, and nothing when none', () => {
+    expect(leftOutNote({ ...base, ready: true, steps: 4, includedSteps: 2, missingText: 2 }, 'en')).toBe('2 step(s) left out: no name or description in this language');
+    expect(leftOutNote({ ...base, ready: true, steps: 4, includedSteps: 2, missingText: 2 }, 'ro')).toContain('2 pas(i)');
+    expect(leftOutNote({ ...base, ready: true }, 'en')).toBeNull();
+    expect(leftOutNote({ ...base, ready: false, missingText: 2 }, 'en')).toBeNull();
   });
   it('fills in numbers', () => expect(fill('{n} steps in {where}', { n: 3, where: 'Cluj' })).toBe('3 steps in Cluj'));
 });

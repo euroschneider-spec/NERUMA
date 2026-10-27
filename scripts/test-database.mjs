@@ -203,7 +203,7 @@ const photoVisible=async name=>(await db.query("select count(*)::int n from stor
 let published,pubCode,pubRevision;
 await db.exec(`reset role;insert into public.organization_members(organization_id,user_id,role) values('${newOrg}','${editor}','editor');`);
 await as(newOwner);
-await check('a location is saved in three languages: two complete, one with too few steps',async()=>{
+await check('a location is saved in three languages: one with only two steps',async()=>{
  assert.equal(await saveDraft(newOrg,pubPlace,0,'en',pubDraft(['Entrance','Gallery','Quiet room'])),1);
  await db.query("insert into storage.objects(bucket_id,name) values('vianorae-private-photos',$1)",[pubKey]);
  const withPhoto=pubDraft(['Entrance','Gallery','Quiet room']);withPhoto.zones[0].photo={id:pubPhoto,storageKey:pubKey,alt:'Glass doors',rights:'Own photo',photographedOn:'2026-01-02'};
@@ -213,7 +213,7 @@ await check('a location is saved in three languages: two complete, one with too 
  const de=pubDraft(['Eingang','Galerie'],{name:'Museum der Besucher'});de.zones[0].photo={...withPhoto.zones[0].photo,alt:'Glastüren'};
  assert.equal(await saveDraft(newOrg,pubPlace,3,'de',de),4);
  const checks=Object.fromEntries((await db.query('select public.publication_check($1,$2) c',[newOrg,pubPlace])).rows[0].c.map(c=>[c.locale,c]));
- assert.equal(checks.en.ready,true);assert.equal(checks.ro.ready,true);assert.equal(checks.de.ready,false);assert.equal(checks.de.steps,2);
+ assert.equal(checks.en.ready,true);assert.equal(checks.ro.ready,true);assert.equal(checks.de.ready,true,'two steps are enough');assert.equal(checks.de.steps,2);assert.equal(checks.de.includedSteps,2);assert.equal(checks.en.includedSteps,3);
 });
 await as(null,'anon');
 await check('before publishing a visitor finds nothing: no guide, no photo, no QR code',async()=>{
@@ -228,7 +228,7 @@ await as(newOwner);
 await check('publishing needs the saved revision the page showed',async()=>{await assert.rejects(()=>publish(pubPlace,3),e=>e.code==='40001');});
 await check('the owner publishes: complete languages go live, the address and the QR code are made once',async()=>{
  published=await publish(pubPlace,4);
- assert.deepEqual(published.live,['en','ro']);assert.deepEqual(published.waiting.map(w=>w.locale),['de']);
+ assert.deepEqual(published.live,['en','ro','de']);assert.deepEqual(published.waiting,[]);
  assert.equal(published.slug,'a-visitor-s-museum-demo-city');assert.match(published.code,/^[0-9a-f]{8}$/);pubCode=published.code;
  const place=(await db.query('select status,slug,published_revision from public.places where id=$1',[pubPlace])).rows[0];
  assert.equal(place.status,'published');assert.equal(Number(place.published_revision),4);
@@ -246,7 +246,7 @@ await check('Explore lists a place only while the platform has switched Explore 
  await as(null,'anon');
  assert.equal((await placesList('en')).length,0,'not in Explore until a platform administrator switches it on');
  assert.equal((await guideFor(published.slug,'en')).status,'published','the guide does not depend on Explore');
- assert.deepEqual(await qr(pubCode),{status:'published',slug:published.slug,locales:['en','ro']},'nor does the QR code');
+ assert.deepEqual(await qr(pubCode),{status:'published',slug:published.slug,locales:['en','ro','de']},'nor does the QR code');
  for(const who of [newOwner,editor,outsider]){
   await as(who);
   await assert.rejects(()=>setOrgExplore(true),/Platform administrator required/);
@@ -307,15 +307,16 @@ await db.query('delete from private.platform_admins where user_id=$1',[exploreAd
 await as(null,'anon');
 await check('a visitor reads the published guide, in their language or a published one, with its photo',async()=>{
  const en=await guideFor(published.slug,'en');
- assert.equal(en.status,'published');assert.deepEqual(en.locales,['en','ro']);
+ assert.equal(en.status,'published');assert.deepEqual(en.locales,['en','ro','de']);
  assert.deepEqual(en.content.zones.map(z=>z.title),['Entrance','Gallery','Quiet room']);
  assert.equal(en.content.zones[0].photo.key,pubKey);assert.equal(en.content.zones[0].photo.alt,'Glass doors');
  // A removed field is left out of what visitors get.
  assert.equal(en.content.zones[1].note,'');assert.equal(en.content.zones[0].note,'Ask staff');
  assert.equal((await guideFor(published.slug,'ro')).content.zones[2].title,'Camera liniștită');
- const de=await guideFor(published.slug,'de');assert.equal(de.locale,'en');
+ const de=await guideFor(published.slug,'de');assert.equal(de.locale,'de');assert.deepEqual(de.content.zones.map(z=>z.title),['Eingang','Galerie']);
+ const fr=await guideFor(published.slug,'fr');assert.equal(fr.locale,'en','a language nobody published falls back to the first one');
  assert.equal(await photoVisible(pubKey),true);
- assert.deepEqual(await qr(pubCode),{status:'published',slug:published.slug,locales:['en','ro']});
+ assert.deepEqual(await qr(pubCode),{status:'published',slug:published.slug,locales:['en','ro','de']});
  const list=await placesList('ro');assert.equal(list.length,1);assert.equal(list[0].name,'Muzeul vizitatorului');assert.equal(list[0].slug,published.slug);
  assert.equal(await qr('nosuchcode'),null);assert.equal(await guideFor('no-such-guide','en'),null);
  // Photos of drafts stay private.
@@ -388,6 +389,41 @@ await check('a published address a visitor cannot open does not exist: any name,
   assert.ok((await db.query('select public.published_places($1) list',['en'])).rows[0].list.some(entry=>entry.slug===result.slug),`${name.slice(0,20)} is listed in Explore`);
   await as(newOwner);
  }
+});
+// A guide needs one step, not three (brief 2026-10-27-no-step-minimum.md): a language goes live with one step, a step that has no words in a
+// language is left out of it (and its photo needs no description there), and eight steps is still the most.
+const fewPlace=id(1340),fewZones=[id(1341),id(1342),id(1343),id(1344)],fewKey=`${newOrg}/${fewPlace}/${fewZones[3]}/${id(1351)}.webp`;
+const fewChecks=async place=>Object.fromEntries((await db.query('select public.publication_check($1,$2) c',[newOrg,place])).rows[0].c.map(c=>[c.locale,c]));
+await check('a location with one step publishes in a language; steps with no words in it are left out, and their photos need no description',async()=>{
+ // One step, one language.
+ const single=id(1345);
+ assert.equal(await saveDraft(newOrg,single,0,'en',{...draft,name:'A single room',city:'Tiny town',zones:[step(id(1346),'The room')]}),1);
+ const one=(await fewChecks(single)).en;
+ assert.deepEqual([one.ready,one.steps,one.includedSteps],[true,1,1],'one step is enough');
+ // Three steps in English and Romanian; later a fourth, with a photo, is added in English only.
+ const three=names=>({...draft,name:'Few steps museum',city:'Tiny town',zones:fewZones.slice(0,names.length).map((zoneId,i)=>step(zoneId,names[i]))});
+ assert.equal(await saveDraft(newOrg,fewPlace,0,'en',three(['One','Two','Three'])),1);
+ assert.equal(await saveDraft(newOrg,fewPlace,1,'ro',{...three(['Unu','Doi','Trei']),name:'Muzeul cu puțini pași'}),2);
+ const four=three(['One','Two','Three','Four']);
+ assert.equal(await saveDraft(newOrg,fewPlace,2,'en',four),3);
+ await db.query("insert into storage.objects(bucket_id,name) values('vianorae-private-photos',$1)",[fewKey]);
+ const withPhoto=three(['One','Two','Three','Four']);
+ withPhoto.zones[3].photo={id:id(1351),storageKey:fewKey,alt:'A fourth window',rights:'Own photo',photographedOn:'2026-01-02'};
+ assert.equal(await saveDraft(newOrg,fewPlace,3,'en',withPhoto),4);
+ const checks=await fewChecks(fewPlace);
+ assert.deepEqual([checks.en.ready,checks.en.steps,checks.en.includedSteps],[true,4,4]);
+ assert.equal(checks.ro.ready,true,'Romanian has its words for the first three steps and goes live without the fourth');
+ assert.equal(checks.ro.missingAlt,0,'the fourth step\'s photo has no Romanian description, and the fourth step is not in the Romanian guide');
+ const result=await publish(fewPlace,4);
+ assert.deepEqual(result.live,['en','ro']);
+ await as(null,'anon');
+ assert.equal((await guideFor(result.slug,'en')).content.zones.length,4);
+ const ro=await guideFor(result.slug,'ro');
+ assert.deepEqual(ro.content.zones.map(z=>z.title),['Unu','Doi','Trei'],'the Romanian guide has only the steps with Romanian words');
+ await as(newOwner);
+});
+await check('nine steps are still too many, and one step without words alone does not publish',async()=>{
+ await assert.rejects(()=>saveDraft(newOrg,id(1347),0,'en',{...draft,name:'Too many',city:'Big town',zones:Array.from({length:9},(_,i)=>step(id(1370+i),`Step ${i+1}`))}));
 });
 await as(null,'anon');
 await check('hostile addresses, codes and languages answer "not found" and never an error',async()=>{

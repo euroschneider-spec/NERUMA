@@ -702,7 +702,10 @@ legend { padding-inline: var(--space-2); max-width: 100%; font-weight: var(--fon
 .place-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr)); gap: 24px; align-items: start; }
 .place-grid .place-card { max-width: none; }
 .place-card-content { padding: 24px; }
-.explore-switch { margin-top: 12px; }
+.explore-switch { margin-top: 12px; position: relative; }
+.explore-switch.is-off .checkbox-label { opacity: 0.7; cursor: not-allowed; }
+.explore-switch.is-off input[type="checkbox"] { cursor: not-allowed; }
+.explore-switch.is-off .infotip-text { width: 280px; max-width: 100%; }
 .explore-switch .small-note { margin: 4px 0 0; }
 .explore-toggle { margin: 8px 0; }
 .place-card-content h2 { font-size: 1.5625rem; margin-bottom: 8px; }

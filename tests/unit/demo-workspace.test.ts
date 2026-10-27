@@ -27,12 +27,12 @@ describe('the demo samples', () => {
     }
   });
 
-  it('has a complete published museum and an unfinished pavilion', () => {
+  it('has a complete published museum and a draft pavilion', () => {
     const cards = listDemoPlaces('en', memory());
     const [willow, pavilion] = cards;
     expect(willow).toMatchObject({ id: demoPlaceIds.willow, status: 'published', attention: [] });
     expect(willow.photoKey).toBeTruthy();
-    expect(pavilion).toMatchObject({ id: demoPlaceIds.pavilion, status: 'draft', attention: ['fewSteps'] });
+    expect(pavilion).toMatchObject({ id: demoPlaceIds.pavilion, status: 'draft', attention: [] });
   });
 
   it('knows only its own locations', () => {

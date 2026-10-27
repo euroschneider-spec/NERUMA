@@ -126,15 +126,15 @@ Languages everywhere: **English, Romanian, German.** Root `/` opens English; an 
 ## 5. Organisation owners and admins (approved organisation)
 
 ### Dashboard
-- One card per location (up to 100): photo, name, draft or published, address, and **what needs attention** (fewer than 3 steps,
+- One card per location (up to 100): photo, name, draft or published, address, and **what needs attention** (no step,
   a step without name or description in this language, a photo without a description, changes not yet published).
 - Per card: edit, **QR code and link** (published only: view, download, copy link), open the public guide.
-- **Show in Explore**: a switch on each card, on by default, saved as soon as it is changed. It appears only once a platform administrator has switched Explore on for the organisation; without that, none of its locations is in Explore. Hiding a location removes it from Explore only: its guide, web address and QR code keep working. A platform administrator visiting can't change it.
+- **Show in Explore**: a switch on each card, on by default, saved as soon as it is changed. Until a platform administrator has switched Explore on for the organisation the switch is shown **greyed out**, and its tooltip says Explore listing is not switched on and to contact NERUMA; none of its locations is in Explore. (It is not shown at all while a platform administrator is visiting.) Hiding a location removes it from Explore only: its guide, web address and QR code keep working. A platform administrator visiting can't change it.
 - Several organisations: a switcher.
 
 ### Building a guide
 - **Location**: name, city, address, country, type, description, arrival information.
-- **Steps**: 1 to 8 per location (3 to 8 to publish). Each: name, description, a useful note, what comes next, "visitors may skip",
+- **Steps**: 1 to 8 per location (one step is enough to publish). Each: name, description, a useful note, what comes next, "visitors may skip",
   six sensory levels, and a photo.
 - **Photos**: JPEG, PNG or WebP up to 3 MB, resized and re-encoded, hidden data removed. A description (in each language), who holds
   the rights and the date taken are required. Private until published.
@@ -146,7 +146,7 @@ Languages everywhere: **English, Romanian, German.** Root `/` opens English; an 
 
 ### Publishing
 - **Publish** (owners and admins) shows which languages go live and which wait and why, then the responsibility statement and one
-  tick. It goes live **straight away**, every complete language at once, without a NERUMA review.
+  tick. It goes live **straight away**, every ready language at once, without a NERUMA review. A language is ready when it has the location name and at least one step with a name and a description in it; steps that have no words in that language are **left out** of it (the box says how many), and a photo on a left-out step needs no description.
 - The first publish makes the web address (from the name and city; never changes) and the QR code (never changes).
 - Editing after publishing changes nothing public until the next publish; the card says so.
 - **Unpublish** (asks first): the address and QR code stay and say "isn't available", without the name; photos become private again.

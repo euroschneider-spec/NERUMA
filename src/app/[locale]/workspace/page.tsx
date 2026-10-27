@@ -8,8 +8,8 @@ import { stripeConfigured } from '@/lib/stripe-server';
 import { getOrganisationCopy } from '@/lib/organisation-copy';
 import { getWorkspaceCopy } from '@/lib/workspace';
 import { LocationCards } from '@/components/location-cards';
-import { listPlaces, workspaceConfigured, workspaceSession } from '@/lib/workspace-server';
-import { publishingReady } from '@/lib/verification-server';
+import { listPlaces, organisationExplore, workspaceConfigured, workspaceSession } from '@/lib/workspace-server';
+import { exploreListingReady, publishingReady } from '@/lib/verification-server';
 
 export const dynamic='force-dynamic';
 // The browser tab speaks the page's language too.
@@ -29,6 +29,9 @@ export default async function Workspace({params,searchParams}:{params:Promise<{l
   if(chosen && !organisation) notFound();
   const places=organisation && workspaceConfigured() ? await listPlaces(context.supabase,organisation.id,locale) : [];
   const publishing=await publishingReady(context.supabase);
+  // The "Show in Explore" switch exists once the Explore migration is installed; it works once a platform administrator has switched Explore on, and is greyed out until then.
+  const exploreReady=!!organisation && workspaceConfigured() && await exploreListingReady(context.supabase);
+  const exploreOn=exploreReady && await organisationExplore(context.supabase,organisation!.id);
   const newPlaceHref=organisation ? `/${locale}/workspace/new?org=${organisation.id}` : '';
   // A failed payment, or no plan once payments are on: say so before anything else (docs/guides/PAYMENTS.md).
   const billing=organisation && workspaceConfigured() ? await getBillingStatus(context.supabase,organisation.id) : null;
@@ -47,7 +50,7 @@ export default async function Workspace({params,searchParams}:{params:Promise<{l
     {context.organisations.length>1 && <nav className="button-row" aria-label={getOrganisationCopy(locale).organisation}>{context.organisations.map(o=><Link key={o.id} className="quiet-link" href={`/${locale}/workspace?org=${o.id}`} aria-current={o.id===organisation?.id?'page':undefined}>{o.name}</Link>)}</nav>}
     {!workspaceConfigured() ? <p>{t.readyLater}</p> : !organisation ? <p>{t.forbidden}</p> : <section aria-labelledby="locations-heading">
       <h2 id="locations-heading">{t.locationsHeading}</h2>
-      {!places.length ? <div className="empty-state"><p>{t.empty}</p>{!visiting && <Link className="button" href={newPlaceHref}>{t.newPlace}</Link>}</div> : <LocationCards places={places} locale={locale} base={`/${locale}/workspace`} sample={sampleOnly && !publishing ? 'all' : 'none'} qrCode="willow-museum" visits={sampleVisits} publishing={publishing} exploreOrg={visiting ? undefined : organisation.id}/>}
+      {!places.length ? <div className="empty-state"><p>{t.empty}</p>{!visiting && <Link className="button" href={newPlaceHref}>{t.newPlace}</Link>}</div> : <LocationCards places={places} locale={locale} base={`/${locale}/workspace`} sample={sampleOnly && !publishing ? 'all' : 'none'} qrCode="willow-museum" visits={sampleVisits} publishing={publishing} exploreOrg={visiting || !exploreReady ? undefined : organisation.id} exploreOn={exploreOn}/>}
     </section>}
   </main>;
 }

@@ -18,6 +18,7 @@ const en = {
   adminError: 'Explore could not be changed. Try again.',
   // The organisation's side, on each location card.
   show: 'Show in Explore',
+  showOff: 'Explore listing is not switched on for your organisation. Contact NERUMA to enable it.',
   showHint: 'Visitors can find this location in Explore. Its guide and QR code work either way.',
   saved: 'Saved.',
   error: 'This could not be saved. Try again.',
@@ -38,6 +39,7 @@ const ro: ExploreListingCopy = {
   offCancel: 'Las-o activă',
   adminError: 'Explorează nu a putut fi modificat. Încearcă din nou.',
   show: 'Arată în Explorează',
+  showOff: 'Listarea în Explorează nu este activată pentru organizația ta. Contactează NERUMA pentru a o activa.',
   showHint: 'Vizitatorii pot găsi această locație în Explorează. Ghidul și codul QR funcționează oricum.',
   saved: 'Salvat.',
   error: 'Nu s-a putut salva. Încearcă din nou.',
@@ -57,6 +59,7 @@ const de: ExploreListingCopy = {
   offCancel: 'Eingeschaltet lassen',
   adminError: 'Entdecken konnte nicht geändert werden. Versuchen Sie es erneut.',
   show: 'In Entdecken zeigen',
+  showOff: 'Die Auflistung in Entdecken ist für Ihre Organisation nicht eingeschaltet. Kontaktieren Sie NERUMA, um sie zu aktivieren.',
   showHint: 'Besuchende können diesen Ort in Entdecken finden. Guide und QR-Code funktionieren in jedem Fall.',
   saved: 'Gespeichert.',
   error: 'Das konnte nicht gespeichert werden. Versuchen Sie es erneut.',
