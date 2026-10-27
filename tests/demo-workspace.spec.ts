@@ -29,7 +29,7 @@ test('the dashboard has a published museum with a QR code and an unfinished pavi
   await expect(museum.locator('.location-visits strong')).toHaveText('128');
   const pavilionCard = cards.filter({ hasText: 'Garden Pavilion' });
   await expect(pavilionCard.locator('.status-badge')).toHaveText('Draft');
-  await expect(pavilionCard.getByText('Add at least 3 steps')).toBeVisible();
+  await expect(pavilionCard.getByText('Nothing needs attention.')).toBeVisible();
   await expect(pavilionCard.getByRole('button', { name: 'QR code and link' })).toHaveCount(0);
 
   await museum.getByRole('button', { name: 'QR code and link' }).click();

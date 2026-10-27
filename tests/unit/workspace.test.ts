@@ -131,8 +131,9 @@ describe('placeAttention', () => {
   it('is empty for three complete steps', () => {
     expect(placeAttention(steps(3), [{ zoneId: 'z0', alt: 'A door' }])).toEqual([]);
   });
-  it('flags fewer than three steps', () => {
-    expect(placeAttention(steps(2), [])).toEqual(['fewSteps']);
+  it('one step is enough, and no step at all is flagged', () => {
+    expect(placeAttention(steps(1), [])).toEqual([]);
+    expect(placeAttention(steps(0), [])).toEqual(['fewSteps']);
   });
   it('flags steps without text in this language', () => {
     expect(placeAttention(steps(3, false), [])).toEqual(['missingText']);

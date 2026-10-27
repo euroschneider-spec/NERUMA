@@ -305,6 +305,14 @@ organisation's owners and admins get a *Show in Explore* switch per location (on
 off and on again. Every switch is written to the organisation's change log, which never names the administrator. Guides, web addresses and QR codes do not depend on
 Explore. The reason: there is no billing plan yet (Stripe is waiting on email domains and money), so the owner decides by hand who is listed; a plan can set the same flag later.
 Not chosen: Explore open to everyone with only the opt-out gated (it would not give the owner control), opt-in by the organisation alone.
+Without the feature the organisation's *Show in Explore* switch is not hidden but **greyed out**, with a tooltip to contact NERUMA (owner, 2026-10-27, after the first build).
+
+### A guide needs one step, not three
+
+Owner, 2026-10-27 (`docs/briefs/2026-10-27-no-step-minimum.md`). This replaces "at least 3 steps to publish" (`docs/briefs/2026-10-13-publishing.md`). We don't know what kind of
+building an organisation has, so a location can be published with one step. The most stays 8. A language goes live when it has the location name and at least one step with a
+name and a description in it; steps with no words in that language are left out of it, and the publish box says how many. A photo on a left-out step needs no description.
+Not chosen: keeping the minimum and lowering it to 2, or requiring every step to have words in every language (a shorter guide in one language is better than none).
 
 ## Not yet discussed
 

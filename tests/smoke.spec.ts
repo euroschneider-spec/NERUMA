@@ -147,7 +147,7 @@ test.describe('the deployed database, asked as an anonymous visitor', () => {
     for (const rpc of ['organization_verification_schema_version', 'mandate_evidence_schema_version', 'workspace_schema_version',
       'step_fields_schema_version', 'problem_reports_schema_version', 'publishing_schema_version', 'two_factor_schema_version', 'remember_device_schema_version',
       'account_deletion_schema_version', 'superadmin_schema_version', 'account_profile_schema_version', 'payments_schema_version',
-      'platform_visit_schema_version', 'explore_listing_schema_version', 'archive_places_schema_version']) {
+      'platform_visit_schema_version', 'explore_listing_schema_version', 'one_step_schema_version', 'archive_places_schema_version']) {
       const response = await request.post(`${database}/rest/v1/rpc/${rpc}`, { headers: headers(), data: {} });
       installed[rpc] = response.status() === 200 && (await response.json()) === 1;
     }

@@ -6,7 +6,7 @@ import { getPublicationCheck, getPublishingAllowed, publishPlace } from '@/app/w
 import { getBillingCopy } from '@/lib/billing';
 import { localeNames, type Locale } from '@/lib/i18n';
 import type { LanguageCheck } from '@/lib/publishing';
-import { getPublishingCopy, waitingReasons, type PublishResult } from '@/lib/publishing';
+import { getPublishingCopy, leftOutNote, waitingReasons, type PublishResult } from '@/lib/publishing';
 import { getWorkspaceCopy } from '@/lib/workspace';
 import { ResponsibilityNotice } from './responsibility-notice';
 
@@ -73,7 +73,7 @@ export function PublishDialog({ open, locale, org, placeId, revision, onClose, o
       {checks && plan?.allowed !== false && <>
         {ready.length > 0 && <section aria-label={t.publishLive}>
           <h3>{t.publishLive}</h3>
-          <ul>{ready.map((check) => <li key={check.locale}>{localeNames[check.locale]}</li>)}</ul>
+          <ul>{ready.map((check) => <li key={check.locale}>{localeNames[check.locale]}{leftOutNote(check, locale) && <>: {leftOutNote(check, locale)}</>}</li>)}</ul>
         </section>}
         {waiting.length > 0 && <section aria-label={t.publishWaits}>
           <h3>{t.publishWaits}</h3>

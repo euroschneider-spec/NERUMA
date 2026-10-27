@@ -92,7 +92,7 @@ selector or `testIdAttribute` anywhere else. Never find an element by CSS class 
 | `admin.willow@example.test` | Organisation **admin** (not owner) of the Willow Museum |
 | `owner.cluj@example.test` | Owner of Visual Arts Museum Cluj: eight steps in EN/RO/DE, own and removed fields, three photos, published. Two-factor is set up: `node scripts/fixture-totp.mjs owner` |
 | `owner.kunsthaus@example.test` | Owner of Kunsthaus am Fluss: a German-only museum, published; a closed problem report |
-| `owner.hotel@example.test` | Owner of Hotel Lindenhof: English and Romanian published, a German guide too short to publish |
+| `owner.hotel@example.test` | Owner of Hotel Lindenhof: English, Romanian and German published; the German guide has two of the four steps |
 | `owner.arts@example.test` | Owner of Place des Arts Society, with four locations in four states: published ("Place des Arts"), a draft with a very long name, an unfinished one-step draft, and one edited after publishing (asks to publish again) |
 | `owner.railway@example.test` | Owner of a museum that took its guide down: the QR code says "unavailable" |
 | `owner.harbour@example.test` | Owner of a **suspended** organisation: signs in, sees no data, and its guide and QR code say "unavailable" |

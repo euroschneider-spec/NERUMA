@@ -320,6 +320,8 @@ try {
     assert.equal((await context.request.get(`${base}${photoPath}`)).status(),200);
   });
   let publicAddress,qrPath;
+  // The QR code leads to the guide in the visitor's language when it is published (this visitor prefers Romanian, and Romanian is live too).
+  const guideAddress=()=>new RegExp(`${publicAddress.replace('/en/','/(en|ro)/')}$`);
   const visitor=await (await browser.newContext({colorScheme:'dark',extraHTTPHeaders:{'Accept-Language':'ro-RO,ro;q=0.9'}})).newPage();
   const publishDialog=page.getByRole('dialog',{name:'Publish this guide?'});
   await check('Publish asks first: which languages go live and which wait, the responsibility text and one tick',async()=>{
@@ -337,8 +339,10 @@ try {
     // Every photo needs its description in English; a step's photo from the earlier checks is detached.
     await page.getByRole('button',{name:'Publish',exact:true}).first().click();
     await expect(publishDialog).toBeVisible();
+    // A guide needs one step: Romanian, saved with its one step, goes live too (it used to wait for three).
     await expect(publishDialog.getByRole('region',{name:'Goes live'})).toContainText('English');
-    await expect(publishDialog.getByRole('region',{name:'Waits'})).toContainText('Română: fewer than 3 steps');
+    await expect(publishDialog.getByRole('region',{name:'Goes live'})).toContainText('Română');
+    await expect(publishDialog.getByRole('region',{name:'Waits'})).toHaveCount(0);
     await expect(publishDialog).toContainText('Your information can change someone’s experience.');
     await expect(publishDialog.getByRole('button',{name:'Publish now',exact:true})).toBeDisabled();
     await publishDialog.getByRole('button',{name:'Cancel',exact:true}).click();await expect(publishDialog).toBeHidden();
@@ -366,11 +370,22 @@ try {
     await visitor.goto(`${base}/en/explore`);
     await expect(visitor.getByText('Fixture Gallery')).toHaveCount(0);
   });
-  await check('a platform administrator switches Explore on for the organisation: the owner gets a "Show in Explore" switch per location, and every switch lands in the change log',async()=>{
+  await check('a platform administrator switches Explore on for the organisation: the "Show in Explore" switch per location is greyed out until then, and every switch lands in the change log',async()=>{
     const card=page.locator('.location-card').filter({hasText:'Fixture Gallery'});
     const toggle=card.getByLabel('Show in Explore',{exact:true});
+    // Without Explore the switch is still there, greyed out, and says whom to ask.
+    const greyedOut=async()=>{
+      await expect(toggle).toHaveAttribute('aria-disabled','true');
+      await expect(toggle).not.toBeChecked();
+      await toggle.focus();
+      await expect(card.getByRole('tooltip')).toBeVisible();
+      await expect(card.getByRole('tooltip')).toHaveText('Explore listing is not switched on for your organisation. Contact NERUMA to enable it.');
+      await toggle.click({force:true});
+      await expect(toggle).not.toBeChecked();
+    };
     await page.goto(`${base}/en/workspace`);
-    await expect(toggle).toHaveCount(0);
+    await greyedOut();
+    const greyedAudit=await new AxeBuilder({page}).withTags(['wcag2a','wcag2aa','wcag21a','wcag21aa','wcag22aa']).analyze();assert.deepEqual(greyedAudit.violations.map(v=>v.id),[]);
     const admin=await (await browser.newContext({colorScheme:'dark'})).newPage();
     await login(admin,3);
     const account=`${base}/en/admin/accounts/00000000-0000-4000-8000-000000000001`;
@@ -393,7 +408,7 @@ try {
     await visitor.goto(`${base}${publicAddress}`);
     await expect(visitor.locator('.gg-title')).toBeVisible();
     await visitor.goto(`${base}${qrPath}`);
-    await expect(visitor).toHaveURL(new RegExp(`${publicAddress}$`));
+    await expect(visitor).toHaveURL(guideAddress());
     // Switching the feature off asks first, takes the switch away, and keeps the location's own choice.
     await admin.goto(account);
     await organisation.getByRole('button',{name:'Switch off Explore',exact:true}).click();
@@ -404,7 +419,7 @@ try {
     await ask.getByRole('button',{name:'Switch off Explore',exact:true}).click();
     await expect(organisation.getByText('Explore is off',{exact:false})).toBeVisible();
     await page.goto(`${base}/en/workspace`);
-    await expect(toggle).toHaveCount(0);
+    await greyedOut();
     await admin.goto(account);
     await organisation.getByRole('button',{name:'Switch on Explore for Fixture museum 1',exact:true}).click();
     await expect(organisation.getByText('Explore is on',{exact:false})).toBeVisible();
@@ -425,7 +440,8 @@ try {
   });
   await check('the QR code opens the guide; only published photos are public',async()=>{
     await visitor.goto(`${base}${qrPath}`);
-    await expect(visitor).toHaveURL(new RegExp(`${publicAddress}$`));
+    await expect(visitor).toHaveURL(guideAddress());
+    await visitor.goto(`${base}${publicAddress}`);
     await expect(visitor.getByRole('heading',{name:'Fixture Gallery',level:1})).toBeVisible();
     assert.equal((await visitor.request.get(`${base}/api/guide-photos?key=${'x'.repeat(10)}`)).status(),404);
     assert.equal((await visitor.request.get(`${base}${photoPath}`)).status(),401);
@@ -515,7 +531,7 @@ try {
     await publishDialog.getByRole('button',{name:'Publish now',exact:true}).click();
     await expect(page.locator('.status-message[role]')).toContainText('Published.');
     await visitor.goto(`${base}${qrPath}`);
-    await expect(visitor).toHaveURL(new RegExp(`${publicAddress}$`));
+    await expect(visitor).toHaveURL(guideAddress());
     await expect(visitor.locator('.gg-title')).toBeVisible();
   });
   await check('a platform administrator visits the organisation: it is marked, they correct and take down but cannot publish or add, and the owner reads the change log',async()=>{
@@ -640,7 +656,7 @@ try {
     await publishDialog.getByRole('button',{name:'Cancel',exact:true}).click();
     assert.equal(await stripeEvent('active'),200);
     await visitor.goto(`${base}${qrPath}`);
-    await expect(visitor).toHaveURL(new RegExp(`${publicAddress}$`));await expect(visitor.locator('.gg-title')).toBeVisible();
+    await expect(visitor).toHaveURL(guideAddress());await expect(visitor.locator('.gg-title')).toBeVisible();
     await fixture('payments-required',{from:null});
   });
   await check('sign out clears access to the saved workspace and photo',async()=>{

@@ -70,11 +70,11 @@ await check('organisations: approved, suspended, and requests pending, asked for
   assert.equal((await one(db, "select count(*)::int n from public.organization_members where role='admin'")).n, 1, 'an organisation admin who is not an owner');
 });
 
-await check('places are published in 3, 2 and 1 languages; one language waits; two are drafts', async () => {
+await check('places are published in 3, 3 and 1 languages (the hotel\'s German guide has only two steps); two are drafts', async () => {
   assert.deepEqual(byKey.cluj.live, ['en', 'ro', 'de']);
   assert.deepEqual(byKey.kunsthaus.live, ['de']);
-  assert.deepEqual(byKey.hotel.live, ['en', 'ro']);
-  assert.deepEqual(byKey.hotel.waiting, ['de'], 'the German guide has two steps, too short to publish');
+  assert.deepEqual(byKey.hotel.live, ['en', 'ro', 'de'], 'the German guide has two steps and goes live: a guide needs one step');
+  assert.deepEqual(byKey.hotel.waiting, []);
   for (const key of ['long-name', 'pavilion']) assert.deepEqual(byKey[key].live, [], key);
   // Harbour Lights is still "published" as a place: it is its organisation that is suspended. Only the railway museum is down.
   assert.equal((await one(db, "select count(*)::int n from public.places where status='published'")).n, 6 + showcase.length);
