@@ -3,6 +3,7 @@ import type { Locale } from '@/lib/i18n';
 import { getPublishingCopy } from '@/lib/publishing';
 import { getWorkspaceCopy, type AttentionKind, type PlaceSummary } from '@/lib/workspace';
 import { PublishButton } from './publish-button';
+import { ArchiveButton } from './archive-controls';
 import { ExploreSwitch } from './explore-switch';
 import { QrDialog } from './qr-dialog';
 import { StepPhoto, type WorkspaceMode } from './step-photo';
@@ -12,11 +13,13 @@ import { StepPhoto, type WorkspaceMode } from './step-photo';
  * (`/en/workspace` or `/en/demo`). `sample` adds a QR code and visit count: to every card, only to published
  * ones, or to none (design samples; real locations get them when publishing exists, DECISIONS.md "QR codes").
  */
-export function LocationCards({ places, locale, base, mode = 'live', sample = 'none', qrCode, visits, publishHint, publishing = false, exploreOrg }: {
+export function LocationCards({ places, locale, base, mode = 'live', sample = 'none', qrCode, visits, publishHint, publishing = false, exploreOrg, archiveOrg }: {
   places: PlaceSummary[]; locale: Locale; base: string; mode?: WorkspaceMode; sample?: 'none' | 'all' | 'published';
   qrCode?: string; visits?: number; publishHint?: string; publishing?: boolean;
   /** The organisation, when a platform administrator has switched Explore on for it and the person may choose; each card then has a "Show in Explore" switch. */
   exploreOrg?: string;
+  /** The organisation, when the person may archive its locations (not a visiting platform administrator, and only once the archive migration is installed). */
+  archiveOrg?: string;
 }) {
   const t = getWorkspaceCopy(locale);
   const p = getPublishingCopy(locale);
@@ -40,6 +43,7 @@ export function LocationCards({ places, locale, base, mode = 'live', sample = 'n
         {(place.qrCode ?? (showSample ? qrCode : undefined)) && <QrDialog code={(place.qrCode ?? qrCode)!} name={place.name} t={t} />}
         {publishing && place.status === 'published' && place.slug && <Link className="quiet-link" href={`/${locale}/places/${place.slug}/guide`} target="_blank" rel="noopener noreferrer">{p.viewPublic}</Link>}
         {/* With publishing live, Publish sits in the editor, where the saved version is; the card keeps the disabled one only before then. */}
+        {archiveOrg && <ArchiveButton locale={locale} org={archiveOrg} place={place.id} name={place.name} published={place.status === 'published'} />}
         {!publishing && <PublishButton label={t.publish} hint={publishHint ?? t.publishSoon} small />}
       </div>
     </li>;

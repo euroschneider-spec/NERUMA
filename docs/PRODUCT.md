@@ -130,6 +130,8 @@ Languages everywhere: **English, Romanian, German.** Root `/` opens English; an 
   a step without name or description in this language, a photo without a description, changes not yet published).
 - Per card: edit, **QR code and link** (published only: view, download, copy link), open the public guide.
 - **Show in Explore**: a switch on each card, on by default, saved as soon as it is changed. It appears only once a platform administrator has switched Explore on for the organisation; without that, none of its locations is in Explore. Hiding a location removes it from Explore only: its guide, web address and QR code keep working. A platform administrator visiting can't change it.
+- **Archive** (owners and admins): puts a location away from the dashboard after a question. If it was published, its guide goes offline in every language (the web address and QR code say the guide isn't available) and it leaves Explore. Nothing is deleted. An archived location can't be edited or published.
+- **Archived locations**: a list under the cards with **Restore**, which brings a location back as a draft to be published again at the same address. A platform administrator visiting can neither archive nor restore.
 - Several organisations: a switcher.
 
 ### Building a guide

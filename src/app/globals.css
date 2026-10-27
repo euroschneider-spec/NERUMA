@@ -704,6 +704,10 @@ legend { padding-inline: var(--space-2); max-width: 100%; font-weight: var(--fon
 .place-card-content { padding: 24px; }
 .explore-switch { margin-top: 12px; }
 .explore-switch .small-note { margin: 4px 0 0; }
+.archived-locations { margin-top: 24px; }
+.archived-locations summary { cursor: pointer; font-weight: 600; }
+.archived-locations ul { list-style: none; padding: 0; margin: 12px 0 0; display: grid; gap: 10px; }
+.archived-locations li { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px; }
 .explore-toggle { margin: 8px 0; }
 .place-card-content h2 { font-size: 1.5625rem; margin-bottom: 8px; }
 

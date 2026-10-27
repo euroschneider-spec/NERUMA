@@ -5,7 +5,7 @@ import { redirect } from 'next/navigation';
 import { isLocale } from '@/lib/i18n';
 import { confirmedUser, createClient } from '@/lib/supabase/server';
 import { getWorkspaceCopy, parsePlaceDraft, parseReportMessage, uuidPattern } from '@/lib/workspace';
-import { approvedOrganization, exploreListingReady, paymentsReady, problemReportsReady, publishingReady } from '@/lib/verification-server';
+import { approvedOrganization, archivePlacesReady, exploreListingReady, paymentsReady, problemReportsReady, publishingReady } from '@/lib/verification-server';
 import { parseLanguageChecks, type LanguageCheck, type PublishResult, type UnpublishResult } from '@/lib/publishing';
 import { responsibilityVersion } from '@/lib/organisation-copy';
 import { organisationAccess, workspaceConfigured } from '@/lib/workspace-server';
@@ -127,6 +127,31 @@ export async function setPlaceExplore(org: string, place: string, shown: boolean
     }
     return { ok: true };
   } catch { return { ok: false }; }
+}
+
+/**
+ * An owner or admin archives a location (its guide goes offline, nothing is deleted) or restores it as a draft. A platform
+ * administrator on a visit does neither; the database refuses it too.
+ */
+async function moveInArchive(org: string, place: string, rpc: 'archive_place' | 'restore_place'): Promise<{ ok: boolean }> {
+  if (!uuidPattern.test(place)) return { ok: false };
+  try {
+    const access = await publisher(org);
+    if (!access || access.visitor || !await archivePlacesReady(access.supabase)) return { ok: false };
+    const result = await access.supabase.rpc(rpc, { org, place });
+    if (result.error || result.data !== true) return { ok: false };
+    for (const locale of ['en', 'ro', 'de']) {
+      revalidatePath(`/${locale}/workspace`);
+      revalidatePath(`/${locale}/explore`);
+    }
+    return { ok: true };
+  } catch { return { ok: false }; }
+}
+export async function archivePlace(org: string, place: string): Promise<{ ok: boolean }> {
+  return moveInArchive(org, place, 'archive_place');
+}
+export async function restorePlace(org: string, place: string): Promise<{ ok: boolean }> {
+  return moveInArchive(org, place, 'restore_place');
 }
 
 /** Whether this organisation may publish now, and whether the person asking is an owner, for the publish dialog. The database decides again. */
