@@ -291,6 +291,12 @@ Owner, 2026-10-26 (`docs/briefs/2026-10-26-button-sizes.md`). Two sizes, not thr
 shorter on desktop, where a mouse does: normal 44px / 40px, small 36px / 32px. The main action is told apart by colour, not by a bigger box; a large size can come
 back if a page needs one. Fields and the top bar use the same two heights. The old `.btn` set was unused and is gone.
 
+### Example photos: Unsplash, no credit shown
+
+Owner, 2026-10-27 (`docs/briefs/2026-10-26-example-photos.md`, `docs/guides/PHOTO-CREDITS.md`). The example photos on the site are free Unsplash downloads. Unsplash's
+licence asks for no credit, so none is shown; the rights line only says where the photo is from. Paid Unsplash+ files, photos with an artwork as the subject, and photos
+with a recognisable person, a logo or a brand are not used. The owner's wish to take our own photos stays open as ledger T-018, but the licence does not require it.
+
 ## Not yet discussed
 
 - `DESIGN-TASKS.md` sections 5, 6 (other items) and 7.

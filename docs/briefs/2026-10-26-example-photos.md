@@ -1,5 +1,5 @@
 ---
-status: building   # idea → building → done
+status: done   # idea → building → done
 date: 2026-10-26
 ---
 
@@ -31,4 +31,14 @@ we may use.
 - Photographer and page link of the two photos are not recorded; to add when the owner has them.
 
 ## Result
-Filled in at the end.
+Pull requests #95 (entrance photo and Explore card), #96 (Garden Pavilion photo), #97 (step 1 and pavilion text), #98 (home page preview card) and #99 (collection and
+interactive gallery steps, with the lookup of photos by step number).
+
+On the live site now: step 1 entrance, step 3 porch, step 4 new wing, the Explore card, the Garden Pavilion and the home preview card show photos. Steps 2 (reception) and
+5 (quiet room) still show drawings; that part moved to ledger T-018 (interior photos). Every description stays at 220 characters or fewer (read-aloud limit, `GOTCHA.md`).
+
+Sources and licence: `docs/guides/PHOTO-CREDITS.md`. All five photos are Unsplash downloads by the owner; Unsplash asks for no credit, so none is shown
+(`DECISIONS.md`, 2026-10-27). Not recorded: photographers and page links.
+
+Run on each pull request: typecheck, lint, `test:unit`, the matching browser specs, and CI (`test:db`, `test:workspace`, four browser shards) all green before merging.
+Not done: the photo date (`demoEntrancePhotoDate`) is still the old 2026-09-01.
