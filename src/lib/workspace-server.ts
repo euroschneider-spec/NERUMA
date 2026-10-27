@@ -60,7 +60,8 @@ export async function organisationExplore(supabase: SupabaseClient, org: string)
   return !error && (data as { explore_listing?: unknown } | null)?.explore_listing === true;
 }
 
-export async function listPlaces(supabase: SupabaseClient, org: string, locale: Locale): Promise<PlaceSummary[]> {
+/** The organisation's locations: the active ones, or with `archived` the ones it put away. */
+export async function listPlaces(supabase: SupabaseClient, org: string, locale: Locale, archived = false): Promise<PlaceSummary[]> {
   // Before the publishing migration these columns and the QR table link don't exist: read without them.
   const publishing = await publishingReady(supabase);
   // The location's Explore choice exists only after the 2026-10-27 migration, and only matters where Explore is on for the organisation.
@@ -68,8 +69,8 @@ export async function listPlaces(supabase: SupabaseClient, org: string, locale: 
   const base = 'id,city,address,status,revision,updated_at,place_translations(name,locale),zones(id,status,sort_order),media_assets(zone_id,storage_key,alt_text,active)' as const;
   const withPublishing = 'id,city,address,status,revision,updated_at,slug,published_revision,qr_redirects(public_code),place_translations(name,locale),zones(id,status,sort_order),media_assets(zone_id,storage_key,alt_text,active)';
   // The extra columns are read through `live` below, so the result is typed by the base select.
-  const { data, error } = await supabase.from('places').select(((publishing ? withPublishing : base) + (exploreChoice ? ',show_in_explore' : '')) as typeof base)
-    .eq('organization_id',org).neq('status','archived').order('updated_at',{ascending:false}).limit(100);
+  const query = supabase.from('places').select(((publishing ? withPublishing : base) + (exploreChoice ? ',show_in_explore' : '')) as typeof base).eq('organization_id',org);
+  const { data, error } = await (archived ? query.eq('status','archived') : query.neq('status','archived')).order('updated_at',{ascending:false}).limit(100);
   if (error) throw new Error('workspace-unavailable');
   // A step's text hangs off the step, not the place, so it has no direct link to a place to embed through: read it on its own.
   const ids = (data || []).map(row => row.id as string);
@@ -100,7 +101,7 @@ type OwnFieldText = {field_id:string;label:string;value:string};
 type Media = {id:string;zone_id:string;storage_key:string;alt_text:Record<string,string>;rights:string;photographed_on:string|null};
 export async function loadPlace(supabase: SupabaseClient, id: string, organisations: {id:string;name:string}[], locale: Locale) {
   if (!uuidPattern.test(id)) return null;
-  const place = await supabase.from('places').select('id,organization_id,city,address,country_code,place_type,revision').eq('id',id).maybeSingle();
+  const place = await supabase.from('places').select('id,organization_id,city,address,country_code,place_type,revision').eq('id',id).neq('status','archived').maybeSingle();
   if (place.error) throw new Error('workspace-unavailable');
   const row=place.data;
   if (!row || !organisations.some(o=>o.id===row.organization_id)) return null;
