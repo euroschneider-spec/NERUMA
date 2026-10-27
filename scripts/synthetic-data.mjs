@@ -184,6 +184,15 @@ export async function loadSyntheticData(db, { volume = false } = {}) {
   // The organisation was suspended after publishing.
   await db.query("update public.organizations set approval_status='suspended' where id=$1", [o('harbour')]);
 
+  // 4b. Explore: the second administrator switches it on for four organisations, through the real function. The hotel, the railway
+  // museum and the suspended harbour museum stay without it, so their published guides are not in Explore. The Berlin concert house
+  // then hides itself, as its owner can.
+  await actAs(db, person('admin.second@example.test'));
+  for (const name of ['cluj', 'kunsthaus', 'arts', 'showcase']) await db.query('select public.set_organisation_explore($1,true)', [o(name)]);
+  await actAs(db, person(orgs.showcase.owner));
+  await db.query('select public.set_place_explore($1,$2,false)', [o('showcase'), id(1200 + showcase.findIndex(([key]) => key === 'berlin-concerts'))]);
+  await actAsSystem(db);
+
   // 5. Problem reports: two open, one closed by the second administrator.
   const report = async (user, org, place, message, locale) => {
     await actAs(db, user);
@@ -225,6 +234,10 @@ export async function loadSyntheticData(db, { volume = false } = {}) {
         },
       });
     }
+  }
+  if (volume) {
+    await actAs(db, person('admin.second@example.test'));
+    await db.query('select public.set_organisation_explore($1,true)', [o('archive')]);
   }
   await actAsSystem(db);
   return { photos, summary };

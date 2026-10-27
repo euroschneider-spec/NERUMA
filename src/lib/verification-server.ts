@@ -34,6 +34,8 @@ export const accountProfileReady=(supabase:SupabaseClient)=>schemaVersionIsOne(s
 export const paymentsReady=(supabase:SupabaseClient)=>schemaVersionIsOne(supabase,'payments_schema_version');
 // Platform administrators visiting an organisation exist only after the 2026-10-26 migration.
 export const platformVisitReady=(supabase:SupabaseClient)=>schemaVersionIsOne(supabase,'platform_visit_schema_version');
+// Explore listing (switched on per organisation) exists only after the 2026-10-27 migration; before it, Explore lists every published place and no switch is shown.
+export const exploreListingReady=(supabase:SupabaseClient)=>schemaVersionIsOne(supabase,'explore_listing_schema_version');
 export const evidenceReady=(supabase:SupabaseClient)=>schemaVersionIsOne(supabase,'mandate_evidence_schema_version');
 
 export async function approvedOrganization(supabase:SupabaseClient,org:string):Promise<boolean> {

@@ -27,7 +27,7 @@ export type PlaceDraft = {
 export const attentionKinds = ['fewSteps', 'missingText', 'missingAlt', 'unpublishedChanges'] as const;
 export type AttentionKind = typeof attentionKinds[number];
 /** `qrCode` and `slug` exist once a location has been published; `unpublishedChanges` says the saved version is newer than the live one. */
-export type PlaceSummary = { id: string; name: string; city: string; address: string; status: string; updatedAt: string; revision: number; photoKey?: string; attention: AttentionKind[]; qrCode?: string; slug?: string };
+export type PlaceSummary = { id: string; name: string; city: string; address: string; status: string; updatedAt: string; revision: number; photoKey?: string; attention: AttentionKind[]; qrCode?: string; slug?: string; showInExplore?: boolean };
 export const MIN_STEPS = 3;
 /** What a location still needs, from saved data only. A step without text in this language counts as missing text. */
 export function placeAttention(steps: { id: string; hasText: boolean }[], photos: { zoneId: string | null; alt: string }[]): AttentionKind[] {

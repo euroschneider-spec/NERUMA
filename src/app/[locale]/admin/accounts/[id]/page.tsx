@@ -8,13 +8,16 @@ import { accountProfileReady } from '@/lib/verification-server';
 import { getVerificationCopy } from '@/lib/verification';
 import { uuidPattern } from '@/lib/workspace';
 import { AdminNav } from '@/components/admin-nav';
+import { ExploreToggle } from '@/components/explore-toggle';
 import { VisitButton } from '@/components/visit-button';
+import { getExploreListingCopy } from '@/lib/explore-listing';
 
 export const dynamic = 'force-dynamic';
 export const metadata = { title: 'Account · NERUMA', robots: { index: false, follow: false } };
 
-export default async function AccountProfile({ params }: { params: Promise<{ locale: string; id: string }> }) {
+export default async function AccountProfile({ params, searchParams }: { params: Promise<{ locale: string; id: string }>; searchParams: Promise<{ explore?: string }> }) {
   const { locale, id } = await params;
+  const { explore } = await searchParams;
   if (!isLocale(locale) || !uuidPattern.test(id)) notFound();
   const t = getSuperadminCopy(locale);
   const { supabase, user } = await requireAdministrator(locale);
@@ -59,12 +62,14 @@ export default async function AccountProfile({ params }: { params: Promise<{ loc
         </section>
         <section aria-labelledby="profile-organisations">
           <h2 id="profile-organisations">{t.organisationsTitle}</h2>
+          {explore === 'error' && <p role="alert">{getExploreListingCopy(locale).adminError}</p>}
           {!profile.organisations.length && <p className="note">{t.noOrganisation}</p>}
           <ul className="deletion-list">
             {profile.organisations.map((org) => (
               <li key={org.id} className="verification-request">
                 <h3>{org.name}</h3>
                 <p>{org.role} · {statuses[profile.organisationStatuses[org.id]] ?? profile.organisationStatuses[org.id]}</p>
+                {profile.organisationStatuses[org.id] === 'approved' && org.id in profile.organisationExplore && <ExploreToggle locale={locale} organisation={org.id} account={id} name={org.name} enabled={profile.organisationExplore[org.id]} />}
                 {profile.organisationStatuses[org.id] === 'approved' && <VisitButton locale={locale} organisation={org.id} label={t.visit} ariaLabel={fill(t.visitAria, { name: org.name })} />}
               </li>
             ))}

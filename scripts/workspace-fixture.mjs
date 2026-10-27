@@ -57,6 +57,7 @@ const simpleRpcs={platform_visit_schema_version:[],start_organisation_visit:['or
   account_erasure_files:['p_user'],organisation_erasure_files:['p_org'],erase_account:['p_user'],erase_held_organisation:['p_org'],export_my_data:[],
   export_user_data:['p_user'],export_files:['p_user'],delete_problem_report:['p_report'],account_deletion_schema_version:[],
   admin_overview:[],admin_accounts:['p_search','p_limit','p_offset','p_admins_only'],add_platform_admin:['p_email'],remove_platform_admin:['p_user'],superadmin_schema_version:[],admin_account:['p_user'],account_profile_schema_version:[],
+  explore_listing_schema_version:[],set_organisation_explore:['org','p_enabled'],set_place_explore:['org','place','p_shown'],
   payments_schema_version:[],erasure_blocked_by_billing:[],billing_status:['org'],billing_record_subscription:['p_secret','p_org','p_customer','p_subscription','p_status','p_period_end','p_cancel_at_period_end','p_event_created']};
 const tables=new Set(['organizations','organization_members','places','place_translations','zones','zone_translations','zone_fields','zone_field_translations','sensory_profiles','media_assets','guides','guide_steps','organization_applications','organization_review_events','organization_evidence_documents','problem_reports']);
 createServer(async(req,res)=>{

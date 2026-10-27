@@ -47,7 +47,7 @@ export default async function Workspace({params,searchParams}:{params:Promise<{l
     {context.organisations.length>1 && <nav className="button-row" aria-label={getOrganisationCopy(locale).organisation}>{context.organisations.map(o=><Link key={o.id} className="quiet-link" href={`/${locale}/workspace?org=${o.id}`} aria-current={o.id===organisation?.id?'page':undefined}>{o.name}</Link>)}</nav>}
     {!workspaceConfigured() ? <p>{t.readyLater}</p> : !organisation ? <p>{t.forbidden}</p> : <section aria-labelledby="locations-heading">
       <h2 id="locations-heading">{t.locationsHeading}</h2>
-      {!places.length ? <div className="empty-state"><p>{t.empty}</p>{!visiting && <Link className="button" href={newPlaceHref}>{t.newPlace}</Link>}</div> : <LocationCards places={places} locale={locale} base={`/${locale}/workspace`} sample={sampleOnly && !publishing ? 'all' : 'none'} qrCode="willow-museum" visits={sampleVisits} publishing={publishing}/>}
+      {!places.length ? <div className="empty-state"><p>{t.empty}</p>{!visiting && <Link className="button" href={newPlaceHref}>{t.newPlace}</Link>}</div> : <LocationCards places={places} locale={locale} base={`/${locale}/workspace`} sample={sampleOnly && !publishing ? 'all' : 'none'} qrCode="willow-museum" visits={sampleVisits} publishing={publishing} exploreOrg={visiting ? undefined : organisation.id}/>}
     </section>}
   </main>;
 }

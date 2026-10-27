@@ -3,11 +3,11 @@ import type { Locale } from './i18n';
 // A platform administrator visits an organisation (brief docs/briefs/2026-10-26-superadmin-visits-organisation.md): the words on the
 // strip and the take-down dialog, and the change log the organisation reads. RO and DE are drafts that need a native speaker.
 
-export type ChangeAction = 'edit' | 'add' | 'take_down';
+export type ChangeAction = 'edit' | 'add' | 'take_down' | 'enable' | 'disable';
 export type ChangeLine = { field: string; from: unknown; to: unknown; hasFrom: boolean };
 export type ChangeLogEntry = { id: number; at: string; entity: string; placeName: string; action: ChangeAction; by: string | null; changes: ChangeLine[] };
 
-const actions: ChangeAction[] = ['edit', 'add', 'take_down'];
+const actions: ChangeAction[] = ['edit', 'add', 'take_down', 'enable', 'disable'];
 const shown = 400;
 
 const isRecord = (value: unknown): value is Record<string, unknown> => !!value && typeof value === 'object' && !Array.isArray(value);
@@ -65,10 +65,10 @@ const en = {
   empty: '(empty)',
   before: 'Before',
   after: 'After',
-  actions: { edit: 'Changed', add: 'Added', take_down: 'Took the guide down' } as Record<ChangeAction, string>,
+  actions: { edit: 'Changed', add: 'Added', take_down: 'Took the guide down', enable: 'Switched on', disable: 'Switched off' } as Record<ChangeAction, string>,
   entities: {
     places: 'Location', place_translations: 'Location text', zones: 'Step', zone_translations: 'Step text', zone_fields: 'Own field',
-    zone_field_translations: 'Own field text', sensory_profiles: 'Sensory profile', media_assets: 'Photo',
+    zone_field_translations: 'Own field text', sensory_profiles: 'Sensory profile', media_assets: 'Photo', explore: 'Explore listing',
   } as Record<string, string>,
   fields: {
     name: 'Name', short_description: 'Short description', arrival_info: 'Arrival information', title: 'Title', description: 'Description',
@@ -102,10 +102,10 @@ const ro: VisitCopy = {
   empty: '(gol)',
   before: 'Înainte',
   after: 'După',
-  actions: { edit: 'Modificat', add: 'Adăugat', take_down: 'A retras ghidul' },
+  actions: { edit: 'Modificat', add: 'Adăugat', take_down: 'A retras ghidul', enable: 'Activat', disable: 'Dezactivat' },
   entities: {
     places: 'Locație', place_translations: 'Text locație', zones: 'Pas', zone_translations: 'Text pas', zone_fields: 'Câmp propriu',
-    zone_field_translations: 'Text câmp propriu', sensory_profiles: 'Profil senzorial', media_assets: 'Fotografie',
+    zone_field_translations: 'Text câmp propriu', sensory_profiles: 'Profil senzorial', media_assets: 'Fotografie', explore: 'Listare în Explorează',
   },
   fields: {
     name: 'Nume', short_description: 'Descriere scurtă', arrival_info: 'Informații despre sosire', title: 'Titlu', description: 'Descriere',
@@ -138,10 +138,10 @@ const de: VisitCopy = {
   empty: '(leer)',
   before: 'Vorher',
   after: 'Nachher',
-  actions: { edit: 'Geändert', add: 'Hinzugefügt', take_down: 'Guide zurückgezogen' },
+  actions: { edit: 'Geändert', add: 'Hinzugefügt', take_down: 'Guide zurückgezogen', enable: 'Eingeschaltet', disable: 'Ausgeschaltet' },
   entities: {
     places: 'Standort', place_translations: 'Standorttext', zones: 'Schritt', zone_translations: 'Schritttext', zone_fields: 'Eigenes Feld',
-    zone_field_translations: 'Text des eigenen Felds', sensory_profiles: 'Sensorisches Profil', media_assets: 'Foto',
+    zone_field_translations: 'Text des eigenen Felds', sensory_profiles: 'Sensorisches Profil', media_assets: 'Foto', explore: 'Auflistung in Entdecken',
   },
   fields: {
     name: 'Name', short_description: 'Kurzbeschreibung', arrival_info: 'Hinweise zur Ankunft', title: 'Titel', description: 'Beschreibung',

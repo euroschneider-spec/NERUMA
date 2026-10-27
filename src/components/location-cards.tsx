@@ -3,6 +3,7 @@ import type { Locale } from '@/lib/i18n';
 import { getPublishingCopy } from '@/lib/publishing';
 import { getWorkspaceCopy, type AttentionKind, type PlaceSummary } from '@/lib/workspace';
 import { PublishButton } from './publish-button';
+import { ExploreSwitch } from './explore-switch';
 import { QrDialog } from './qr-dialog';
 import { StepPhoto, type WorkspaceMode } from './step-photo';
 
@@ -11,9 +12,11 @@ import { StepPhoto, type WorkspaceMode } from './step-photo';
  * (`/en/workspace` or `/en/demo`). `sample` adds a QR code and visit count: to every card, only to published
  * ones, or to none (design samples; real locations get them when publishing exists, DECISIONS.md "QR codes").
  */
-export function LocationCards({ places, locale, base, mode = 'live', sample = 'none', qrCode, visits, publishHint, publishing = false }: {
+export function LocationCards({ places, locale, base, mode = 'live', sample = 'none', qrCode, visits, publishHint, publishing = false, exploreOrg }: {
   places: PlaceSummary[]; locale: Locale; base: string; mode?: WorkspaceMode; sample?: 'none' | 'all' | 'published';
   qrCode?: string; visits?: number; publishHint?: string; publishing?: boolean;
+  /** The organisation, when a platform administrator has switched Explore on for it and the person may choose; each card then has a "Show in Explore" switch. */
+  exploreOrg?: string;
 }) {
   const t = getWorkspaceCopy(locale);
   const p = getPublishingCopy(locale);
@@ -30,6 +33,7 @@ export function LocationCards({ places, locale, base, mode = 'live', sample = 'n
         <h4>{t.attentionHeading}</h4>
         {place.attention.length ? <ul>{place.attention.map(kind => <li key={kind}>{attentionText(kind)}</li>)}</ul> : <p>{t.attentionClear}</p>}
       </div>
+      {exploreOrg && place.showInExplore !== undefined && <ExploreSwitch locale={locale} org={exploreOrg} place={place.id} shown={place.showInExplore} />}
       {showSample && visits !== undefined && <p className="location-visits"><span>{t.visitsLabel}</span> <strong>{visits}</strong> <em>({t.visitsSample})</em></p>}
       <div className="location-card-actions">
         <Link className="button button-outline button-small" href={`${base}/${place.id}`}>{t.edit}</Link>

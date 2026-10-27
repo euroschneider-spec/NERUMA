@@ -5,7 +5,7 @@ import { redirect } from 'next/navigation';
 import { isLocale } from '@/lib/i18n';
 import { confirmedUser, createClient } from '@/lib/supabase/server';
 import { getWorkspaceCopy, parsePlaceDraft, parseReportMessage, uuidPattern } from '@/lib/workspace';
-import { approvedOrganization, paymentsReady, problemReportsReady, publishingReady } from '@/lib/verification-server';
+import { approvedOrganization, exploreListingReady, paymentsReady, problemReportsReady, publishingReady } from '@/lib/verification-server';
 import { parseLanguageChecks, type LanguageCheck, type PublishResult, type UnpublishResult } from '@/lib/publishing';
 import { responsibilityVersion } from '@/lib/organisation-copy';
 import { organisationAccess, workspaceConfigured } from '@/lib/workspace-server';
@@ -105,6 +105,22 @@ export async function unpublishPlace(org: string, place: string): Promise<Unpubl
     if (!supabase) return { ok: false };
     const result = await supabase.rpc('unpublish_place', { org, place });
     if (result.error) return { ok: false };
+    for (const locale of ['en', 'ro', 'de']) {
+      revalidatePath(`/${locale}/workspace`);
+      revalidatePath(`/${locale}/explore`);
+    }
+    return { ok: true };
+  } catch { return { ok: false }; }
+}
+
+/** An owner or admin shows or hides one location in Explore. The database allows it only while a platform administrator has switched Explore on, and never to a visitor. */
+export async function setPlaceExplore(org: string, place: string, shown: boolean): Promise<{ ok: boolean }> {
+  if (!uuidPattern.test(place) || typeof shown !== 'boolean') return { ok: false };
+  try {
+    const access = await publisher(org);
+    if (!access || access.visitor || !await exploreListingReady(access.supabase)) return { ok: false };
+    const result = await access.supabase.rpc('set_place_explore', { org, place, p_shown: shown });
+    if (result.error || result.data !== true) return { ok: false };
     for (const locale of ['en', 'ro', 'de']) {
       revalidatePath(`/${locale}/workspace`);
       revalidatePath(`/${locale}/explore`);

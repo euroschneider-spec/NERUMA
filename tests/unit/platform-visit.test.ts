@@ -56,7 +56,7 @@ describe('the words of a visit in every language', () => {
       expect(Object.keys(copy).sort()).toEqual(Object.keys(english).sort());
       expect(Object.keys(copy.fields).sort()).toEqual(Object.keys(english.fields).sort());
       expect(Object.keys(copy.entities).sort()).toEqual(Object.keys(english.entities).sort());
-      expect(Object.keys(copy.actions).sort()).toEqual(['add', 'edit', 'take_down']);
+      expect(Object.keys(copy.actions).sort()).toEqual(['add', 'disable', 'edit', 'enable', 'take_down']);
       expect(copy.stripBody).toContain('{name}');
     }
   });

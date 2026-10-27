@@ -234,6 +234,76 @@ await check('the owner publishes: complete languages go live, the address and th
  assert.equal(place.status,'published');assert.equal(Number(place.published_revision),4);
  assert.equal((await db.query("select responsibility_version from public.guide_versions where place_id=$1 limit 1",[pubPlace])).rows[0].responsibility_version,'2026-10-07-v1');
 });
+// Explore is switched on per organisation by a platform administrator (brief 2026-10-27-show-in-explore.md).
+const exploreAdmin=id(90);
+await db.exec('reset role');
+await db.query("insert into auth.users(id,email,email_confirmed_at) values($1,'explore.admin@example.test',now())",[exploreAdmin]);
+await db.query('insert into private.platform_admins values($1)',[exploreAdmin]);
+const setOrgExplore=async(on,org=newOrg)=>(await db.query('select public.set_organisation_explore($1,$2) r',[org,on])).rows[0].r;
+const setPlaceExplore=async(shown,org=newOrg)=>(await db.query('select public.set_place_explore($1,$2,$3) r',[org,pubPlace,shown])).rows[0].r;
+const exploreLog=async()=>{await db.exec('reset role');return (await db.query("select action,entity_type,changes,actor_id from public.organization_change_log where organization_id=$1 and entity_type='explore' order by id",[newOrg])).rows;};
+await check('Explore lists a place only while the platform has switched Explore on for its organisation',async()=>{
+ await as(null,'anon');
+ assert.equal((await placesList('en')).length,0,'not in Explore until a platform administrator switches it on');
+ assert.equal((await guideFor(published.slug,'en')).status,'published','the guide does not depend on Explore');
+ assert.deepEqual(await qr(pubCode),{status:'published',slug:published.slug,locales:['en','ro']},'nor does the QR code');
+ for(const who of [newOwner,editor,outsider]){
+  await as(who);
+  await assert.rejects(()=>setOrgExplore(true),/Platform administrator required/);
+ }
+ await as(newOwner);
+ await assert.rejects(()=>setPlaceExplore(false),/not switched on/,'no location switch while Explore is off');
+ await assert.rejects(()=>db.query('update public.places set show_in_explore=false where id=$1',[pubPlace]),/only while Explore is switched on/,'not by writing the column either');
+ await as(exploreAdmin);
+ await assert.rejects(()=>setOrgExplore(true,id(999)),/not available/);
+ assert.equal(await setOrgExplore(true),true);
+ assert.equal(await setOrgExplore(true),true);
+ assert.deepEqual((await exploreLog()).map(row=>row.action),['enable'],'a switch that changes nothing writes nothing');
+ await as(null,'anon');
+ assert.equal((await placesList('ro'))[0].name,'Muzeul vizitatorului');
+});
+await check('the organisation hides a location and shows it again; only owners and admins can, never a platform administrator visiting',async()=>{
+ await as(editor);
+ await assert.rejects(()=>setPlaceExplore(false),/Only owners and admins/);
+ await assert.rejects(()=>db.query('update public.places set show_in_explore=false where id=$1',[pubPlace]),/Only owners and admins/);
+ await as(newOwner);
+ assert.equal(await setPlaceExplore(false),true);
+ await as(null,'anon');
+ assert.equal((await placesList('en')).length,0,'hidden from Explore');
+ assert.equal((await guideFor(published.slug,'en')).status,'published','but its guide is still there');
+ assert.equal((await qr(pubCode)).status,'published','and so is its QR code');
+ await as(exploreAdmin);
+ await db.query('select public.start_organisation_visit($1)',[newOrg]);
+ await assert.rejects(()=>setPlaceExplore(true),/Only owners and admins/,'a visiting platform administrator cannot change the organisation\'s choice');
+ await db.query('select public.end_organisation_visit()');
+});
+await check('switching the feature off removes the organisation from Explore and keeps each location\'s own choice',async()=>{
+ await as(exploreAdmin);
+ assert.equal(await setOrgExplore(false),false);
+ await as(newOwner);
+ await assert.rejects(()=>setPlaceExplore(true),/not switched on/,'the switch is gone with the feature');
+ await as(exploreAdmin);
+ assert.equal(await setOrgExplore(true),true);
+ await as(null,'anon');
+ assert.equal((await placesList('en')).length,0,'the location the organisation hid is still hidden');
+ await as(newOwner);
+ assert.equal(await setPlaceExplore(true),true);
+ await as(null,'anon');
+ assert.equal((await placesList('en')).length,1,'shown again');
+});
+await check('every switch of the feature is in the organisation\'s change log, without the administrator\'s name',async()=>{
+ await db.exec('reset role');
+ const rows=await exploreLog();
+ assert.deepEqual(rows.map(row=>row.action),['enable','disable','enable']);
+ assert.ok(rows.every(row=>row.entity_type==='explore'&&row.actor_id===exploreAdmin&&Object.keys(row.changes).length===0));
+ await as(newOwner);
+ const log=(await db.query('select public.organisation_change_log($1,50) l',[newOrg])).rows[0].l.filter(entry=>entry.entity==='explore');
+ assert.deepEqual(log.map(entry=>entry.action),['enable','disable','enable']);
+ assert.ok(log.every(entry=>entry.by===null),'the organisation never sees who');
+});
+// The later administration checks count the platform administrators: this one was only for the checks above.
+await db.exec('reset role');
+await db.query('delete from private.platform_admins where user_id=$1',[exploreAdmin]);
 await as(null,'anon');
 await check('a visitor reads the published guide, in their language or a published one, with its photo',async()=>{
  const en=await guideFor(published.slug,'en');
