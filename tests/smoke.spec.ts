@@ -145,11 +145,16 @@ test.describe('the deployed database, asked as an anonymous visitor', () => {
   test('which migrations are installed (informational: the failing line names what is missing)', async ({ request }) => {
     const installed: Record<string, boolean> = {};
     for (const rpc of ['organization_verification_schema_version', 'mandate_evidence_schema_version', 'workspace_schema_version',
-      'step_fields_schema_version', 'problem_reports_schema_version', 'publishing_schema_version', 'two_factor_schema_version', 'remember_device_schema_version']) {
+      'step_fields_schema_version', 'problem_reports_schema_version', 'publishing_schema_version', 'two_factor_schema_version', 'remember_device_schema_version',
+      'account_deletion_schema_version', 'superadmin_schema_version', 'account_profile_schema_version', 'payments_schema_version',
+      'platform_visit_schema_version', 'explore_listing_schema_version']) {
       const response = await request.post(`${database}/rest/v1/rpc/${rpc}`, { headers: headers(), data: {} });
       installed[rpc] = response.status() === 200 && (await response.json()) === 1;
     }
     test.info().annotations.push({ type: 'installed', description: JSON.stringify(installed) });
+    // Printed, so a run in the terminal says which migrations the database still lacks (some, like payments, may be waiting on purpose).
+    const missing = Object.keys(installed).filter((rpc) => !installed[rpc]).map((rpc) => rpc.replace(/_schema_version$/, ''));
+    console.log(missing.length ? `Migrations not installed: ${missing.join(', ')}` : 'Every migration the app knows about is installed.');
     // The app needs these to register anyone at all.
     expect(installed.organization_verification_schema_version, 'verification migration').toBe(true);
     expect(installed.mandate_evidence_schema_version, 'mandate documents migration').toBe(true);
