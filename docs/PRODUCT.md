@@ -19,7 +19,7 @@ Languages everywhere: **English, Romanian, German.** Root `/` opens English; an 
 - **Home**: what NERUMA is, how it works in three steps, who it is for, the six sensory channels, where information comes from
   (three source levels), and a link to the example guide.
 - **Text pages**: For organisations, Methodology, Privacy, Terms, Accessibility. Privacy and Terms are **drafts**.
-- **Explore**: the published guides of organisations a platform administrator has switched Explore on for (and that the organisation has not hidden), plus the fictional example (Willow Museum). A guide that is not listed still opens from its QR code and web address. Filter by country, city and category: each list offers only what the published guides have, and the cities follow the chosen country. The fictional example has no country or city, so choosing either hides it.
+- **Explore**: the published guides of organisations a platform administrator has switched Explore on for (and that the organisation has not hidden), plus the fictional example (Willow Museum). A guide that is not listed still opens from its QR code and web address. Filter by country, city and category: each list offers only what the published guides have, and the cities follow the chosen country. The fictional example has no country or city, so choosing either hides it. When no guide matches the filters, the page says so and offers *Clear filters*.
 - **The example guide** (`/places/willow-museum/guide`): fictional, always available.
 - **A published guide** (`/places/<address>/guide`), in the visitor's language when it is published in it, otherwise in a published
   one, with links to the other languages. A guide that was taken down shows a neutral "isn't available right now" page that never
