@@ -40,7 +40,7 @@ Where the rule lives (so it is changed everywhere, not in one place): `publicati
 `src/lib/publishing.ts` (`waitFewSteps`), the dashboard's `attentionFewSteps`, `docs/PRODUCT.md`. A new migration replaces the database function.
 
 ## Result
-Built in this pull request (migration `20261027110000_one_step_minimum.sql`; `src/lib/publishing.ts`, `src/lib/workspace.ts`, `src/components/publish-dialog.tsx`).
+Built in this pull request (migration `20261027120000_one_step_minimum.sql`; `src/lib/publishing.ts`, `src/lib/workspace.ts`, `src/components/publish-dialog.tsx`).
 
 - One database definition of "this step has its words in this language" (`private.step_complete`) is used by the publish check and by what visitors are given. The check now
   reports `includedSteps`; a language is ready with a name, at least one such step, at most 8 steps in all, and descriptions only for photos on included steps.

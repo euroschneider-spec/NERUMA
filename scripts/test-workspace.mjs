@@ -455,6 +455,44 @@ try {
       assert.deepEqual(result.violations.map(v=>v.id),[],`${theme}: published guide`);
     }
   });
+  await check('the owner archives a published location: it leaves the dashboard and goes offline, can\'t be edited, and comes back as a draft that is published again at the same address',async()=>{
+    await page.goto(`${base}/en/workspace`);
+    const card=page.locator('.location-card').filter({hasText:'Fixture Gallery'});
+    const ask=page.getByRole('dialog',{name:'Archive Fixture Gallery?'});
+    await card.getByRole('button',{name:'Archive Fixture Gallery',exact:true}).click();
+    await expect(ask).toContainText('Its guide goes offline in every language');
+    await ask.getByRole('button',{name:'Keep it',exact:true}).click();
+    await expect(card).toHaveCount(1);
+    await card.getByRole('button',{name:'Archive Fixture Gallery',exact:true}).click();
+    await ask.getByRole('button',{name:'Archive location',exact:true}).click();
+    await expect(page.locator('.location-card').filter({hasText:'Fixture Gallery'})).toHaveCount(0);
+    const archive=page.locator('details.archived-locations');
+    await expect(archive.locator('summary')).toHaveText('Archived locations (1)');
+    await archive.locator('summary').click();
+    await expect(archive.getByText('Fixture Gallery',{exact:true})).toBeVisible();
+    const audit=await new AxeBuilder({page}).withTags(['wcag2a','wcag2aa','wcag21a','wcag21aa','wcag22aa']).analyze();assert.deepEqual(audit.violations.map(v=>v.id),[]);
+    // Offline for visitors, gone from Explore, and read-only for the organisation.
+    await visitor.goto(`${base}${publicAddress}`);
+    await expect(visitor.locator('.gg-title')).toHaveCount(0);
+    await visitor.goto(`${base}${qrPath}`);
+    await expect(visitor.locator('.gg-title')).toHaveCount(0);
+    await visitor.goto(`${base}/en/explore`);
+    await expect(visitor.getByText('Fixture Gallery')).toHaveCount(0);
+    assert.equal((await page.goto(editUrl)).status(),404);
+    // Restoring brings it back as a draft; publishing again keeps the address.
+    await page.goto(`${base}/en/workspace`);
+    await archive.locator('summary').click();
+    await archive.getByRole('button',{name:'Restore Fixture Gallery',exact:true}).click();
+    await expect(card.locator('.status-badge')).toHaveText('Draft');
+    await expect(page.locator('details.archived-locations')).toHaveCount(0);
+    await page.goto(editUrl);
+    await page.getByRole('button',{name:'Publish',exact:true}).first().click();
+    await publishDialog.getByLabel('We have checked this guide and take responsibility for it.').check();
+    await publishDialog.getByRole('button',{name:'Publish now',exact:true}).click();
+    await expect(page.locator('.status-message[role]')).toContainText('Published. Visitors see this version now.');
+    await visitor.goto(`${base}${publicAddress}`);
+    await expect(visitor.getByRole('heading',{name:'Fixture Gallery',level:1})).toBeVisible();
+  });
   await check('editing after publishing leaves visitors on the live version and the card asks to publish again',async()=>{
     await page.goto(editUrl);
     await page.getByLabel('Step name',{exact:true}).first().fill('Renamed after publishing');

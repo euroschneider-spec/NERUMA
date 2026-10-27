@@ -301,6 +301,56 @@ await check('every switch of the feature is in the organisation\'s change log, w
  assert.deepEqual(log.map(entry=>entry.action),['enable','disable','enable']);
  assert.ok(log.every(entry=>entry.by===null),'the organisation never sees who');
 });
+// Archiving a location (brief docs/briefs/2026-10-27-archive-locations.md): it goes offline, is read-only, and comes back as a draft.
+const archPlace=id(1390),archZones=[id(1391),id(1392),id(1393)];
+const archive=async(place,org=newOrg)=>(await db.query('select public.archive_place($1,$2) ok',[org,place])).rows[0].ok;
+const restore=async(place,org=newOrg)=>(await db.query('select public.restore_place($1,$2) ok',[org,place])).rows[0].ok;
+const placeStatus=async place=>{await db.exec('reset role');return (await db.query('select status,revision from public.places where id=$1',[place])).rows[0];};
+await check('archiving takes the guide offline and makes the location read-only; only owners and admins archive, and restoring brings back a draft',async()=>{
+ await as(newOwner);
+ await saveDraft(newOrg,archPlace,0,'en',{...draft,name:'Archive test place',zones:archZones.map((zoneId,i)=>step(zoneId,['One','Two','Three'][i]))});
+ const live=await publish(archPlace,1);
+ assert.equal((await guideFor(live.slug,'en')).status,'published');
+ await as(editor);
+ await assert.rejects(()=>archive(archPlace),/Only owners and admins/);
+ await denied(`update public.places set status='archived' where id='${archPlace}'`);
+ await as(newOwner);
+ assert.equal(await archive(archPlace),true);
+ assert.equal(await archive(archPlace),false,'archiving twice changes nothing');
+ assert.deepEqual(await guideFor(live.slug,'en'),{status:'unavailable'},'the address says unavailable');
+ assert.deepEqual(await qr(live.code),{status:'unavailable'},'and so does the QR code');
+ assert.equal((await placesList('en')).some(p=>p.slug===live.slug),false,'it is not in Explore');
+ const archived=await placeStatus(archPlace);
+ assert.equal(archived.status,'archived');
+ await as(newOwner);
+ await assert.rejects(()=>saveDraft(newOrg,archPlace,Number(archived.revision),'en',{...draft,zones:archZones.map((zoneId,i)=>step(zoneId,['Uno','Dos','Tres'][i]))}),/restore it first/,'no edits while archived');
+ await assert.rejects(()=>publish(archPlace,Number(archived.revision)),/comes back as a draft/,'no publishing while archived');
+ await assert.rejects(()=>db.query('update public.places set status=\'published\' where id=$1',[archPlace]),/comes back as a draft/,'nor by writing the status');
+ await as(editor);
+ await assert.rejects(()=>restore(archPlace),/Only owners and admins/);
+ await as(newOwner);
+ assert.equal(await restore(archPlace),true);
+ assert.equal(await restore(archPlace),false,'restoring twice changes nothing');
+ assert.equal((await placeStatus(archPlace)).status,'draft','it comes back as a draft');
+ assert.deepEqual(await guideFor(live.slug,'en'),{status:'unavailable'},'still offline until it is published again');
+ await as(newOwner);
+ const back=await placeStatus(archPlace);
+ await saveDraft(newOrg,archPlace,Number(back.revision),'en',{...draft,name:'Archive test place',zones:archZones.map((zoneId,i)=>step(zoneId,['One','Two','Three'][i]))});
+ assert.equal((await publish(archPlace,Number(back.revision)+1)).slug,live.slug,'publishing again keeps the address');
+ await unpublish(archPlace);
+});
+await check('a platform administrator visiting cannot archive or restore',async()=>{
+ const guest=id(95);
+ await db.exec('reset role');
+ await db.query("insert into auth.users(id,email,email_confirmed_at) values($1,'archive.admin@example.test',now())",[guest]);
+ await db.query('insert into private.platform_admins values($1)',[guest]);
+ await as(guest);
+ await db.query('select public.start_organisation_visit($1)',[newOrg]);
+ await assert.rejects(()=>archive(archPlace),/Only owners and admins/);
+ await db.query('select public.end_organisation_visit()');
+ await db.exec('reset role');
+ await db.query('delete from private.platform_admins where user_id=$1',[guest]);
+});
 // The later administration checks count the platform administrators: this one was only for the checks above.
 await db.exec('reset role');
 await db.query('delete from private.platform_admins where user_id=$1',[exploreAdmin]);
@@ -1088,6 +1138,8 @@ await check('a platform administrator who is removed loses a visit in progress',
   await as(visitor);
   assert.equal((await db.query('select count(*)::int n from public.places where organization_id=$1', [orgV])).rows[0].n, 0);
 });
+await db.exec('reset role');
+
 await db.exec('reset role');
 
 // Personal data is written down (docs/guides/PERSONAL-DATA.md). A column that points at a user, or looks like an email, a name,

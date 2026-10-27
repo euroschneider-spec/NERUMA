@@ -7,9 +7,11 @@ import { fill } from '@/lib/publishing';
 import { stripeConfigured } from '@/lib/stripe-server';
 import { getOrganisationCopy } from '@/lib/organisation-copy';
 import { getWorkspaceCopy } from '@/lib/workspace';
+import { RestoreButton } from '@/components/archive-controls';
 import { LocationCards } from '@/components/location-cards';
+import { getArchiveCopy } from '@/lib/archive-places';
 import { listPlaces, organisationExplore, workspaceConfigured, workspaceSession } from '@/lib/workspace-server';
-import { exploreListingReady, publishingReady } from '@/lib/verification-server';
+import { archivePlacesReady, exploreListingReady, publishingReady } from '@/lib/verification-server';
 
 export const dynamic='force-dynamic';
 // The browser tab speaks the page's language too.
@@ -32,14 +34,18 @@ export default async function Workspace({params,searchParams}:{params:Promise<{l
   // The "Show in Explore" switch exists once the Explore migration is installed; it works once a platform administrator has switched Explore on, and is greyed out until then.
   const exploreReady=!!organisation && workspaceConfigured() && await exploreListingReady(context.supabase);
   const exploreOn=exploreReady && await organisationExplore(context.supabase,organisation!.id);
+  // A platform administrator on a visit corrects and takes down; archiving is the organisation's own.
+  const visiting=context.visit?.organisation===organisation?.id;
+  const archiving=!!organisation && workspaceConfigured() && !visiting && await archivePlacesReady(context.supabase);
+  const archived=archiving ? await listPlaces(context.supabase,organisation.id,locale,true) : [];
+  const a=getArchiveCopy(locale);
   const newPlaceHref=organisation ? `/${locale}/workspace/new?org=${organisation.id}` : '';
   // A failed payment, or no plan once payments are on: say so before anything else (docs/guides/PAYMENTS.md).
   const billing=organisation && workspaceConfigured() ? await getBillingStatus(context.supabase,organisation.id) : null;
   const plan=billing ? planState(billing) : null;
   const b=getBillingCopy(locale);
   const planNotice=!billing ? null : plan==='grace' ? fill(b.dashboardGrace,{date:longDate(billing.graceUntil!,locale)}) : billing.allowed ? null : plan==='ended' ? b.dashboardEnded : b.dashboardNone;
-  // A platform administrator on a visit corrects and takes down; adding a location is the organisation's own (brief 2026-10-26).
-  const visiting=context.visit?.organisation===organisation?.id;
+  // Adding a location is the organisation's own too (brief 2026-10-26).
   const owner=!visiting && context.memberships.find(m=>m.organisation===organisation?.id)?.role==='owner';
   return <main id="main-content" className="app-main">
     <div className="app-heading">
@@ -50,7 +56,12 @@ export default async function Workspace({params,searchParams}:{params:Promise<{l
     {context.organisations.length>1 && <nav className="button-row" aria-label={getOrganisationCopy(locale).organisation}>{context.organisations.map(o=><Link key={o.id} className="quiet-link" href={`/${locale}/workspace?org=${o.id}`} aria-current={o.id===organisation?.id?'page':undefined}>{o.name}</Link>)}</nav>}
     {!workspaceConfigured() ? <p>{t.readyLater}</p> : !organisation ? <p>{t.forbidden}</p> : <section aria-labelledby="locations-heading">
       <h2 id="locations-heading">{t.locationsHeading}</h2>
-      {!places.length ? <div className="empty-state"><p>{t.empty}</p>{!visiting && <Link className="button" href={newPlaceHref}>{t.newPlace}</Link>}</div> : <LocationCards places={places} locale={locale} base={`/${locale}/workspace`} sample={sampleOnly && !publishing ? 'all' : 'none'} qrCode="willow-museum" visits={sampleVisits} publishing={publishing} exploreOrg={visiting || !exploreReady ? undefined : organisation.id} exploreOn={exploreOn}/>}
+      {!places.length ? <div className="empty-state"><p>{t.empty}</p>{!visiting && <Link className="button" href={newPlaceHref}>{t.newPlace}</Link>}</div> : <LocationCards places={places} locale={locale} base={`/${locale}/workspace`} sample={sampleOnly && !publishing ? 'all' : 'none'} qrCode="willow-museum" visits={sampleVisits} publishing={publishing} exploreOrg={visiting || !exploreReady ? undefined : organisation.id} exploreOn={exploreOn} archiveOrg={archiving ? organisation.id : undefined}/>}
+      {archived.length>0 && <details className="archived-locations">
+        <summary>{a.heading} ({archived.length})</summary>
+        <p className="small-note">{a.hint}</p>
+        <ul>{archived.map(place=><li key={place.id}><span>{place.name}</span> <RestoreButton locale={locale} org={organisation.id} place={place.id} name={place.name}/></li>)}</ul>
+      </details>}
     </section>}
   </main>;
 }
