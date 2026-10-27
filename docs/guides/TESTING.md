@@ -101,6 +101,7 @@ selector or `testIdAttribute` anywhere else. Never find an element by CSS class 
 | `owner1@example.test` | Owner of "Fixture museum 1", an empty organisation (to try creating a first location) |
 | `owner4@example.test` | Signed in, no organisation yet (can apply) |
 | `owner5@example.test` | The applicant behind the waiting Linden Gallery request |
+| `owner.showcase@example.test` | Owner of seven published places in five countries and every kind of place, for trying the Explore filters (country, city, category) |
 | `owner.large@example.test` | **Only with `DEV_MOCK_VOLUME=1 npm run dev:mock`:** owner of 55 organisations (the app lists 50) and of one with 105 places |
 
 The people and places are **synthetic**: made up, realistic, fictional (every name says so, every address ends `@example.test`).

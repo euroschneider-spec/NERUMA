@@ -66,8 +66,6 @@ Decision needed before starting.
   Put the form first.
 - [x] Builder (10282px, ~12 screens): all five steps are open at once. Make each step an accordion. Done: the first step is open, the others folded, with Expand all / Collapse all (checked 2026-10-26).
 - [ ] Home (4709px): the six feature cards take one row each. Use two columns or a compact list.
-- [ ] Explore: three filters, each offering only "All", for one result. Hide them until there are more
-  places.
 - [ ] Dashboard: seven tabs wrap into three rows. Use one scrollable row. The three stat cards stack to
   ~330px; put them in one row.
 - [x] Top bar on content pages wraps to two rows (92px) because of *Summary / Full page*: that control moved into

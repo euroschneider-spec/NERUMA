@@ -39,8 +39,9 @@ describe('reading a published guide', () => {
 
 describe('the lists a visitor and an owner read', () => {
   it('Explore entries need a good address and language', () => {
-    expect(parsePublishedPlaces([{ slug: 'ok-one', name: 'A', city: 'B', placeType: 'museum', locale: 'ro', locales: ['ro', 'en'], steps: 4 }, { slug: 'Bad Slug', locale: 'en' }, { slug: 'x', locale: 'fr' }]))
-      .toEqual([{ slug: 'ok-one', name: 'A', city: 'B', placeType: 'museum', locale: 'ro', locales: ['ro', 'en'], steps: 4 }]);
+    expect(parsePublishedPlaces([{ slug: 'ok-one', name: 'A', city: 'B', countryCode: 'RO', placeType: 'museum', locale: 'ro', locales: ['ro', 'en'], steps: 4 }, { slug: 'Bad Slug', locale: 'en' }, { slug: 'x', locale: 'fr' }]))
+      .toEqual([{ slug: 'ok-one', name: 'A', city: 'B', countryCode: 'RO', placeType: 'museum', locale: 'ro', locales: ['ro', 'en'], steps: 4 }]);
+    expect(parsePublishedPlaces([{ slug: 'no-country', countryCode: 'romania', locale: 'en' }])[0].countryCode).toBe('');
     expect(parsePublishedPlaces('nope')).toEqual([]);
   });
   it('a QR target is either an address or "unavailable", never a name', () => {

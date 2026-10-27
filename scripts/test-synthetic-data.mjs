@@ -6,6 +6,7 @@ import { PGlite } from '@electric-sql/pglite';
 import { createSupabaseLikeDatabase } from './pglite-supabase.mjs';
 import { loadFixtureBase } from './fixture-base.mjs';
 import { loadSyntheticData, people } from './synthetic-data.mjs';
+import { showcase } from './synthetic-data/content.mjs';
 
 let checks = 0;
 async function check(name, fn) { await fn(); checks++; console.log(`PASS ${name}`); }
@@ -27,7 +28,7 @@ const { db, photos, summary } = await world();
 const byKey = Object.fromEntries(summary.places.map((place) => [place.key, place]));
 
 await check('it loads into the real migrations, and loading leaves the database as the system (no role left over)', async () => {
-  assert.equal(summary.places.length, 9);
+  assert.equal(summary.places.length, 9 + showcase.length);
   assert.equal((await one(db, 'select current_user u')).u !== 'authenticated', true);
 });
 
@@ -76,7 +77,7 @@ await check('places are published in 3, 2 and 1 languages; one language waits; t
   assert.deepEqual(byKey.hotel.waiting, ['de'], 'the German guide has two steps, too short to publish');
   for (const key of ['long-name', 'pavilion']) assert.deepEqual(byKey[key].live, [], key);
   // Harbour Lights is still "published" as a place: it is its organisation that is suspended. Only the railway museum is down.
-  assert.equal((await one(db, "select count(*)::int n from public.places where status='published'")).n, 6);
+  assert.equal((await one(db, "select count(*)::int n from public.places where status='published'")).n, 6 + showcase.length);
   assert.equal(byKey.railway.live.length, 1, 'the railway guide was live before it was taken down');
 });
 
@@ -106,7 +107,10 @@ await check('a visitor finds the published places in Explore, each in their lang
   const english = (await one(db, 'select public.published_places($1) l', ['en'])).l;
   const romanian = (await one(db, 'select public.published_places($1) l', ['ro'])).l;
   await asSystem(db);
-  assert.deepEqual(english.map((place) => place.slug).sort(), [byKey.cluj, byKey.kunsthaus, byKey.hotel, byKey['place-des-arts'], byKey.mill].map((place) => place.slug).sort());
+  assert.deepEqual(english.map((place) => place.slug).sort(), [byKey.cluj, byKey.kunsthaus, byKey.hotel, byKey['place-des-arts'], byKey.mill, ...showcase.map(([key]) => byKey[key])].map((place) => place.slug).sort());
+  const countries = new Set(english.map((place) => place.countryCode));
+  assert.deepEqual([...countries].sort(), ['AT', 'CA', 'CH', 'DE', 'RO'], 'Explore can filter by five countries');
+  assert.deepEqual([...new Set(english.map((place) => place.placeType))].sort(), ['cultural', 'hotel', 'institution', 'museum', 'other', 'public_service'], 'and by every kind of place')
   assert.equal(romanian.find((place) => place.slug === byKey.cluj.slug).name, 'Muzeul de Artă Vizuală Cluj (fictiv)');
   assert.equal(english.find((place) => place.slug === byKey.kunsthaus.slug).locale, 'de', 'a German-only guide is offered in German');
   assert.ok(!english.some((place) => /^place-/.test(place.slug)), 'no draft placeholder address is listed');
@@ -163,7 +167,7 @@ await check('problem reports: two open, one closed by the second administrator',
 
 await check('the QR code of every published place is its own, short and never reused', async () => {
   const codes = summary.places.map((place) => place.code).filter(Boolean);
-  assert.equal(codes.length, 7, 'every place that was published has one, including the two taken down');
+  assert.equal(codes.length, 7 + showcase.length, 'every place that was published has one, including the two taken down');
   assert.equal(new Set(codes).size, codes.length);
   for (const code of codes) assert.match(code, /^[0-9a-f]{8}$/);
 });

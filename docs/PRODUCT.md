@@ -19,7 +19,7 @@ Languages everywhere: **English, Romanian, German.** Root `/` opens English; an 
 - **Home**: what NERUMA is, how it works in three steps, who it is for, the six sensory channels, where information comes from
   (three source levels), and a link to the example guide.
 - **Text pages**: For organisations, Methodology, Privacy, Terms, Accessibility. Privacy and Terms are **drafts**.
-- **Explore**: every published guide, plus the fictional example (Willow Museum). Filter by category.
+- **Explore**: every published guide, plus the fictional example (Willow Museum). Filter by country, city and category: each list offers only what the published guides have, and the cities follow the chosen country. The fictional example has no country or city, so choosing either hides it.
 - **The example guide** (`/places/willow-museum/guide`): fictional, always available.
 - **A published guide** (`/places/<address>/guide`), in the visitor's language when it is published in it, otherwise in a published
   one, with links to the other languages. A guide that was taken down shows a neutral "isn't available right now" page that never
@@ -223,9 +223,6 @@ Languages everywhere: **English, Romanian, German.** Root `/` opens English; an 
 
 ## 8. Visible gaps (things a person can notice today)
 
-- **Explore**: the **country** and **city** filters are shown but do nothing. The category filter offers **Theatre** and **Clinic**,
-  which no location can be (the builder's types are institution, museum, hotel, cultural venue, public service, other), and it doesn't
-  offer institution, public service or other.
 - The **privacy** page's introduction still describes "the demonstration, before live accounts", and does not name the data controller,
   retention or processors (see `docs/guides/PERSONAL-DATA.md`).
 - **Terms** are a draft for the demonstration.

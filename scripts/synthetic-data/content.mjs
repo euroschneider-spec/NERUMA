@@ -215,6 +215,45 @@ export const mill = {
 };
 
 // ---------------------------------------------------------------------------------------------------------------------
+// Seven more published places in five countries and every kind of place, so the Explore filters have something to filter.
+// Two share a city (Montréal) and two share a country (Germany, Austria), so narrowing by country changes the cities offered.
+// ---------------------------------------------------------------------------------------------------------------------
+const venue = (type, city, country, name, address, description, arrivalInfo, a, b, c) => ({
+  type, city, country, ...threeSteps(a, b, c),
+  en: { name: `${name} (fictional)`, address, description, arrivalInfo },
+});
+export const showcase = [
+  ['vienna-coffee', venue('museum', 'Wien', 'AT', 'Coffeehouse Museum Vienna', 'Musterstraße 4', 'A museum about the Viennese coffeehouse.', 'Tram 2, stop Musterplatz.',
+    ['Entrance', 'A revolving door and, beside it, a wide automatic door. The hall smells of roasted coffee.', 'Use the automatic door.', 'The ticket desk is on the left.'],
+    ['Coffeehouse room', 'A reconstructed coffeehouse with marble tables. Cups clink and a machine hisses now and then.', 'Seats are available along the wall.', 'The quiet corner is at the back.'],
+    ['Quiet corner', 'A small alcove with a bench and soft light.', 'No sound is played here.', 'Thank you for visiting.'])],
+  ['graz-hotel', venue('hotel', 'Graz', 'AT', 'Hotel Murblick', 'Uferweg 12', 'A 40-room hotel on the river.', 'Five minutes on foot from the tram stop.',
+    ['Arrival', 'A glass door with a ramp. The lobby is bright and has a lift.', 'Staff come to the door on request.', 'Reception is straight ahead.'],
+    ['Reception', 'A long desk with a bench. Check-in takes about five minutes.', 'Online check-in is possible.', 'Rooms are reached by lift.'],
+    ['A standard room', 'A quiet room facing the river, with dimmable lights.', 'Rooms without scented cleaning can be requested.', 'Breakfast is on the ground floor.'])],
+  ['leipzig-office', venue('public_service', 'Leipzig', 'DE', 'Citizens’ Office Leipzig Centre', 'Marktplatz 1', 'The city office for registrations and documents.', 'Tram stop Markt, step-free.',
+    ['Entrance', 'A heavy glass door with a button to open it. A guard greets you.', 'Press the blue button on the left.', 'Take a number at the machine.'],
+    ['Waiting hall', 'A large hall with 60 seats and a screen that calls numbers with a loud tone.', 'Mornings are the busiest; after 14:00 it is calm.', 'Counters are along the right wall.'],
+    ['Counter', 'A small desk behind a glass screen. A loop for hearing aids is installed.', 'You can ask for slower speech or written answers.', 'Thank you for your visit.'])],
+  ['berlin-concerts', venue('cultural', 'Berlin', 'DE', 'Canal Concert House Berlin', 'Kanalweg 9', 'A concert house for chamber music.', 'U-Bahn Kanalstraße, with a lift.',
+    ['Foyer', 'A tall foyer with a cloakroom and a café. It echoes before concerts.', 'Arrive 30 minutes early for a calm entry.', 'The hall doors are on the left.'],
+    ['Concert hall', 'A hall with 400 seats and warm lighting. Sound is loud during the finale.', 'Ear plugs are free at the cloakroom.', 'Ushers will guide you to your seat.'],
+    ['Quiet room', 'A small room with a speaker that carries the concert at low volume.', 'Open during every concert.', 'Return to the foyer by the stairs or lift.'])],
+  ['timisoara-library', venue('institution', 'Timișoara', 'RO', 'Timișoara University Library', 'Bulevardul Vasile Pârvan 4', 'A university library open to the public.', 'Tram 9, stop Universitate.',
+    ['Entrance', 'Two sets of doors, the second with a security gate that beeps.', 'Tell the guard if you need to avoid the gate.', 'The reading room is upstairs.'],
+    ['Reading room', 'A long room with desks and green lamps. It is silent and slightly cold.', 'Bring a jumper; it is 19 degrees.', 'Quiet booths are at the end.'],
+    ['Quiet booth', 'A booth with a door, a chair and a lamp that you can switch off.', 'Book at the desk for up to two hours.', 'Thank you for visiting.'])],
+  ['montreal-trams', venue('museum', 'Montréal', 'CA', 'Tram Museum Montréal', '110 Rue Saint-Pierre', 'Historic trams from 1890 to 1959.', 'Bus 55, stop Saint-Pierre.',
+    ['Entrance', 'A wide doorway into the old depot. Metal floors and a faint smell of oil.', 'Wheelchairs can enter by the side ramp.', 'The tram hall is straight ahead.'],
+    ['Tram hall', 'Eight trams in a bright hall. A bell rings twice an hour.', 'Benches are placed between the trams.', 'The workshop is at the back.'],
+    ['Workshop', 'A noisy workshop with demonstrations at 11:00 and 15:00.', 'Skip it if sound is hard; the demonstrations can be watched through a window.', 'Return to the entrance.'])],
+  ['zurich-baths', venue('other', 'Zürich', 'CH', 'Lakeside Baths Zürich', 'Seestrasse 20', 'A public swimming and sauna house on the lake.', 'Tram 11, stop Seeblick.',
+    ['Entrance', 'A turnstile with a card reader, and a staffed gate beside it.', 'Use the staffed gate if you cannot use the turnstile.', 'Changing rooms are on the left.'],
+    ['Changing rooms', 'Open changing rooms and single cabins. Lockers close with a loud clack.', 'Single cabins are free of charge.', 'The pool hall is down a short corridor.'],
+    ['Pool hall', 'A bright hall with echo and strong chlorine smell. Quiet hours are 07:00 to 09:00.', 'Lanes for slow swimmers are marked in blue.', 'Thank you for visiting.'])],
+];
+
+// ---------------------------------------------------------------------------------------------------------------------
 // The people and organisations. Fictional names, and only @example.test addresses.
 // ---------------------------------------------------------------------------------------------------------------------
 export const people = [
@@ -229,5 +268,6 @@ export const people = [
   { n: 28, email: 'applicant.needsinfo@example.test', note: 'Applicant asked for more information' },
   { n: 29, email: 'applicant.rejected@example.test', note: 'Applicant whose request was rejected' },
   { n: 30, email: 'unconfirmed@example.test', note: 'Registered but never confirmed the email (cannot sign in)', confirmed: false },
+  { n: 32, email: 'owner.showcase@example.test', note: 'Owner of seven published places in five countries (for trying the Explore filters)' },
   { n: 31, email: 'owner.large@example.test', note: 'Owner of 55 organisations and 100+ places (only with the volume option)', volume: true },
 ];
