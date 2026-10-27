@@ -19,7 +19,7 @@ Languages everywhere: **English, Romanian, German.** Root `/` opens English; an 
 - **Home**: what NERUMA is, how it works in three steps, who it is for, the six sensory channels, where information comes from
   (three source levels), and a link to the example guide.
 - **Text pages**: For organisations, Methodology, Privacy, Terms, Accessibility. Privacy and Terms are **drafts**.
-- **Explore**: every published guide, plus the fictional example (Willow Museum). Filter by country, city and category: each list offers only what the published guides have, and the cities follow the chosen country. The fictional example has no country or city, so choosing either hides it.
+- **Explore**: the published guides of organisations a platform administrator has switched Explore on for (and that the organisation has not hidden), plus the fictional example (Willow Museum). A guide that is not listed still opens from its QR code and web address. Filter by country, city and category: each list offers only what the published guides have, and the cities follow the chosen country. The fictional example has no country or city, so choosing either hides it.
 - **The example guide** (`/places/willow-museum/guide`): fictional, always available.
 - **A published guide** (`/places/<address>/guide`), in the visitor's language when it is published in it, otherwise in a published
   one, with links to the other languages. A guide that was taken down shows a neutral "isn't available right now" page that never
@@ -129,6 +129,7 @@ Languages everywhere: **English, Romanian, German.** Root `/` opens English; an 
 - One card per location (up to 100): photo, name, draft or published, address, and **what needs attention** (fewer than 3 steps,
   a step without name or description in this language, a photo without a description, changes not yet published).
 - Per card: edit, **QR code and link** (published only: view, download, copy link), open the public guide.
+- **Show in Explore**: a switch on each card, on by default, saved as soon as it is changed. It appears only once a platform administrator has switched Explore on for the organisation; without that, none of its locations is in Explore. Hiding a location removes it from Explore only: its guide, web address and QR code keep working. A platform administrator visiting can't change it.
 - Several organisations: a switcher.
 
 ### Building a guide
@@ -164,7 +165,7 @@ Languages everywhere: **English, Romanian, German.** Root `/` opens English; an 
   again brings everything back at the same address and QR code; nothing is deleted.
 
 ### Change log
-- From the sidebar: what **NERUMA support** changed in the organisation's guides, newest first: what kind of change, when (date and time, UTC),
+- From the sidebar: what **NERUMA support** changed in the organisation's guides, and when Explore was switched on or off for it, newest first: what kind of change, when (date and time, UTC),
   which location, and the words before and after. It never names the administrator. Empty until NERUMA support has changed something;
   nothing the organisation's own team does is listed here.
 

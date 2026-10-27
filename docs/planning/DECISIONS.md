@@ -297,6 +297,15 @@ Owner, 2026-10-27 (`docs/briefs/2026-10-26-example-photos.md`, `docs/guides/PHOT
 licence asks for no credit, so none is shown; the rights line only says where the photo is from. Paid Unsplash+ files, photos with an artwork as the subject, and photos
 with a recognisable person, a logo or a brand are not used. The owner's wish to take our own photos stays open as ledger T-018, but the licence does not require it.
 
+### Explore is a feature a platform administrator hands out
+
+Owner, 2026-10-27 (`docs/briefs/2026-10-27-show-in-explore.md`). This replaces "Published guides appear in Explore automatically" (13 October). An organisation is
+in Explore only while a platform administrator has switched Explore on for it, on the account page; it is off for every organisation until then. Once on, the
+organisation's owners and admins get a *Show in Explore* switch per location (on by default) and can only opt out; a location's choice is kept when the feature is switched
+off and on again. Every switch is written to the organisation's change log, which never names the administrator. Guides, web addresses and QR codes do not depend on
+Explore. The reason: there is no billing plan yet (Stripe is waiting on email domains and money), so the owner decides by hand who is listed; a plan can set the same flag later.
+Not chosen: Explore open to everyone with only the opt-out gated (it would not give the owner control), opt-in by the organisation alone.
+
 ## Not yet discussed
 
 - `DESIGN-TASKS.md` sections 5, 6 (other items) and 7.

@@ -1,5 +1,5 @@
 ---
-status: idea   # idea → building → done
+status: building   # idea → building → done
 date: 2026-10-27
 ---
 
@@ -19,13 +19,13 @@ This changes the 13 October decision "Published guides appear in Explore automat
 owner chose this on 27 October.
 
 ## Done when
-- [ ] A platform administrator opens an organisation, switches "Explore" on, and a note appears in that organisation's change log.
+- [x] A platform administrator opens an organisation, switches "Explore" on, and a note appears in that organisation's change log.
       The owner then sees a **Show in Explore** switch on each location, already on.
-- [ ] That owner turns a location off: it disappears from Explore, while its QR code and guide address still work. Turning it on
+- [x] That owner turns a location off: it disappears from Explore, while its QR code and guide address still work. Turning it on
       brings it back.
-- [ ] An organisation without the feature has no switch and none of its places is in Explore, published or not. Switching the
+- [x] An organisation without the feature has no switch and none of its places is in Explore, published or not. Switching the
       feature off removes the switch and the places from Explore at once, and writes a change-log note.
-- [ ] All of it reads right in English, Romanian and German, and on a phone.
+- [x] All of it reads right in English, Romanian and German, and on a phone.
 
 ## Not in scope
 - Plans, prices, Stripe, or setting the feature from a subscription.
@@ -37,8 +37,7 @@ owner chose this on 27 October.
 ## Decisions
 Confirmed by the owner unless marked proposed:
 - The flag belongs to the **organisation** (off by default); the switch belongs to each **location** (on by default once the
-  feature is on). *Proposed, waiting for the owner:* the location's choice is kept when the feature is switched off, so switching
-  it back on restores it.
+  feature is on). The location's choice is kept when the feature is switched off, so switching it back on restores it (owner, 2026-10-27).
 - **The feature starts off for every organisation.** No real organisation is live yet, so nothing disappears from Explore when this
   ships (owner, 2026-10-27).
 - The platform administrator's switch is on the **Accounts side**, next to the existing *Visit* button for an organisation, so it
@@ -50,4 +49,11 @@ Confirmed by the owner unless marked proposed:
   owner's own use of the switch is not listed there.
 
 ## Result
-Filled in at the end.
+Built in this pull request (migration `20261027100000_explore_listing.sql`; `src/lib/explore-listing.ts`, `src/components/explore-switch.tsx`,
+`explore-toggle.tsx`, `src/app/admin/explore-actions.ts`).
+
+- The flag is `organizations.explore_listing` (off), the choice is `places.show_in_explore` (on). `published_places` lists only published places where both allow it.
+- The platform administrator's switch is on the account page only, not on the Accounts list.
+- Run: `typecheck`, `lint`, `test:unit`, `test:db` (new checks for who may switch what, the remembered choice and the log), `test:data`, `test:workspace` (the whole flow
+  in a browser, with axe on the dashboard), `platform`, `privacy-security` and `hostile-text` specs.
+- Not run: the migration against a real Supabase project (apply it by hand, then `npm run test:smoke`); the Romanian and German words need a native speaker.

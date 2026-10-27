@@ -6,7 +6,7 @@ import { confirmedUser, createClient, type SupabaseClient } from './supabase/ser
 import { authConfigured } from './supabase/config';
 import { newZone, placeAttention, uuidPattern, type OwnField, type PlaceDraft, type PlaceSummary, type RemovableField } from './workspace';
 import type { SensoryProfile } from './demo';
-import { publishingReady, stepFieldsReady, verificationReady } from './verification-server';
+import { exploreListingReady, publishingReady, stepFieldsReady, verificationReady } from './verification-server';
 import type { Publication } from './publishing';
 import { getViewer } from './viewer-server';
 import { isOrganisationRole } from './roles';
@@ -54,13 +54,21 @@ export async function organisationAccess(supabase: SupabaseClient, userId: strin
   return (await currentVisit(supabase))?.organisation === org ? 'visitor' : null;
 }
 
+/** Whether a platform administrator has switched Explore on for this organisation. Anything unclear counts as off. */
+export async function organisationExplore(supabase: SupabaseClient, org: string): Promise<boolean> {
+  const { data, error } = await supabase.from('organizations').select('explore_listing').eq('id', org).maybeSingle();
+  return !error && (data as { explore_listing?: unknown } | null)?.explore_listing === true;
+}
+
 export async function listPlaces(supabase: SupabaseClient, org: string, locale: Locale): Promise<PlaceSummary[]> {
   // Before the publishing migration these columns and the QR table link don't exist: read without them.
   const publishing = await publishingReady(supabase);
+  // The location's Explore choice exists only after the 2026-10-27 migration, and only matters where Explore is on for the organisation.
+  const exploreChoice = await exploreListingReady(supabase) && await organisationExplore(supabase, org);
   const base = 'id,city,address,status,revision,updated_at,place_translations(name,locale),zones(id,status,sort_order),media_assets(zone_id,storage_key,alt_text,active)' as const;
   const withPublishing = 'id,city,address,status,revision,updated_at,slug,published_revision,qr_redirects(public_code),place_translations(name,locale),zones(id,status,sort_order),media_assets(zone_id,storage_key,alt_text,active)';
   // The extra columns are read through `live` below, so the result is typed by the base select.
-  const { data, error } = await supabase.from('places').select((publishing ? withPublishing : base) as typeof base)
+  const { data, error } = await supabase.from('places').select(((publishing ? withPublishing : base) + (exploreChoice ? ',show_in_explore' : '')) as typeof base)
     .eq('organization_id',org).neq('status','archived').order('updated_at',{ascending:false}).limit(100);
   if (error) throw new Error('workspace-unavailable');
   // A step's text hangs off the step, not the place, so it has no direct link to a place to embed through: read it on its own.
@@ -76,10 +84,10 @@ export async function listPlaces(supabase: SupabaseClient, org: string, locale: 
     const texts = stepTexts.filter(t=>t.place_id===row.id);
     const photos = (row.media_assets as {zone_id:string|null;storage_key:string;alt_text:Record<string,string>;active:boolean}[]).filter(p=>p.active);
     const firstPhoto = steps.map(s=>photos.find(p=>p.zone_id===s.id)).find(Boolean);
-    const live = row as unknown as {slug?:string;published_revision?:number|string|null;qr_redirects?:{public_code:string}[]};
+    const live = row as unknown as {slug?:string;published_revision?:number|string|null;qr_redirects?:{public_code:string}[];show_in_explore?:boolean};
     const unpublished = publishing && row.status==='published' && live.published_revision!=null && Number(row.revision)>Number(live.published_revision);
     return {id:row.id,city:row.city,address:row.address || '',status:row.status,revision:Number(row.revision),updatedAt:row.updated_at,
-      qrCode:live.qr_redirects?.[0]?.public_code,slug:publishing && live.slug && !live.slug.startsWith('place-') ? live.slug : undefined,
+      qrCode:live.qr_redirects?.[0]?.public_code,showInExplore:exploreChoice ? live.show_in_explore !== false : undefined,slug:publishing && live.slug && !live.slug.startsWith('place-') ? live.slug : undefined,
       name:current?.name || (fallback ? `${fallback.name} (${fallback.locale.toUpperCase()})` : row.city),
       photoKey:firstPhoto?.storage_key,
       attention:[...placeAttention(steps.map(s=>({id:s.id,hasText:texts.some(t=>t.zone_id===s.id && t.title.trim()!=='' && t.description.trim()!=='')})),photos.map(p=>({zoneId:p.zone_id,alt:p.alt_text[locale] || ''}))),...(unpublished ? ['unpublishedChanges' as const] : [])]};

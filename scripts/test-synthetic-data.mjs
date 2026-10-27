@@ -107,7 +107,7 @@ await check('a visitor finds the published places in Explore, each in their lang
   const english = (await one(db, 'select public.published_places($1) l', ['en'])).l;
   const romanian = (await one(db, 'select public.published_places($1) l', ['ro'])).l;
   await asSystem(db);
-  assert.deepEqual(english.map((place) => place.slug).sort(), [byKey.cluj, byKey.kunsthaus, byKey.hotel, byKey['place-des-arts'], byKey.mill, ...showcase.map(([key]) => byKey[key])].map((place) => place.slug).sort());
+  assert.deepEqual(english.map((place) => place.slug).sort(), [byKey.cluj, byKey.kunsthaus, byKey['place-des-arts'], byKey.mill, ...showcase.filter(([key]) => key !== 'berlin-concerts').map(([key]) => byKey[key])].map((place) => place.slug).sort(), 'Explore lists the organisations it is switched on for, minus the location its owner hid; the hotel is published but not listed');
   const countries = new Set(english.map((place) => place.countryCode));
   assert.deepEqual([...countries].sort(), ['AT', 'CA', 'CH', 'DE', 'RO'], 'Explore can filter by five countries');
   assert.deepEqual([...new Set(english.map((place) => place.placeType))].sort(), ['cultural', 'hotel', 'institution', 'museum', 'other', 'public_service'], 'and by every kind of place')

@@ -40,7 +40,7 @@ export default async function ChangeLog({ params, searchParams }: { params: Prom
                 <time dateTime={entry.at}>{longDate(entry.at, locale)}, {time.format(new Date(entry.at))} UTC</time> · {entry.by ?? v.logBy}
                 {entry.placeName && <> · {fill(v.logLocation, { name: entry.placeName })}</>}
               </p>
-              {entry.action !== 'take_down' && (
+              {entry.action !== 'take_down' && entry.changes.length > 0 && (
                 <dl className="change-lines">
                   {entry.changes.map((change) => (
                     <div key={change.field}>

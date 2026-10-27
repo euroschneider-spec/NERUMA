@@ -16,6 +16,8 @@ export type AccountProfile = AccountRow & {
   deletion: { requestedAt: string; deleteAfter: string; byAdministrator: boolean } | null;
   application: { status: string; organisation: string; submittedAt: string } | null;
   organisationStatuses: Record<string, string>;
+  /** Whether Explore is switched on for each of the person's organisations; empty before the 2026-10-27 migration. */
+  organisationExplore: Record<string, boolean>;
 };
 export type AccountsPage = { total: number; rows: AccountRow[] };
 
@@ -64,13 +66,19 @@ export function parseProfile(value: unknown): AccountProfile | null {
   const deletion = obj(r.deletion);
   const application = obj(r.application);
   const organisationStatuses: Record<string, string> = {};
-  if (Array.isArray(r.organisations)) for (const org of r.organisations) { const o = obj(org); if (o && text(o.id)) organisationStatuses[text(o.id)] = text(o.status); }
+  const organisationExplore: Record<string, boolean> = {};
+  if (Array.isArray(r.organisations)) for (const org of r.organisations) {
+    const o = obj(org);
+    if (o && text(o.id)) organisationStatuses[text(o.id)] = text(o.status);
+    if (o && text(o.id) && typeof o.explore === 'boolean') organisationExplore[text(o.id)] = o.explore;
+  }
   return {
     ...row,
     deletionPending: deletion !== null,
     deletion: deletion && text(deletion.delete_after) ? { requestedAt: text(deletion.requested_at), deleteAfter: text(deletion.delete_after), byAdministrator: deletion.by_administrator === true } : null,
     application: application && text(application.status) ? { status: text(application.status), organisation: text(application.organisation), submittedAt: text(application.submitted_at) } : null,
     organisationStatuses,
+    organisationExplore,
   };
 }
 

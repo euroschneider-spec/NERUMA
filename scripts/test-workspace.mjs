@@ -362,8 +362,66 @@ try {
     await expect(visitor.getByRole('heading',{name:'Fixture Gallery',level:1})).toBeVisible();
     await expect(visitor.locator('.gg-title')).toBeVisible();
     await expect(visitor.getByText('Demonstration',{exact:false})).toHaveCount(0);
+    // Published is not the same as listed: Explore is a feature a platform administrator switches on (next check).
+    await visitor.goto(`${base}/en/explore`);
+    await expect(visitor.getByText('Fixture Gallery')).toHaveCount(0);
+  });
+  await check('a platform administrator switches Explore on for the organisation: the owner gets a "Show in Explore" switch per location, and every switch lands in the change log',async()=>{
+    const card=page.locator('.location-card').filter({hasText:'Fixture Gallery'});
+    const toggle=card.getByLabel('Show in Explore',{exact:true});
+    await page.goto(`${base}/en/workspace`);
+    await expect(toggle).toHaveCount(0);
+    const admin=await (await browser.newContext({colorScheme:'dark'})).newPage();
+    await login(admin,3);
+    const account=`${base}/en/admin/accounts/00000000-0000-4000-8000-000000000001`;
+    await admin.goto(account);
+    const organisation=admin.locator('li').filter({hasText:'Fixture museum 1'});
+    await expect(organisation.getByText('Explore is off',{exact:false})).toBeVisible();
+    await organisation.getByRole('button',{name:'Switch on Explore for Fixture museum 1',exact:true}).click();
+    await expect(organisation.getByText('Explore is on',{exact:false})).toBeVisible();
+    // The owner: on by default, and the guide appears in Explore.
+    await page.goto(`${base}/en/workspace`);
+    await expect(toggle).toBeChecked();
+    const audit=await new AxeBuilder({page}).withTags(['wcag2a','wcag2aa','wcag21a','wcag21aa','wcag22aa']).analyze();assert.deepEqual(audit.violations.map(v=>v.id),[]);
     await visitor.goto(`${base}/en/explore`);
     await expect(visitor.getByRole('heading',{name:'Fixture Gallery',level:2})).toBeVisible();
+    // Hiding the location takes it out of Explore only: its guide and QR code keep working.
+    await toggle.uncheck();
+    await expect(card.getByRole('status')).toHaveText('Saved.');
+    await visitor.goto(`${base}/en/explore`);
+    await expect(visitor.getByText('Fixture Gallery')).toHaveCount(0);
+    await visitor.goto(`${base}${publicAddress}`);
+    await expect(visitor.locator('.gg-title')).toBeVisible();
+    await visitor.goto(`${base}${qrPath}`);
+    await expect(visitor).toHaveURL(new RegExp(`${publicAddress}$`));
+    // Switching the feature off asks first, takes the switch away, and keeps the location's own choice.
+    await admin.goto(account);
+    await organisation.getByRole('button',{name:'Switch off Explore',exact:true}).click();
+    const ask=admin.getByRole('dialog',{name:'Switch off Explore for Fixture museum 1?'});
+    await ask.getByRole('button',{name:'Keep it on',exact:true}).click();
+    await expect(organisation.getByText('Explore is on',{exact:false})).toBeVisible();
+    await organisation.getByRole('button',{name:'Switch off Explore',exact:true}).click();
+    await ask.getByRole('button',{name:'Switch off Explore',exact:true}).click();
+    await expect(organisation.getByText('Explore is off',{exact:false})).toBeVisible();
+    await page.goto(`${base}/en/workspace`);
+    await expect(toggle).toHaveCount(0);
+    await admin.goto(account);
+    await organisation.getByRole('button',{name:'Switch on Explore for Fixture museum 1',exact:true}).click();
+    await expect(organisation.getByText('Explore is on',{exact:false})).toBeVisible();
+    await page.goto(`${base}/en/workspace`);
+    await expect(toggle).not.toBeChecked();
+    await visitor.goto(`${base}/en/explore`);
+    await expect(visitor.getByText('Fixture Gallery')).toHaveCount(0);
+    await toggle.check();
+    await expect(card.getByRole('status')).toHaveText('Saved.');
+    await visitor.goto(`${base}/en/explore`);
+    await expect(visitor.getByRole('heading',{name:'Fixture Gallery',level:2})).toBeVisible();
+    // The organisation reads each switch in its change log, without the administrator's name.
+    await page.goto(`${base}/en/workspace/log`);
+    await expect(page.getByRole('heading',{name:'Switched on · Explore listing',level:2})).toHaveCount(2);
+    await expect(page.getByRole('heading',{name:'Switched off · Explore listing',level:2})).toHaveCount(1);
+    await expect(page.locator('main')).not.toContainText('owner3@example.test');
+    await admin.context().close();
   });
   await check('the QR code opens the guide; only published photos are public',async()=>{
     await visitor.goto(`${base}${qrPath}`);
@@ -713,8 +771,8 @@ try {
     await expect(adminPage.getByRole('heading',{name:'owner1@example.test',exact:true,level:1})).toBeVisible();
     await expect(adminPage.getByText('You are viewing this account as a platform administrator.',{exact:true})).toBeVisible();
     await expect(adminPage.locator('section[aria-labelledby="profile-organisations"]')).toContainText('Fixture museum 1');
-    // One button was there before; the other is Visit, which carries the organisation's name for a screen reader.
-    await expect(adminPage.locator('main button')).toHaveCount(2);
+    // One button was there before; the other is Visit, which carries the organisation's name for a screen reader. The Explore switch is counted apart.
+    assert.equal(await adminPage.evaluate(()=>[...document.querySelectorAll('main button')].filter(button=>!button.closest('.explore-toggle')).length),2);
     await expect(adminPage.getByRole('button',{name:'Visit Fixture museum 1 as a platform administrator',exact:true})).toBeVisible();
     const profileAudit=await new AxeBuilder({page:adminPage}).withTags(['wcag2a','wcag2aa','wcag21a','wcag21aa']).analyze();assert.deepEqual(profileAudit.violations,[]);
     for(const bad of ['not-an-id','00000000-0000-4000-8000-000000000000']) assert.equal((await adminPage.goto(`${base}/en/admin/accounts/${bad}`)).status(),404,bad);
