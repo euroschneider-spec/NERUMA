@@ -84,5 +84,7 @@ language sql stable security invoker set search_path='' as $$
  where p.id=place and p.organization_id=org;
 $$;
 
+create function public.one_step_schema_version() returns integer language sql immutable security invoker set search_path='' as $$ select 1 $$;
+grant execute on function public.one_step_schema_version() to anon,authenticated;
 notify pgrst,'reload schema';
 commit;
