@@ -94,7 +94,7 @@ test('page reader excludes controls and form values, stops on panel close and ca
   await mockSpeech(page);await page.goto('/en/contact');await page.getByLabel('Your name *',{exact:true}).fill('Do not narrate this input value');
   await page.locator('.topbar-reading').click();const dialog=page.getByRole('dialog');await dialog.locator('.reading-audio-details summary').click();const pageAudio=dialog.locator('.read-aloud');
   await pageAudio.getByRole('button',{name:copy.en.start,exact:true}).click();await page.evaluate(()=>(window as unknown as {__speech:SpeechFixture}).__speech.finish());
-  const spoken=(await fixture(page)).texts.join('\n');expect(spoken).toContain('Let’s make visits clearer.');expect(spoken).not.toContain('Do not narrate this input value');
+  const spoken=(await fixture(page)).texts.join('\n');expect(spoken).toContain('Get in touch.');expect(spoken).not.toContain('Do not narrate this input value');
   await page.keyboard.press('Escape');await page.goto('/en/places/willow-museum/guide');await page.getByRole('button',{name:copy.en.options,exact:true}).click();const guideAudio=page.locator('.gg-sheet .read-aloud');
   await guideAudio.getByRole('button',{name:copy.en.start,exact:true}).click();await page.locator('.topbar-reading').click();await dialog.locator('.reading-audio-details summary').click();
   await pageAudio.getByRole('button',{name:copy.en.start,exact:true}).click();await expect(guideAudio.getByRole('button',{name:copy.en.stop,exact:true})).toBeDisabled();
